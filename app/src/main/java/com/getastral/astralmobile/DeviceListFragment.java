@@ -1,14 +1,19 @@
 package com.getastral.astralmobile;
 
 import android.app.Activity;
+import android.content.res.TypedArray;
 import android.os.Bundle;
 import android.app.ListFragment;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
-
-import com.getastral.astralmobile.dummy.DummyContent;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A list fragment representing a list of Devices. This fragment
@@ -67,16 +72,15 @@ public class DeviceListFragment extends ListFragment {
     public DeviceListFragment() {
     }
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    String[] menutitles;
+    TypedArray menuIcons;
 
-        // TODO: replace with a real list adapter.
-        setListAdapter(new ArrayAdapter<DummyContent.DummyItem>(
-                getActivity(),
-                android.R.layout.simple_list_item_activated_1,
-                android.R.id.text1,
-                DummyContent.ITEMS));
+    DeviceListAdapter adapter;
+    private List<DeviceListRowItem> rowItems;
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.device_list_fragment, null, false);
     }
 
     @Override
@@ -87,6 +91,15 @@ public class DeviceListFragment extends ListFragment {
         if (savedInstanceState != null
                 && savedInstanceState.containsKey(STATE_ACTIVATED_POSITION)) {
             setActivatedPosition(savedInstanceState.getInt(STATE_ACTIVATED_POSITION));
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mActivatedPosition != ListView.INVALID_POSITION) {
+            // Serialize and persist the activated item position.
+            outState.putInt(STATE_ACTIVATED_POSITION, mActivatedPosition);
         }
     }
 
@@ -111,21 +124,33 @@ public class DeviceListFragment extends ListFragment {
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+
+        super.onActivityCreated(savedInstanceState);
+
+        menutitles = getResources().getStringArray(R.array.titles);
+        menuIcons = getResources().obtainTypedArray(R.array.icons);
+
+        rowItems = new ArrayList<DeviceListRowItem>();
+
+        for (int i = 0; i < menutitles.length; i++) {
+            DeviceListRowItem items = new DeviceListRowItem(menutitles[i], menuIcons.getResourceId(i, -1));
+
+            rowItems.add(items);
+        }
+
+        adapter = new DeviceListAdapter(getActivity(), rowItems);
+        setListAdapter(adapter);
+    }
+
+
+    @Override
     public void onListItemClick(ListView listView, View view, int position, long id) {
         super.onListItemClick(listView, view, position, id);
 
         // Notify the active callbacks interface (the activity, if the
         // fragment is attached to one) that an item has been selected.
-        mCallbacks.onItemSelected(DummyContent.ITEMS.get(position).id);
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        if (mActivatedPosition != ListView.INVALID_POSITION) {
-            // Serialize and persist the activated item position.
-            outState.putInt(STATE_ACTIVATED_POSITION, mActivatedPosition);
-        }
+        mCallbacks.onItemSelected(Integer.toString(position));
     }
 
     /**

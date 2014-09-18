@@ -5,4 +5,23 @@
     <string name="title_device_list">Devices</string>
     <string name="title_device_detail">Device Detail</string>
 
+
+    <string-array name="titles">
+        <item>Hall Light</item>
+        <item>Fan</item>
+        <item>Kitchen Light</item>
+        <item>Bedroom Light</item>
+        <item>TV</item>
+        <item>uPlug</item>
+    </string-array>
+
+    <array name="icons">
+        <item>@drawable/ic_launcher</item>
+        <item>@drawable/ic_launcher</item>
+        <item>@drawable/ic_launcher</item>
+        <item>@drawable/ic_launcher</item>
+        <item>@drawable/ic_launcher</item>
+        <item>@drawable/ic_launcher</item>
+    </array>
+
 </resources>
