@@ -95,7 +95,6 @@ public class DeviceListActivity extends Activity
             // adding or replacing the detail fragment using a
             // fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(DeviceDetailFragment.ARG_ITEM_ID, id);
             DeviceDetailFragment fragment = new DeviceDetailFragment();
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
@@ -106,7 +105,6 @@ public class DeviceListActivity extends Activity
             // In single-pane mode, simply start the detail activity
             // for the selected item ID.
             Intent detailIntent = new Intent(this, DeviceDetailActivity.class);
-            detailIntent.putExtra(DeviceDetailFragment.ARG_ITEM_ID, id);
             startActivity(detailIntent);
         }
     }
