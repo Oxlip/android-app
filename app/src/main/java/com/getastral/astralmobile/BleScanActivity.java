@@ -187,8 +187,8 @@ public class BleScanActivity extends ListActivity {
             if (view == null) {
                 view = mInflator.inflate(R.layout.ble_scan_list_item, null);
                 viewHolder = new ViewHolder();
-                viewHolder.deviceAddress = (TextView) view.findViewById(R.id.device_address);
-                viewHolder.deviceName = (TextView) view.findViewById(R.id.device_name);
+                viewHolder.deviceAddress = (TextView) view.findViewById(R.id.ble_scan_list_uuid);
+                viewHolder.deviceName = (TextView) view.findViewById(R.id.ble_scan_list_device_name);
                 view.setTag(viewHolder);
             } else {
                 viewHolder = (ViewHolder) view.getTag();
