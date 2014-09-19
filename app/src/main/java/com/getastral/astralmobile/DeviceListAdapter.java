@@ -14,9 +14,9 @@ import java.util.List;
 public class DeviceListAdapter extends BaseAdapter {
 
     Context context;
-    List<DeviceListRowItem> rowItem;
+    List<Device> rowItem;
 
-    DeviceListAdapter(Context context, List<DeviceListRowItem> rowItem) {
+    DeviceListAdapter(Context context, List<Device> rowItem) {
         this.context = context;
         this.rowItem = rowItem;
     }
@@ -51,10 +51,10 @@ public class DeviceListAdapter extends BaseAdapter {
         ImageView imgIcon = (ImageView) convertView.findViewById(R.id.icon);
         TextView txtTitle = (TextView) convertView.findViewById(R.id.title);
 
-        DeviceListRowItem row_pos = rowItem.get(position);
+        Device row_pos = rowItem.get(position);
         // setting the image resource and title
-        imgIcon.setImageResource(row_pos.getIcon());
-        txtTitle.setText(row_pos.getTitle());
+        imgIcon.setImageResource(R.drawable.ic_launcher);
+        txtTitle.setText(row_pos.getName());
 
         return convertView;
 

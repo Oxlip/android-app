@@ -1,8 +1,8 @@
 package com.getastral.astralmobile;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.app.Activity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -33,6 +33,7 @@ public class DeviceListActivity extends Activity
      * device.
      */
     private boolean mTwoPane;
+    DatabaseHandler db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +53,8 @@ public class DeviceListActivity extends Activity
                     .findFragmentById(R.id.device_list))
                     .setActivateOnItemClick(true);
         }
+
+        db = new DatabaseHandler(this);
 
         // TODO: If exposing deep links into your app, handle intents here.
     }

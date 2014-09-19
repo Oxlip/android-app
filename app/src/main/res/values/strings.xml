@@ -7,24 +7,6 @@
     <string name="main_action_bar_scan">Scan</string>
     <string name="main_action_bar_settings">Settings</string>
 
-    <string-array name="titles">
-        <item>Hall Light</item>
-        <item>Fan</item>
-        <item>Kitchen Light</item>
-        <item>Bedroom Light</item>
-        <item>TV</item>
-        <item>uPlug</item>
-    </string-array>
-
-    <array name="icons">
-        <item>@drawable/ic_launcher</item>
-        <item>@drawable/ic_launcher</item>
-        <item>@drawable/ic_launcher</item>
-        <item>@drawable/ic_launcher</item>
-        <item>@drawable/ic_launcher</item>
-        <item>@drawable/ic_launcher</item>
-    </array>
-
     <string name="title_activity_ble_scan">Scan</string>
     <string name="ble_not_supported">BLE is not supported by this Android version.</string>
     <string name="error_bluetooth_not_supported">This phone does not have support for BLE hardware.</string>

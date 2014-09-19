@@ -1,19 +1,12 @@
 package com.getastral.astralmobile;
 
 import android.app.Activity;
-import android.content.res.TypedArray;
-import android.os.Bundle;
 import android.app.ListFragment;
+import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A list fragment representing a list of Devices. This fragment
@@ -72,12 +65,6 @@ public class DeviceListFragment extends ListFragment {
     public DeviceListFragment() {
     }
 
-    String[] menutitles;
-    TypedArray menuIcons;
-
-    DeviceListAdapter adapter;
-    private List<DeviceListRowItem> rowItems;
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.device_list_fragment, null, false);
@@ -127,20 +114,9 @@ public class DeviceListFragment extends ListFragment {
     public void onActivityCreated(Bundle savedInstanceState) {
 
         super.onActivityCreated(savedInstanceState);
+        DeviceListActivity activity = (DeviceListActivity)getActivity();
 
-        menutitles = getResources().getStringArray(R.array.titles);
-        menuIcons = getResources().obtainTypedArray(R.array.icons);
-
-        rowItems = new ArrayList<DeviceListRowItem>();
-
-        for (int i = 0; i < menutitles.length; i++) {
-            DeviceListRowItem items = new DeviceListRowItem(menutitles[i], menuIcons.getResourceId(i, -1));
-
-            rowItems.add(items);
-        }
-
-        adapter = new DeviceListAdapter(getActivity(), rowItems);
-        setListAdapter(adapter);
+        setListAdapter(new DeviceListAdapter(activity, activity.db.getDevices()));
     }
 
 
