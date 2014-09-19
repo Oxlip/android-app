@@ -68,8 +68,9 @@ public class DeviceListActivity extends Activity
         switch (item.getItemId()) {
             // action with ID action_refresh was selected
             case R.id.main_action_bar_scan:
-                Toast.makeText(this, "Refresh selected", Toast.LENGTH_SHORT)
-                        .show();
+                Toast.makeText(this, "Starting BLE scan", Toast.LENGTH_SHORT).show();
+                Intent scanIntent = new Intent(this, BleScanActivity.class);
+                startActivity(scanIntent);
                 break;
             // action with ID action_settings was selected
             case R.id.main_action_bar_settings:
