@@ -226,4 +226,16 @@ public class BleScanActivity extends ListActivity {
         TextView deviceName;
         TextView deviceAddress;
     }
+
+    /** Called when the user touches the button */
+    public void connectDevice(View view) {
+        Device device = new Device();
+        TextView name = (TextView) ((View)view.getParent()).findViewById(R.id.ble_scan_list_device_name);
+        TextView uuid = (TextView) ((View)view.getParent()).findViewById(R.id.ble_scan_list_uuid);
+        device.setName(name.getText().toString());
+        device.setUuid(uuid.getText().toString());
+
+        DatabaseHandler db = new DatabaseHandler(this);
+        db.connectDevice(device);
+    }
 }

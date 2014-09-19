@@ -40,7 +40,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 FIELD_NAME + " TEXT," +
                 FIELD_APPLIANCE_TYPE + " TEXT," +
                 FIELD_APPLIANCE_MAKE + " TEXT," +
-                FIELD_APPLIANCE_MODEL + " TEXT," +
+                FIELD_APPLIANCE_MODEL + " TEXT" +
                 ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
