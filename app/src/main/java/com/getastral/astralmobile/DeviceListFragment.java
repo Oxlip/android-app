@@ -67,7 +67,7 @@ public class DeviceListFragment extends ListFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.device_list_fragment, null, false);
+        return inflater.inflate(R.layout.fragment_device_list, null, false);
     }
 
     @Override

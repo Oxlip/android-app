@@ -45,7 +45,7 @@ public class DeviceListAdapter extends BaseAdapter {
         if (convertView == null) {
             LayoutInflater mInflater = (LayoutInflater) context
                     .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-            convertView = mInflater.inflate(R.layout.device_list_item, null);
+            convertView = mInflater.inflate(R.layout.item_device_list, null);
         }
 
         ImageView imgIcon = (ImageView) convertView.findViewById(R.id.icon);

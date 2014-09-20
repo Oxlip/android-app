@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.util.ArrayList;
 
 public class BleScanActivity extends ListActivity {
@@ -67,7 +68,7 @@ public class BleScanActivity extends ListActivity {
             menu.findItem(R.id.ble_scan_action_bar_stop).setVisible(true);
             menu.findItem(R.id.ble_scan_action_bar_scan).setVisible(false);
             menu.findItem(R.id.ble_scan_action_bar_refresh).setActionView(
-                    R.layout.ble_scan_progress);
+                    R.layout.progress_ble_scan);
         }
         return true;
     }
@@ -185,7 +186,7 @@ public class BleScanActivity extends ListActivity {
             ViewHolder viewHolder;
             // General ListView optimization code.
             if (view == null) {
-                view = mInflator.inflate(R.layout.ble_scan_list_item, null);
+                view = mInflator.inflate(R.layout.item_ble_scan_list, null);
                 viewHolder = new ViewHolder();
                 viewHolder.deviceAddress = (TextView) view.findViewById(R.id.ble_scan_list_uuid);
                 viewHolder.deviceName = (TextView) view.findViewById(R.id.ble_scan_list_device_name);
