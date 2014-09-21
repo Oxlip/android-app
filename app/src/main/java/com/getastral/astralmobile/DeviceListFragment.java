@@ -1,11 +1,12 @@
 package com.getastral.astralmobile;
 
 import android.app.Activity;
-import android.app.ListFragment;
+import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 /**
@@ -17,7 +18,7 @@ import android.widget.ListView;
  * Activities containing this fragment MUST implement the {@link Callbacks}
  * interface.
  */
-public class DeviceListFragment extends ListFragment {
+public class DeviceListFragment extends Fragment {
 
     /**
      * The serialization (saved instance state) Bundle key representing the
@@ -115,18 +116,15 @@ public class DeviceListFragment extends ListFragment {
 
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
-
-        setListAdapter(new DeviceListAdapter(activity, activity.db.getDevices()));
-    }
-
-
-    @Override
-    public void onListItemClick(ListView listView, View view, int position, long id) {
-        super.onListItemClick(listView, view, position, id);
-
-        // Notify the active callbacks interface (the activity, if the
-        // fragment is attached to one) that an item has been selected.
-        mCallbacks.onItemSelected(Integer.toString(position));
+        DeviceListAdapter adapter = new DeviceListAdapter(activity, activity.db.getDevices());
+        ListView listview = (ListView) getView().findViewById(R.id.fdl_list);
+        listview.setAdapter(adapter);
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mCallbacks.onItemSelected(Integer.toString(position));
+            }
+        });
     }
 
     /**
@@ -136,16 +134,16 @@ public class DeviceListFragment extends ListFragment {
     public void setActivateOnItemClick(boolean activateOnItemClick) {
         // When setting CHOICE_MODE_SINGLE, ListView will automatically
         // give items the 'activated' state when touched.
-        getListView().setChoiceMode(activateOnItemClick
-                ? ListView.CHOICE_MODE_SINGLE
-                : ListView.CHOICE_MODE_NONE);
+        ListView listview = (ListView) getView().findViewById(R.id.fdl_list);
+        listview.setChoiceMode(activateOnItemClick ? ListView.CHOICE_MODE_SINGLE : ListView.CHOICE_MODE_NONE);
     }
 
     private void setActivatedPosition(int position) {
+        ListView listview = (ListView) getView().findViewById(R.id.fdl_list);
         if (position == ListView.INVALID_POSITION) {
-            getListView().setItemChecked(mActivatedPosition, false);
+            listview.setItemChecked(mActivatedPosition, false);
         } else {
-            getListView().setItemChecked(position, true);
+            listview.setItemChecked(position, true);
         }
 
         mActivatedPosition = position;

@@ -6,25 +6,28 @@
     android:padding="5dp" >
 
     <ImageView
-        android:id="@+id/icon"
+        android:id="@+id/dl_image"
         android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_centerVertical="true"
         android:layout_marginLeft="12dp"
-        android:layout_marginRight="12dp"/>
+        android:layout_marginRight="12dp"
+        android:focusable="false"/>
 
     <TextView
-        android:id="@+id/title"
+        android:id="@+id/dl_name"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:layout_marginTop="10dp"
-        android:layout_toRightOf="@id/icon"
+        android:layout_toRightOf="@id/dl_image"
         android:gravity="center_vertical"
         android:textColor="#000000"
-        android:textSize="20sp" />
+        android:textSize="20sp"
+        android:focusable="false"/>
 
     <ToggleButton
+        android:id="@+id/dl_btn_on_off"
         android:layout_alignParentEnd="true"
         android:layout_gravity="end"
         android:layout_width="wrap_content"
