@@ -1,5 +1,7 @@
 package com.getastral.astralmobile;
 
+import android.bluetooth.BluetoothDevice;
+
 public class Device {
     //private variables
     String _uuid;
@@ -7,6 +9,10 @@ public class Device {
     String _appliance_type;
     String _appliance_make;
     String _appliance_model;
+
+    BluetoothDevice _ble_device;
+    int _rssi;
+    boolean _is_registered;
 
     public String getUuid() {
         return _uuid;
@@ -48,24 +54,37 @@ public class Device {
         this._appliance_model = _appliance_model;
     }
 
+    public int getRssi() {
+        return this._rssi;
+    }
+
+    public void setRssi(int _rssi) {
+        this._rssi = _rssi;
+    }
+
+    public boolean isRegistered() {
+        return this._is_registered;
+    }
+
+    public void setRegistered() {
+        this._is_registered = true;
+    }
+
+    public void SetUnregistered() {
+        this._is_registered = false;
+    }
+
+    public BluetoothDevice getBleDevice() {
+        return this._ble_device;
+    }
+
+    public void setBleDevice(BluetoothDevice _ble_device) {
+        this._ble_device = _ble_device;
+    }
+
+
     // Empty constructor
-    public Device(){
-
-    }
-    // constructor
-    public Device(String uuid, String name, String appliance_type, String appliance_make, String appliance_model){
-        this._uuid = uuid;
-        this._name = name;
-        this._appliance_type = appliance_type;
-        this._appliance_make = appliance_make;
-        this._appliance_model = appliance_model;
+    public Device() {
     }
 
-    // constructor
-    public Device(String name, String appliance_type, String appliance_make, String appliance_model){
-        this._name = name;
-        this._appliance_type = appliance_type;
-        this._appliance_make = appliance_make;
-        this._appliance_model = appliance_model;
-    }
 }
