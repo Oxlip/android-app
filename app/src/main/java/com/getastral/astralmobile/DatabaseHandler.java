@@ -1,13 +1,13 @@
 package com.getastral.astralmobile;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseHandler extends SQLiteOpenHelper {
 
@@ -102,6 +102,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
                 device.setApplianceType(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_TYPE)));
                 device.setApplianceMake(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_MAKE)));
                 device.setApplianceModel(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_MODEL)));
+                device.setRegistered();
 
                 deviceList.add(device);
             } while (cursor.moveToNext());
