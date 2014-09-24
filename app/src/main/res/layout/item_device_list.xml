@@ -26,6 +26,15 @@
         android:textSize="20sp"
         android:focusable="false"/>
 
+    <Button
+        android:id="@+id/dl_btn_connect"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/dl_btn_connect"
+        android:focusable="false"/>
+
     <ToggleButton
         android:id="@+id/dl_btn_on_off"
         android:layout_alignParentEnd="true"

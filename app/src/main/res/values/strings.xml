@@ -12,6 +12,8 @@
     <string name="error_bluetooth_not_supported">This phone does not have support for BLE hardware.</string>
     <string name="unknown_device">Unknown device</string>
 
+    <string name="dl_btn_connect">Connect</string>
+
     <string name="ble_scan_action_bar_connect">Connect</string>
     <string name="ble_scan_action_bar_disconnect">Disconnect</string>
     <string name="ble_scan_action_bar_refresh">Refresh</string>

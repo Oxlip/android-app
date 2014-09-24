@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -194,8 +195,6 @@ public class DeviceListFragment extends Fragment {
                             device.setRssi(rssi);
                             mListAdapter.addDevice(device);
                         }
-                        Log.d("BLE", bleDevice.getName());
-                        Log.d("BLE", result ? "pass":"fail" );
                     }
                 });
             }
@@ -329,6 +328,8 @@ public class DeviceListFragment extends Fragment {
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
 
+            Device device = rowItem.get(position);
+
             if (convertView == null) {
                 LayoutInflater mInflater = (LayoutInflater) context
                         .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
@@ -338,23 +339,51 @@ public class DeviceListFragment extends Fragment {
             ImageView imgIcon = (ImageView) convertView.findViewById(R.id.dl_image);
             TextView txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
             ToggleButton btnOn = (ToggleButton)convertView.findViewById(R.id.dl_btn_on_off);
+            Button btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
+
+            /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
+            btnOn.setTag(device);
+            btnConnect.setTag(device);
+
             btnOn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     ToggleButton btnOn = (ToggleButton)v;
+                    Device device = (Device)v.getTag();
+                    Log.d("Button", device.getName());
                     if (!btnOn.isChecked()) {
                         Log.d("Button", "Sending BLE Turn off message");
                     } else {
                         Log.d("Button", "Sending BLE Turn on message");
                     }
-
                 }
             });
 
-            Device row_pos = rowItem.get(position);
+            btnConnect.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Device device = (Device)v.getTag();
+                    DatabaseHandler db = new DatabaseHandler(getActivity().getApplicationContext());
+                    db.connectDevice(device);
+                    device.setRegistered();
+                    mListAdapter.notifyDataSetInvalidated();
+                }
+            });
+
+            /* "connect" button should be visible only for the first time.
+             *  "On/Off" button should be visible only if the device is connected.
+             */
+            if (device.isRegistered()) {
+                btnOn.setVisibility(View.VISIBLE);
+                btnConnect.setVisibility(View.INVISIBLE);
+            } else {
+                btnOn.setVisibility(View.INVISIBLE);
+                btnConnect.setVisibility(View.VISIBLE);
+            }
+
             // setting the image resource and title
             imgIcon.setImageResource(R.drawable.ic_launcher);
-            txtTitle.setText(row_pos.getName());
+            txtTitle.setText(device.getName());
 
             return convertView;
         }
