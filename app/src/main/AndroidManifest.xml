@@ -31,10 +31,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.getastral.astralmobile.DeviceListActivity" />
         </activity>
-        <activity
-            android:name=".BleScanActivity"
-            android:label="@string/title_activity_ble_scan" >
-        </activity>
     </application>
 
 </manifest>
