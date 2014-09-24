@@ -12,6 +12,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -100,6 +102,8 @@ public class DeviceListFragment extends Fragment {
         //getActionBar().setTitle(R.string.title_activity_ble_scan);
         mHandler = new Handler();
 
+        setHasOptionsMenu(true);
+
         // Use this check to determine whether BLE is supported on the device.  Then you can
         // selectively disable BLE-related features.
         if (!activity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
@@ -121,6 +125,16 @@ public class DeviceListFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_device_list, null, false);
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        if (!mScanning) {
+            menu.findItem(R.id.main_action_bar_progress).setActionView(null);
+        } else {
+            menu.findItem(R.id.main_action_bar_progress).setActionView(R.layout.progress_ble_scan);
+        }
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
@@ -170,6 +184,7 @@ public class DeviceListFragment extends Fragment {
                 public void run() {
                     mScanning = false;
                     mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                    getActivity().invalidateOptionsMenu();
                 }
             }, SCAN_PERIOD);
             mScanning = true;
@@ -178,6 +193,7 @@ public class DeviceListFragment extends Fragment {
             mScanning = false;
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
         }
+        getActivity().invalidateOptionsMenu();
     }
 
     // Device scan callback.
