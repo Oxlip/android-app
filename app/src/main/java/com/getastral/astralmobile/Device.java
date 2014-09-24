@@ -1,6 +1,7 @@
 package com.getastral.astralmobile;
 
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
 
 public class Device {
     //private variables
@@ -11,6 +12,7 @@ public class Device {
     String _appliance_model;
 
     BluetoothDevice _ble_device;
+    BluetoothGatt _ble_gatt;
     int _rssi;
     boolean _is_registered;
 
@@ -80,6 +82,14 @@ public class Device {
 
     public void setBleDevice(BluetoothDevice _ble_device) {
         this._ble_device = _ble_device;
+    }
+
+    public BluetoothGatt getBleGatt() {
+        return this._ble_gatt;
+    }
+
+    public void setBleGatt(BluetoothGatt _ble_gatt) {
+        this._ble_gatt = _ble_gatt;
     }
 
 

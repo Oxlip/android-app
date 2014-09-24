@@ -4,6 +4,10 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCallback;
+import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
@@ -209,11 +213,99 @@ public class DeviceListFragment extends Fragment {
                             device.setName(bleDevice.getName());
                             device.setUuid(bleDevice.getAddress());
                             device.setRssi(rssi);
+
                             mListAdapter.addDevice(device);
                         }
                     }
                 });
             }
+    };
+
+    protected BluetoothGatt getBleGatt(Device device, boolean autoconnect) {
+        BluetoothDevice bleDevice;
+        BluetoothGatt bleGatt;
+
+        bleGatt = device.getBleGatt();
+        if (bleGatt != null) {
+            return bleGatt;
+        }
+        bleDevice = device.getBleDevice();
+        if (bleDevice == null) {
+            /* TODO - Find the device by UUID and then get bleDevice or throw exception*/
+            return null;
+        }
+        bleGatt = bleDevice.connectGatt(getActivity().getApplicationContext(), autoconnect, mGattCallback);
+        device.setBleGatt(bleGatt);
+
+        return bleGatt;
+    }
+
+    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            Log.d("BLE", "onCharacteristicChanged ( characteristic : " + characteristic + ")");
+        }
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("BLE", "onCharacteristicRead ( characteristic :"
+                        + characteristic + " ,status, : " + status + ")");
+            }
+        }
+
+        @Override
+        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            super.onCharacteristicWrite(gatt, characteristic, status);
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d("BLE", "onCharacteristicWrite ( characteristic :"
+                        + characteristic + " ,status : " + status + ")");
+            }
+        };
+
+        @Override
+        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            BluetoothDevice device = gatt.getDevice();
+
+            Log.d("BLE", "onConnectionStateChange (device : " + device
+                    + ", status : " + status + " , newState :  " + newState
+                    + ")");
+        }
+
+        @Override
+        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor device, int status) {
+            Log.d("BLE", "onDescriptorRead (device : " + device + " , status :  "
+                    + status + ")");
+            super.onDescriptorRead(gatt, device, status);
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor arg0, int status) {
+            Log.d("BLE", "onDescriptorWrite (arg0 : " + arg0 + " , status :  "
+                    + status + ")");
+            super.onDescriptorWrite(gatt, arg0, status);
+        }
+
+        @Override
+        public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
+            Log.d("BLE", "onReliableWriteCompleted (gatt : " + status
+                    + " , status :  " + status + ")");
+            super.onReliableWriteCompleted(gatt, status);
+        }
+
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            BluetoothDevice device = gatt.getDevice();
+
+            Log.d("BLE", "onReadRemoteRssi (device : " + device + " , rssi :  "
+                    + rssi + " , status :  " + status + ")");
+
+        };
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            Log.d("BLE", "onServicesDiscovered");
+        }
     };
 
     @Override
@@ -366,7 +458,8 @@ public class DeviceListFragment extends Fragment {
                 public void onClick(View v) {
                     ToggleButton btnOn = (ToggleButton)v;
                     Device device = (Device)v.getTag();
-                    Log.d("Button", device.getName());
+                    BluetoothGatt gatt = getBleGatt(device, true);
+                    Log.d("Button", gatt.getDevice().getName());
                     if (!btnOn.isChecked()) {
                         Log.d("Button", "Sending BLE Turn off message");
                     } else {
