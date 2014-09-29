@@ -129,7 +129,6 @@ public class DeviceListFragment extends Fragment {
         if (mBluetoothAdapter == null) {
             Toast.makeText(activity, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
             getActivity().finish();
-            return;
         }
     }
 
@@ -316,7 +315,7 @@ public class DeviceListFragment extends Fragment {
                 Log.d("BLE", "onCharacteristicWrite ( characteristic :"
                         + characteristic + " ,status : " + status + ")");
             }
-        };
+        }
 
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -362,7 +361,7 @@ public class DeviceListFragment extends Fragment {
             Log.d("BLE", "onReadRemoteRssi (device : " + device + " , rssi :  "
                     + rssi + " , status :  " + status + ")");
 
-        };
+        }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
@@ -409,7 +408,13 @@ public class DeviceListFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
         mListAdapter = new DeviceListAdapter(activity, activity.db.getDevices());
-        ListView listview = (ListView) getView().findViewById(R.id.fdl_list);
+        ListView listview;
+        View view = getView();
+        if (view == null) {
+            Log.d("DLF", "view is null");
+            return;
+        }
+        listview = (ListView) view.findViewById(R.id.fdl_list);
         listview.setAdapter(mListAdapter);
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -426,12 +431,26 @@ public class DeviceListFragment extends Fragment {
     public void setActivateOnItemClick(boolean activateOnItemClick) {
         // When setting CHOICE_MODE_SINGLE, ListView will automatically
         // give items the 'activated' state when touched.
-        ListView listview = (ListView) getView().findViewById(R.id.fdl_list);
+        ListView listview;
+        View view = getView();
+        if (view == null) {
+            Log.d("DLF", "view is null");
+            return;
+        }
+
+        listview = (ListView) view.findViewById(R.id.fdl_list);
         listview.setChoiceMode(activateOnItemClick ? ListView.CHOICE_MODE_SINGLE : ListView.CHOICE_MODE_NONE);
     }
 
     private void setActivatedPosition(int position) {
-        ListView listview = (ListView) getView().findViewById(R.id.fdl_list);
+        ListView listview;
+        View view = getView();
+        if (view == null) {
+            Log.d("DLF", "view is null");
+            return;
+        }
+
+        listview = (ListView) view.findViewById(R.id.fdl_list);
         if (position == ListView.INVALID_POSITION) {
             listview.setItemChecked(mActivatedPosition, false);
         } else {
@@ -455,8 +474,8 @@ public class DeviceListFragment extends Fragment {
         /**
          * Associate the given ble device with matching device uuid.
          *
-         * @param bleDevice
-         * @param rssi
+         * @param bleDevice Bluetooth device to be associated.
+         * @param rssi Received signal strength
          * @return true if a device with given uuid is found and bleDevice is associated.
          */
         protected boolean associateBleDevice(BluetoothDevice bleDevice, int rssi) {
@@ -475,8 +494,8 @@ public class DeviceListFragment extends Fragment {
         /**
          * Finds the Device from a given bluetooth Device.
          *
-         * @param bleDevice
-         * @return
+         * @param bleDevice Bluetooth device to search
+         * @return Device associated with the given BLE device.
          */
         protected Device getDevice(BluetoothDevice bleDevice) {
             for (int i = 0; i < rowItem.size(); i++) {
@@ -521,8 +540,7 @@ public class DeviceListFragment extends Fragment {
             Device device = rowItem.get(position);
 
             if (convertView == null) {
-                LayoutInflater mInflater = (LayoutInflater) context
-                        .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+                LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
                 convertView = mInflater.inflate(R.layout.item_device_list, null);
             }
 
