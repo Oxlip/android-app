@@ -13,6 +13,7 @@ public class Device {
 
     BluetoothDevice _ble_device;
     BluetoothGatt _ble_gatt;
+    boolean _ble_gatt_services_discovered;
     int _rssi;
     boolean _is_registered;
 
@@ -92,6 +93,13 @@ public class Device {
         this._ble_gatt = _ble_gatt;
     }
 
+    public boolean isBleGattServicesDiscovered() {
+        return this._ble_gatt_services_discovered;
+    }
+
+    public void setBleGattServicesDiscovered(boolean discovered) {
+        this._ble_gatt_services_discovered = discovered;
+    }
 
     // Empty constructor
     public Device() {
