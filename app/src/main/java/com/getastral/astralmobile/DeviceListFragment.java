@@ -573,6 +573,8 @@ public class DeviceListFragment extends Fragment {
                 btnConnect.setVisibility(View.VISIBLE);
             }
 
+            btnOn.setEnabled(device.getBleDevice() != null);
+
             // setting the image resource and title
             imgIcon.setImageResource(R.drawable.ic_launcher);
             txtTitle.setText(device.getName());
