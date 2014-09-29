@@ -8,7 +8,9 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -30,6 +32,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * A list fragment representing a list of Devices. This fragment
@@ -69,6 +72,10 @@ public class DeviceListFragment extends Fragment {
      * The current activated item position. Only used on tablets.
      */
     private int mActivatedPosition = ListView.INVALID_POSITION;
+
+    private static final UUID ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
+    private static final UUID ASTRAL_UUID_INFO = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
+    private static final UUID ASTRAL_UUID_OUTLET = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -180,22 +187,24 @@ public class DeviceListFragment extends Fragment {
         scanLeDevice(false);
     }
 
+    private void stopLeScan() {
+        mBluetoothAdapter.stopLeScan(mLeScanCallback);
+        mScanning = false;
+    }
+
     private void scanLeDevice(final boolean enable) {
         if (enable) {
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    mScanning = false;
-                    mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                    getActivity().invalidateOptionsMenu();
+                    stopLeScan();
                 }
             }, SCAN_PERIOD);
             mScanning = true;
             mBluetoothAdapter.startLeScan(mLeScanCallback);
         } else {
-            mScanning = false;
-            mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            stopLeScan();
         }
         getActivity().invalidateOptionsMenu();
     }
@@ -221,7 +230,13 @@ public class DeviceListFragment extends Fragment {
             }
     };
 
-    protected BluetoothGatt getBleGatt(Device device, boolean autoconnect) {
+    /**
+     * Establishes a BLE connection to the given device.
+     *
+     * @param device - Device needs to be connected.
+     * @return BluetoothGatt object associated with the connection.
+     */
+    protected BluetoothGatt bleConnect(Device device) {
         BluetoothDevice bleDevice;
         BluetoothGatt bleGatt;
 
@@ -231,14 +246,53 @@ public class DeviceListFragment extends Fragment {
         }
         bleDevice = device.getBleDevice();
         if (bleDevice == null) {
+            Log.d("DLF", "BLE connection/bonding is not yet established.");
             /* TODO - Find the device by UUID and then get bleDevice or throw exception*/
             return null;
         }
-        bleGatt = bleDevice.connectGatt(getActivity().getApplicationContext(), autoconnect, mGattCallback);
+        bleGatt = bleDevice.connectGatt(getActivity().getApplicationContext(), true, mGattCallback);
         device.setBleGatt(bleGatt);
 
         return bleGatt;
     }
+
+    protected BluetoothGattService getBleService(Device device, UUID serviceId) {
+        BluetoothGatt gatt = bleConnect(device);
+        if (gatt == null) {
+            return null;
+        }
+        BluetoothGattService service = gatt.getService(serviceId);
+        if (service == null) {
+            Log.d("DLF", "BLE service not found - kickstarting gatt.discoverServices()");
+            if (!device.isBleGattServicesDiscovered()) {
+                gatt.discoverServices();
+            }
+        }
+        return service;
+    }
+
+    protected void writeBleCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
+        BluetoothGatt gatt;
+        BluetoothGattService service;
+        BluetoothGattCharacteristic characteristic;
+
+        gatt = bleConnect(device);
+        if (gatt == null) {
+            return;
+        }
+        service = getBleService(device, serviceId);
+        if (service == null) {
+            return;
+        }
+        characteristic = service.getCharacteristic(characteristicId);
+        if (characteristic == null) {
+            Log.d("DLF", "characteristic not found " + characteristicId);
+            return;
+        }
+        characteristic.setValue(value);
+        gatt.writeCharacteristic(characteristic);
+    }
+
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 
@@ -271,6 +325,14 @@ public class DeviceListFragment extends Fragment {
             Log.d("BLE", "onConnectionStateChange (device : " + device
                     + ", status : " + status + " , newState :  " + newState
                     + ")");
+
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    gatt.discoverServices();
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    gatt.close();
+                }
+            }
         }
 
         @Override
@@ -305,6 +367,10 @@ public class DeviceListFragment extends Fragment {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             Log.d("BLE", "onServicesDiscovered");
+            Device device = mListAdapter.getDevice(gatt.getDevice());
+            if (device != null){
+                device.setBleGattServicesDiscovered(true);
+            }
         }
     };
 
@@ -386,24 +452,40 @@ public class DeviceListFragment extends Fragment {
             this.rowItem = rowItem;
         }
 
-        /*
+        /**
          * Associate the given ble device with matching device uuid.
-         *  Returns true if a device with given uuid is found and bleDevice is associated.
+         *
+         * @param bleDevice
+         * @param rssi
+         * @return true if a device with given uuid is found and bleDevice is associated.
          */
-        public boolean associateBleDevice(BluetoothDevice bleDevice, int rssi) {
+        protected boolean associateBleDevice(BluetoothDevice bleDevice, int rssi) {
+            Device device = getDevice(bleDevice);
+            if (device == null) {
+                return false;
+            }
+            device.setBleDevice(bleDevice);
+            if (device.getRssi() != rssi) {
+                device.setRssi(rssi);
+                this.notifyDataSetInvalidated();
+            }
+            return true;
+        }
+
+        /**
+         * Finds the Device from a given bluetooth Device.
+         *
+         * @param bleDevice
+         * @return
+         */
+        protected Device getDevice(BluetoothDevice bleDevice) {
             for (int i = 0; i < rowItem.size(); i++) {
                 Device device = rowItem.get(i);
-                if (!device.getUuid().equals(bleDevice.getAddress())) {
-                    continue;
+                if (device.getUuid().equals(bleDevice.getAddress())) {
+                    return device;
                 }
-                device.setBleDevice(bleDevice);
-                if (device.getRssi() != rssi) {
-                    device.setRssi(rssi);
-                    this.notifyDataSetInvalidated();
-                }
-                return true;
             }
-            return false;
+            return null;
         }
 
         /**
@@ -458,13 +540,14 @@ public class DeviceListFragment extends Fragment {
                 public void onClick(View v) {
                     ToggleButton btnOn = (ToggleButton)v;
                     Device device = (Device)v.getTag();
-                    BluetoothGatt gatt = getBleGatt(device, true);
-                    Log.d("Button", gatt.getDevice().getName());
+                    byte[] value = {0, 0};
+
                     if (!btnOn.isChecked()) {
-                        Log.d("Button", "Sending BLE Turn off message");
+                        value[1] = 0;
                     } else {
-                        Log.d("Button", "Sending BLE Turn on message");
+                        value[1] = 100;
                     }
+                    writeBleCharacteristic(device, ASTRAL_UUID_BASE, ASTRAL_UUID_OUTLET, value);
                 }
             });
 
