@@ -558,7 +558,7 @@ public class DeviceListFragment extends Fragment {
                 public void onClick(View v) {
                     ToggleButton btnOn = (ToggleButton)v;
                     Device device = (Device)v.getTag();
-                    byte[] value = {0, 0};
+                    byte[] value = {1, 0};
 
                     if (!btnOn.isChecked()) {
                         value[1] = 0;
