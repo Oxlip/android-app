@@ -205,6 +205,7 @@ public class DeviceListFragment extends Fragment {
 
     private void scanLeDevice(final boolean enable) {
         if (enable) {
+            mListAdapter.invalidateConnectionState();
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -517,6 +518,17 @@ public class DeviceListFragment extends Fragment {
                 }
             }
             return null;
+        }
+
+        /**
+         * Invalidates BLE connection state of all the devices in this list.
+         */
+        protected void invalidateConnectionState() {
+            for (int i = 0; i < rowItem.size(); i++) {
+                Device device = rowItem.get(i);
+                device.setRssi(0);
+            }
+            this.notifyDataSetInvalidated();
         }
 
         /**
