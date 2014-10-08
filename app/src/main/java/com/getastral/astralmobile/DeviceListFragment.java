@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -159,6 +160,16 @@ public class DeviceListFragment extends Fragment {
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.main_action_bar_scan:
+                scanLeDevice(true);
+                break;
+        }
+        return true;
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
@@ -189,6 +200,7 @@ public class DeviceListFragment extends Fragment {
     private void stopLeScan() {
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
         mScanning = false;
+        getActivity().invalidateOptionsMenu();
     }
 
     private void scanLeDevice(final boolean enable) {

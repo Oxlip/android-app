@@ -69,19 +69,16 @@ public class DeviceListActivity extends Activity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // action with ID action_refresh was selected
-            case R.id.main_action_bar_scan:
-                break;
             // action with ID action_settings was selected
             case R.id.main_action_bar_settings:
                 Toast.makeText(this, "Settings selected", Toast.LENGTH_SHORT)
                         .show();
                 break;
             default:
-                break;
+                return super.onOptionsItemSelected(item);
         }
 
-        return true;
+        return false;
     }
 
     /**
