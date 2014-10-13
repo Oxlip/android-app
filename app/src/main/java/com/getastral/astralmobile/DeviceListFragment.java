@@ -256,7 +256,7 @@ public class DeviceListFragment extends Fragment {
         if (bleGatt != null) {
             return bleGatt;
         }
-        bleDevice = device.getBleDevice();
+        bleDevice = device.getBleDevice(mBluetoothAdapter);
         if (bleDevice == null) {
             Log.d("DLF", "BLE connection/bonding is not yet established.");
             /* TODO - Find the device by UUID and then get bleDevice or throw exception*/

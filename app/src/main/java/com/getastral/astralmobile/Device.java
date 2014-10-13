@@ -1,5 +1,6 @@
 package com.getastral.astralmobile;
 
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 
@@ -79,7 +80,17 @@ public class Device {
         this._is_registered = false;
     }
 
-    public BluetoothDevice getBleDevice() {
+    /**
+     * Returns BluetoothDevice object for the this device.
+     * Instantiates new BluetoothDevice if requried.
+     *
+     * @param bluetoothAdapter
+     * @return BluetoothDevice object for the this device.
+     */
+    public BluetoothDevice getBleDevice(BluetoothAdapter bluetoothAdapter) {
+        if (this._ble_device == null) {
+            this._ble_device = bluetoothAdapter.getRemoteDevice(this._ble_mac_address);
+        }
         return this._ble_device;
     }
 
