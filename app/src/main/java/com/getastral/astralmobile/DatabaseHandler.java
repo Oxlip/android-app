@@ -22,7 +22,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String TABLE_DEVICES = "Devices";
 
     // Contacts Table Columns names
-    private static final String FIELD_UUID = "uuid";
+    private static final String FIELD_MAC_ADDRESS = "mac_address";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_APPLIANCE_TYPE = "appliance_type";
     private static final String FIELD_APPLIANCE_MAKE = "appliance_make";
@@ -36,7 +36,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_DEVICES + "(" +
-                FIELD_UUID + " TEXT PRIMARY KEY," +
+                FIELD_MAC_ADDRESS + " TEXT PRIMARY KEY," +
                 FIELD_NAME + " TEXT," +
                 FIELD_APPLIANCE_TYPE + " TEXT," +
                 FIELD_APPLIANCE_MAKE + " TEXT," +
@@ -64,7 +64,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(FIELD_UUID, device.getUuid());
+        values.put(FIELD_MAC_ADDRESS, device.getBleMacAddress() );
         values.put(FIELD_NAME, device.getName());
         values.put(FIELD_APPLIANCE_TYPE, device.getApplianceType());
         values.put(FIELD_APPLIANCE_MAKE, device.getApplianceMake());
@@ -74,9 +74,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-    // Check whether the given UUID is already exists in the database.
-    Boolean isRegistered(String uuid) {
-        String countQuery = "SELECT  * FROM " + TABLE_DEVICES + "WHERE " + FIELD_UUID + "==" + uuid;
+    // Check whether the given MAC address is already exists in the database.
+    Boolean isRegistered(String macAddress) {
+        String countQuery = "SELECT  * FROM " + TABLE_DEVICES + "WHERE " + FIELD_MAC_ADDRESS + "==" + macAddress;
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery(countQuery, null);
         cursor.close();
@@ -97,7 +97,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             do {
                 Device device = new Device();
-                device.setUuid(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_UUID)));
+                device.setBleMacAddress(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_MAC_ADDRESS)));
                 device.setName(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_NAME)));
                 device.setApplianceType(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_TYPE)));
                 device.setApplianceMake(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_MAKE)));
@@ -114,8 +114,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     // Unregister the given device.
     public void unregisterDevice(Device device) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_DEVICES, FIELD_UUID + " = ?",
-                new String[] { String.valueOf(device.getUuid()) });
+        db.delete(TABLE_DEVICES, FIELD_MAC_ADDRESS + " = ?",
+                new String[] { String.valueOf(device.getBleMacAddress()) });
         db.close();
     }
 

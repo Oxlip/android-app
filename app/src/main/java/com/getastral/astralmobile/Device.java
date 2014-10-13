@@ -5,24 +5,26 @@ import android.bluetooth.BluetoothGatt;
 
 public class Device {
     //private variables
-    String _uuid;
     String _name;
     String _appliance_type;
     String _appliance_make;
     String _appliance_model;
 
+    // MAC address of the device.
+    String _ble_mac_address;
+    // Device object for the given _ble_mac(it need not to be in the range)
     BluetoothDevice _ble_device;
     BluetoothGatt _ble_gatt;
     boolean _ble_gatt_services_discovered;
     int _rssi;
     boolean _is_registered;
 
-    public String getUuid() {
-        return _uuid;
+    public String getBleMacAddress() {
+        return _ble_mac_address;
     }
 
-    public void setUuid(String _uuid) {
-        this._uuid = _uuid;
+    public void setBleMacAddress(String _ble_mac_address) {
+        this._ble_mac_address = _ble_mac_address;
     }
 
     public String getName() {
@@ -82,6 +84,7 @@ public class Device {
     }
 
     public void setBleDevice(BluetoothDevice _ble_device) {
+        this._ble_mac_address = _ble_device.getAddress();
         this._ble_device = _ble_device;
     }
 

@@ -232,7 +232,7 @@ public class DeviceListFragment extends Fragment {
                         if (!result) {
                             Device device = new Device();
                             device.setName(bleDevice.getName());
-                            device.setUuid(bleDevice.getAddress());
+                            device.setBleMacAddress(bleDevice.getAddress());
                             device.setRssi(rssi);
 
                             mListAdapter.addDevice(device);
@@ -513,7 +513,7 @@ public class DeviceListFragment extends Fragment {
         protected Device getDevice(BluetoothDevice bleDevice) {
             for (int i = 0; i < rowItem.size(); i++) {
                 Device device = rowItem.get(i);
-                if (device.getUuid().equals(bleDevice.getAddress())) {
+                if (device.getBleMacAddress().equals(bleDevice.getAddress())) {
                     return device;
                 }
             }
@@ -614,8 +614,7 @@ public class DeviceListFragment extends Fragment {
                 btnOn.setVisibility(View.INVISIBLE);
                 btnConnect.setVisibility(View.VISIBLE);
             }
-
-            btnOn.setEnabled(device.getBleDevice() != null);
+            btnOn.setEnabled(device.getRssi() != 0);
 
             // setting the image resource and title
             imgIcon.setImageResource(R.drawable.ic_launcher);
