@@ -3,6 +3,7 @@ package com.getastral.astralmobile;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
+import android.os.ConditionVariable;
 
 public class Device {
     //private variables
@@ -16,9 +17,21 @@ public class Device {
     // Device object for the given _ble_mac(it need not to be in the range)
     BluetoothDevice _ble_device;
     BluetoothGatt _ble_gatt;
-    boolean _ble_gatt_services_discovered;
+
+    // condition which would be open(trigger) only when BLE connection is opened and GATT services are discovered.
+    ConditionVariable _ble_services_discovered;
+    ConditionVariable _ble_characteristic_write;
+
     int _rssi;
     boolean _is_registered;
+
+    private int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 2000;
+
+
+    public Device() {
+        _ble_services_discovered = new ConditionVariable();
+        _ble_characteristic_write = new ConditionVariable();
+    }
 
     public String getBleMacAddress() {
         return _ble_mac_address;
@@ -107,16 +120,45 @@ public class Device {
         this._ble_gatt = _ble_gatt;
     }
 
-    public boolean isBleGattServicesDiscovered() {
-        return this._ble_gatt_services_discovered;
-    }
-
     public void setBleGattServicesDiscovered(boolean discovered) {
-        this._ble_gatt_services_discovered = discovered;
+        if (discovered) {
+            this._ble_services_discovered.open();
+        } else {
+            this._ble_services_discovered.close();
+        }
     }
 
-    // Empty constructor
-    public Device() {
+    /**
+     * Wait for BLE service discovery to happen for this device.
+     *
+     * @return True if BLE service discovery happened.
+     *         False if timed out.
+     */
+    public boolean waitForBleServiceDiscovery() {
+        return this._ble_services_discovered.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
     }
 
+    public void setBleCharacteristicWriteCompleted(boolean completed) {
+        if (completed) {
+            this._ble_characteristic_write.open();
+        } else {
+            this._ble_characteristic_write.close();
+        }
+    }
+    public boolean waitForBleCharacteristicWriteComplete() {
+        return this._ble_characteristic_write.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
+    }
+
+
+    /**
+     * Disconnect the BLE device.
+     */
+    public void bleDisconnect() {
+        BluetoothGatt bleGatt;
+
+        bleGatt = getBleGatt();
+        setBleGattServicesDiscovered(false);
+        bleGatt.disconnect();
+        setBleGatt(null);
+    }
 }

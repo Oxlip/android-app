@@ -198,9 +198,15 @@ public class DeviceListFragment extends Fragment {
     }
 
     private void stopLeScan() {
+        Activity activity;
+
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
         mScanning = false;
-        getActivity().invalidateOptionsMenu();
+
+        activity = getActivity();
+        if (activity != null) {
+            activity.invalidateOptionsMenu();
+        }
     }
 
     private void scanLeDevice(final boolean enable) {
@@ -248,61 +254,60 @@ public class DeviceListFragment extends Fragment {
      * @param device - Device needs to be connected.
      * @return BluetoothGatt object associated with the connection.
      */
-    protected BluetoothGatt bleConnect(Device device) {
+    private BluetoothGatt bleConnect(Device device) {
         BluetoothDevice bleDevice;
         BluetoothGatt bleGatt;
+        boolean connectionStatus;
 
         bleGatt = device.getBleGatt();
         if (bleGatt != null) {
+            device.waitForBleServiceDiscovery();
             return bleGatt;
         }
         bleDevice = device.getBleDevice(mBluetoothAdapter);
-        if (bleDevice == null) {
-            Log.d("DLF", "BLE connection/bonding is not yet established.");
-            /* TODO - Find the device by UUID and then get bleDevice or throw exception*/
-            return null;
-        }
-        bleGatt = bleDevice.connectGatt(getActivity().getApplicationContext(), true, mGattCallback);
+        bleGatt = bleDevice.connectGatt(getActivity().getApplicationContext() , true, mGattCallback);
         device.setBleGatt(bleGatt);
+        connectionStatus = device.waitForBleServiceDiscovery();
+        if (!connectionStatus) {
+            Log.e("BLE", "Connection timed out while discovering services");
+        }
 
         return bleGatt;
     }
 
-    protected BluetoothGattService getBleService(Device device, UUID serviceId) {
-        BluetoothGatt gatt = bleConnect(device);
-        if (gatt == null) {
-            return null;
-        }
-        BluetoothGattService service = gatt.getService(serviceId);
-        if (service == null) {
-            Log.d("DLF", "BLE service not found - kickstarting gatt.discoverServices()");
-            if (!device.isBleGattServicesDiscovered()) {
-                gatt.discoverServices();
-            }
-        }
-        return service;
-    }
-
-    protected void writeBleCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
+    /**
+     *  Writes the given bytes to given BLE device's characterstic.
+     *
+     * @param device
+     * @param serviceId
+     * @param characteristicId
+     * @param value
+     */
+    protected boolean writeBleCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
         BluetoothGatt gatt;
         BluetoothGattService service;
         BluetoothGattCharacteristic characteristic;
 
         gatt = bleConnect(device);
-        if (gatt == null) {
-            return;
-        }
-        service = getBleService(device, serviceId);
+        service = gatt.getService(serviceId);
         if (service == null) {
-            return;
+            Log.e("DLF", "service not found " + characteristicId);
+            return false;
         }
+
         characteristic = service.getCharacteristic(characteristicId);
         if (characteristic == null) {
-            Log.d("DLF", "characteristic not found " + characteristicId);
-            return;
+            Log.e("DLF", "characteristic not found " + characteristicId);
+            return false;
         }
         characteristic.setValue(value);
+        device.setBleCharacteristicWriteCompleted(false);
         gatt.writeCharacteristic(characteristic);
+        device.waitForBleCharacteristicWriteComplete();
+
+        //device.bleDisconnect();
+
+        return true;
     }
 
 
@@ -328,6 +333,10 @@ public class DeviceListFragment extends Fragment {
                 Log.d("BLE", "onCharacteristicWrite ( characteristic :"
                         + characteristic + " ,status : " + status + ")");
             }
+            Device device = mListAdapter.getDevice(gatt.getDevice());
+            if (device != null){
+                device.setBleCharacteristicWriteCompleted(true);
+            }
         }
 
         @Override
@@ -340,9 +349,10 @@ public class DeviceListFragment extends Fragment {
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    // Automatically discover service once BLE connection is established
                     gatt.discoverServices();
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    gatt.close();
+                    //gatt.close();
                 }
             }
         }
