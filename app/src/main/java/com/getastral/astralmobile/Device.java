@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.os.ConditionVariable;
+import android.util.Log;
 
 public class Device {
     //private variables
@@ -25,8 +26,8 @@ public class Device {
     int _rssi;
     boolean _is_registered;
 
-    private int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 2000;
-
+    private int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
+    private int BLE_GATT_WRITE_TIMEOUT = 3000;
 
     public Device() {
         _ble_services_discovered = new ConditionVariable();
@@ -95,7 +96,7 @@ public class Device {
 
     /**
      * Returns BluetoothDevice object for the this device.
-     * Instantiates new BluetoothDevice if requried.
+     * Instantiates new BluetoothDevice if required.
      *
      * @param bluetoothAdapter
      * @return BluetoothDevice object for the this device.
@@ -120,6 +121,12 @@ public class Device {
         this._ble_gatt = _ble_gatt;
     }
 
+    /**
+     * Set BLE GATT service discovery operation status.
+     *
+     * @param discovered - True if services were discovered.
+     *                     False if discovery is still going on.
+     */
     public void setBleGattServicesDiscovered(boolean discovered) {
         if (discovered) {
             this._ble_services_discovered.open();
@@ -135,9 +142,21 @@ public class Device {
      *         False if timed out.
      */
     public boolean waitForBleServiceDiscovery() {
-        return this._ble_services_discovered.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
+        boolean result;
+
+        result = this._ble_services_discovered.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
+        if (!result) {
+            Log.e("BLE", "Connection timed out while discovering BLE services.");
+        }
+        return result;
     }
 
+    /**
+     * Set BLE Characteristic Write operation status.
+     *
+     * @param completed - True if operation was completed.
+     *                    False if operation is still going on.
+     */
     public void setBleCharacteristicWriteCompleted(boolean completed) {
         if (completed) {
             this._ble_characteristic_write.open();
@@ -145,8 +164,20 @@ public class Device {
             this._ble_characteristic_write.close();
         }
     }
+
+    /**
+     * Wait for BLE write characteristic to complete.
+     *
+     * @return True if BLE write completed(either successfully or failed).
+     *         False if timed out.
+     */
     public boolean waitForBleCharacteristicWriteComplete() {
-        return this._ble_characteristic_write.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
+        boolean result;
+        result = this._ble_characteristic_write.block(BLE_GATT_WRITE_TIMEOUT);
+        if (!result) {
+            Log.e("BLE", "Connection timed out while writing BLE characteristics.");
+        }
+        return result;
     }
 
 

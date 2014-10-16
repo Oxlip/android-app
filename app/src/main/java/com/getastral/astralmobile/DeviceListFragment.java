@@ -14,6 +14,7 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -267,10 +268,7 @@ public class DeviceListFragment extends Fragment {
         bleDevice = device.getBleDevice(mBluetoothAdapter);
         bleGatt = bleDevice.connectGatt(getActivity().getApplicationContext() , true, mGattCallback);
         device.setBleGatt(bleGatt);
-        connectionStatus = device.waitForBleServiceDiscovery();
-        if (!connectionStatus) {
-            Log.e("BLE", "Connection timed out while discovering services");
-        }
+        device.waitForBleServiceDiscovery();
 
         return bleGatt;
     }
@@ -283,33 +281,71 @@ public class DeviceListFragment extends Fragment {
      * @param characteristicId
      * @param value
      */
-    protected boolean writeBleCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
-        BluetoothGatt gatt;
-        BluetoothGattService service;
-        BluetoothGattCharacteristic characteristic;
-
-        gatt = bleConnect(device);
-        service = gatt.getService(serviceId);
-        if (service == null) {
-            Log.e("DLF", "service not found " + characteristicId);
-            return false;
-        }
-
-        characteristic = service.getCharacteristic(characteristicId);
-        if (characteristic == null) {
-            Log.e("DLF", "characteristic not found " + characteristicId);
-            return false;
-        }
-        characteristic.setValue(value);
-        device.setBleCharacteristicWriteCompleted(false);
-        gatt.writeCharacteristic(characteristic);
-        device.waitForBleCharacteristicWriteComplete();
-
-        //device.bleDisconnect();
-
-        return true;
+    protected void writeBleCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
+        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(device, serviceId, characteristicId, value);
+        new WriteBleCharacteristicTask().execute(p);
     }
 
+    private class WriteBleCharacteristicTaskParam {
+        Device device;
+        UUID serviceId;
+        UUID characteristicId;
+        byte[] value;
+        public WriteBleCharacteristicTaskParam(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
+            this.device = device;
+            this.serviceId = serviceId;
+            this.characteristicId = characteristicId;
+            this.value = value;
+        }
+    }
+
+    private class WriteBleCharacteristicTask extends AsyncTask<WriteBleCharacteristicTaskParam, Integer, Long> {
+        protected Long doInBackground(WriteBleCharacteristicTaskParam... params) {
+            int count = params.length;
+            long totalSize = 0;
+            for (int i = 0; i < count; i++) {
+                WriteBleCharacteristicTaskParam param = params[i];
+                publishProgress((int) ((i / (float) count) * 100));
+                // Escape early if cancel() is called
+                if (isCancelled()) break;
+
+                Device device = param.device;
+                UUID serviceId = param.serviceId;
+                UUID characteristicId = param.characteristicId;
+                byte[] value = param.value;
+
+                BluetoothGatt gatt;
+                BluetoothGattService service;
+                BluetoothGattCharacteristic characteristic;
+
+                gatt = bleConnect(device);
+                service = gatt.getService(serviceId);
+                if (service == null) {
+                    Log.e("DLF", "service not found " + characteristicId);
+                    return 0L;
+                }
+
+                characteristic = service.getCharacteristic(characteristicId);
+                if (characteristic == null) {
+                    Log.e("DLF", "characteristic not found " + characteristicId);
+                    return 0L;
+                }
+                characteristic.setValue(value);
+                device.setBleCharacteristicWriteCompleted(false);
+                gatt.writeCharacteristic(characteristic);
+                device.waitForBleCharacteristicWriteComplete();
+
+                device.bleDisconnect();
+            }
+            return totalSize;
+        }
+
+        protected void onProgressUpdate(Integer... progress) {
+        }
+
+        protected void onPostExecute(Long result) {
+        }
+    }
 
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 
