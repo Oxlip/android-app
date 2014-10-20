@@ -17,29 +17,29 @@ import java.util.UUID;
 
 public class Device {
     // information about the device.
-    String _name;
-    String _appliance_type;
-    String _appliance_make;
-    String _appliance_model;
+    private String _name;
+    private String _appliance_type;
+    private String _appliance_make;
+    private String _appliance_model;
     // MAC address of the device (unique ID).
-    String _ble_mac_address;
+    private String _ble_mac_address;
 
     // Bluetooth adapter used for scanning and connecting.
-    BluetoothAdapter _bluetoothAdapter;
+    private BluetoothAdapter _bluetoothAdapter;
 
     // Application context.
-    Context _context;
+    private Context _context;
 
     // Device object for the given _ble_mac(it need not to be in the range)
-    BluetoothDevice _ble_device;
-    BluetoothGatt _ble_gatt;
+    private BluetoothDevice _ble_device;
+    private BluetoothGatt _ble_gatt;
 
     // condition which would be open(trigger) only when BLE connection is opened and GATT services are discovered.
-    ConditionVariable _ble_services_discovered;
-    ConditionVariable _ble_characteristic_write;
+    private ConditionVariable _ble_services_discovered;
+    private ConditionVariable _ble_characteristic_write;
 
-    int _rssi;
-    boolean _is_registered;
+    private int _rssi;
+    private boolean _is_registered;
 
     private static int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
     private static int BLE_GATT_WRITE_TIMEOUT = 3000;
@@ -115,30 +115,16 @@ public class Device {
         this._is_registered = false;
     }
 
-    /**
-     * Returns BluetoothDevice object for the this device.
-     * Instantiates new BluetoothDevice if required.
-     *
-     * @param bluetoothAdapter
-     * @return BluetoothDevice object for the this device.
-     */
-    public BluetoothDevice getBleDevice(BluetoothAdapter bluetoothAdapter) {
-        if (this._ble_device == null) {
-            this._ble_device = bluetoothAdapter.getRemoteDevice(this._ble_mac_address);
-        }
-        return this._ble_device;
-    }
-
     public void setBleDevice(BluetoothDevice _ble_device) {
         this._ble_mac_address = _ble_device.getAddress();
         this._ble_device = _ble_device;
     }
 
-    public BluetoothGatt getBleGatt() {
+    private BluetoothGatt getBleGatt() {
         return this._ble_gatt;
     }
 
-    public void setBleGatt(BluetoothGatt _ble_gatt) {
+    private void setBleGatt(BluetoothGatt _ble_gatt) {
         this._ble_gatt = _ble_gatt;
     }
 
@@ -162,7 +148,7 @@ public class Device {
      * @return True if BLE service discovery happened.
      *         False if timed out.
      */
-    public boolean waitForBleServiceDiscovery() {
+    private boolean waitForBleServiceDiscovery() {
         boolean result;
 
         result = this._ble_services_discovered.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
@@ -178,7 +164,7 @@ public class Device {
      * @param completed - True if operation was completed.
      *                    False if operation is still going on.
      */
-    public void setBleCharacteristicWriteCompleted(boolean completed) {
+    private void setBleCharacteristicWriteCompleted(boolean completed) {
         if (completed) {
             this._ble_characteristic_write.open();
         } else {
@@ -192,7 +178,7 @@ public class Device {
      * @return True if BLE write completed(either successfully or failed).
      *         False if timed out.
      */
-    public boolean waitForBleCharacteristicWriteComplete() {
+    private boolean waitForBleCharacteristicWriteComplete() {
         boolean result;
         result = this._ble_characteristic_write.block(BLE_GATT_WRITE_TIMEOUT);
         if (!result) {
@@ -205,7 +191,7 @@ public class Device {
     /**
      * Disconnect the BLE device.
      */
-    public void bleDisconnect() {
+    private void bleDisconnect() {
         BluetoothGatt bleGatt;
 
         bleGatt = getBleGatt();
@@ -229,8 +215,10 @@ public class Device {
             device.waitForBleServiceDiscovery();
             return bleGatt;
         }
-        bleDevice = device.getBleDevice(bluetoothAdapter);
-        bleGatt = bleDevice.connectGatt(context , true, mGattCallback);
+        if (_ble_device == null) {
+            _ble_device = bluetoothAdapter.getRemoteDevice(this._ble_mac_address);
+        }
+        bleGatt = _ble_device.connectGatt(context , true, mGattCallback);
         device.setBleGatt(bleGatt);
         device.waitForBleServiceDiscovery();
 
