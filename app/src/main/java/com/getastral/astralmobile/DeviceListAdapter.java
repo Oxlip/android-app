@@ -14,29 +14,41 @@ import android.widget.ToggleButton;
 
 import java.util.List;
 
-// Adapter for holding devices.
+/**
+ * List Adapter to hold discovered devices and render them in UI.
+ * This is a singleton class(because only one list is enough for the whole application).
+ */
 public class DeviceListAdapter extends BaseAdapter {
 
-    private Context context;
-    private List<Device> deviceList;
+    private Context mContext;
+    private List<Device> mDeviceList;
+    private static DeviceListAdapter mInstance = null;
 
-    // Make this class singleton
-    private static DeviceListAdapter instance = null;
     protected DeviceListAdapter() {
         // Exists only to defeat instantiation.
     }
-    // Get the current instance
+
+    /**
+     * Returns the current instance.
+     * @return DeviceListAdapter instance.
+     */
     public static DeviceListAdapter getInstance() {
-        return instance;
+        return mInstance;
     }
-    // Get the current instance, create new one if required.
+
+    /**
+     * Creates new instance if required.
+     * @param context
+     * @param deviceList
+     * @return DeviceListAdapter instance.
+     */
     public static DeviceListAdapter getInstance(Context context, List<Device> deviceList) {
-        if(instance == null) {
-            instance = new DeviceListAdapter();
-            instance.context = context;
-            instance.deviceList = deviceList;
+        if(mInstance == null) {
+            mInstance = new DeviceListAdapter();
+            mInstance.mContext = context;
+            mInstance.mDeviceList = deviceList;
         }
-        return instance;
+        return mInstance;
     }
 
     /**
@@ -66,8 +78,8 @@ public class DeviceListAdapter extends BaseAdapter {
      * @return Device associated with the given BLE device.
      */
     protected Device getDevice(BluetoothDevice bleDevice) {
-        for (int i = 0; i < deviceList.size(); i++) {
-            Device device = deviceList.get(i);
+        for (int i = 0; i < mDeviceList.size(); i++) {
+            Device device = mDeviceList.get(i);
             if (device.getBleMacAddress().equals(bleDevice.getAddress())) {
                 return device;
             }
@@ -79,8 +91,8 @@ public class DeviceListAdapter extends BaseAdapter {
      * Invalidates BLE connection state of all the devices in this list.
      */
     protected void invalidateConnectionState() {
-        for (int i = 0; i < deviceList.size(); i++) {
-            Device device = deviceList.get(i);
+        for (int i = 0; i < mDeviceList.size(); i++) {
+            Device device = mDeviceList.get(i);
             device.setRssi(0);
         }
         this.notifyDataSetInvalidated();
@@ -91,47 +103,53 @@ public class DeviceListAdapter extends BaseAdapter {
      * @param device - New device.
      */
     public void addDevice(Device device) {
-        deviceList.add(device);
+        mDeviceList.add(device);
         this.notifyDataSetInvalidated();
     }
 
     @Override
     public int getCount() {
-
-        return deviceList.size();
+        return mDeviceList.size();
     }
 
     @Override
     public Object getItem(int position) {
-
-        return deviceList.get(position);
+        return mDeviceList.get(position);
     }
 
     @Override
     public long getItemId(int position) {
-
-        return deviceList.indexOf(getItem(position));
+        return mDeviceList.indexOf(getItem(position));
     }
 
+    /**
+     * Renders the UI for the given device item.
+     */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        ImageView imgIcon;
+        TextView txtTitle;
+        ToggleButton btnOn;
+        Button btnConnect;
+        Device device;
 
-        Device device = deviceList.get(position);
+        device = mDeviceList.get(position);
 
         if (convertView == null) {
-            LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
             convertView = mInflater.inflate(R.layout.item_device_list, null);
         }
 
-        ImageView imgIcon = (ImageView) convertView.findViewById(R.id.dl_image);
-        TextView txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
-        ToggleButton btnOn = (ToggleButton)convertView.findViewById(R.id.dl_btn_on_off);
-        Button btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
+        imgIcon = (ImageView) convertView.findViewById(R.id.dl_image);
+        txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
+        btnOn = (ToggleButton)convertView.findViewById(R.id.dl_btn_on_off);
+        btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
 
-            /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
+        /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
         btnOn.setTag(device);
         btnConnect.setTag(device);
 
+        /* Button Click Handler for on/off button*/
         btnOn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -148,6 +166,7 @@ public class DeviceListAdapter extends BaseAdapter {
             }
         });
 
+        /* Button Click Handler for connect button*/
         btnConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -157,9 +176,9 @@ public class DeviceListAdapter extends BaseAdapter {
             }
         });
 
-            /* "connect" button should be visible only for the first time.
-             *  "On/Off" button should be visible only if the device is connected.
-             */
+        /* "connect" button should be visible only for the first time.
+         *  "On/Off" button should be visible only if the device is connected.
+         */
         if (device.isRegistered()) {
             btnOn.setVisibility(View.VISIBLE);
             btnConnect.setVisibility(View.INVISIBLE);
@@ -167,9 +186,10 @@ public class DeviceListAdapter extends BaseAdapter {
             btnOn.setVisibility(View.INVISIBLE);
             btnConnect.setVisibility(View.VISIBLE);
         }
+
+        /* Enable the on button only if the device is in range */
         btnOn.setEnabled(device.getRssi() != 0);
 
-        // setting the image resource and title
         imgIcon.setImageResource(R.drawable.ic_launcher);
         txtTitle.setText(device.getName());
 
