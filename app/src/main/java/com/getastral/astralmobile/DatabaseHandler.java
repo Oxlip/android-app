@@ -1,5 +1,6 @@
 package com.getastral.astralmobile;
 
+import android.bluetooth.BluetoothAdapter;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -85,7 +86,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     }
 
     // Return all registered devices.
-    public List<Device> getDevices() {
+    public List<Device> getDevices(BluetoothAdapter bluetoothAdapter, Context context) {
         List<Device> deviceList = new ArrayList<Device>();
         // Select All Query
         String selectQuery = "SELECT  * FROM " + TABLE_DEVICES;
@@ -96,7 +97,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                Device device = new Device();
+                Device device = new Device(bluetoothAdapter, context);
                 device.setBleMacAddress(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_MAC_ADDRESS)));
                 device.setName(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_NAME)));
                 device.setApplianceType(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_TYPE)));

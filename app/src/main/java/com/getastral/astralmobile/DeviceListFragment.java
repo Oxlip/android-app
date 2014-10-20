@@ -4,17 +4,10 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -25,16 +18,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * A list fragment representing a list of Devices. This fragment
@@ -55,9 +42,6 @@ public class DeviceListFragment extends Fragment {
     // Stops scanning after 5 seconds.
     private static final long SCAN_PERIOD = 5000;
 
-    // Adapter to hold all the devices to be displayed.
-    private DeviceListAdapter mListAdapter;
-
     /**
      * The serialization (saved instance state) Bundle key representing the
      * activated item position. Only used on tablets.
@@ -74,10 +58,6 @@ public class DeviceListFragment extends Fragment {
      * The current activated item position. Only used on tablets.
      */
     private int mActivatedPosition = ListView.INVALID_POSITION;
-
-    private static final UUID ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
-    private static final UUID ASTRAL_UUID_INFO = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
-    private static final UUID ASTRAL_UUID_OUTLET = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -212,7 +192,8 @@ public class DeviceListFragment extends Fragment {
 
     private void scanLeDevice(final boolean enable) {
         if (enable) {
-            mListAdapter.invalidateConnectionState();
+            DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
+            listAdapter.invalidateConnectionState();
             // Stops scanning after a pre-defined scan period.
             mHandler.postDelayed(new Runnable() {
                 @Override
@@ -235,202 +216,21 @@ public class DeviceListFragment extends Fragment {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        boolean result = mListAdapter.associateBleDevice(bleDevice, rssi);
+                        DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
+                        boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
                         if (!result) {
-                            Device device = new Device();
+                            Device device = new Device(mBluetoothAdapter, getActivity().getApplicationContext());
                             device.setName(bleDevice.getName());
                             device.setBleMacAddress(bleDevice.getAddress());
                             device.setRssi(rssi);
 
-                            mListAdapter.addDevice(device);
+                            listAdapter.addDevice(device);
                         }
                     }
                 });
             }
     };
 
-    /**
-     * Establishes a BLE connection to the given device.
-     *
-     * @param device - Device needs to be connected.
-     * @return BluetoothGatt object associated with the connection.
-     */
-    private BluetoothGatt bleConnect(Device device) {
-        BluetoothDevice bleDevice;
-        BluetoothGatt bleGatt;
-        boolean connectionStatus;
-
-        bleGatt = device.getBleGatt();
-        if (bleGatt != null) {
-            device.waitForBleServiceDiscovery();
-            return bleGatt;
-        }
-        bleDevice = device.getBleDevice(mBluetoothAdapter);
-        bleGatt = bleDevice.connectGatt(getActivity().getApplicationContext() , true, mGattCallback);
-        device.setBleGatt(bleGatt);
-        device.waitForBleServiceDiscovery();
-
-        return bleGatt;
-    }
-
-    /**
-     *  Writes the given bytes to given BLE device's characterstic.
-     *
-     * @param device
-     * @param serviceId
-     * @param characteristicId
-     * @param value
-     */
-    protected void writeBleCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
-        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(device, serviceId, characteristicId, value);
-        new WriteBleCharacteristicTask().execute(p);
-    }
-
-    private class WriteBleCharacteristicTaskParam {
-        Device device;
-        UUID serviceId;
-        UUID characteristicId;
-        byte[] value;
-        public WriteBleCharacteristicTaskParam(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
-            this.device = device;
-            this.serviceId = serviceId;
-            this.characteristicId = characteristicId;
-            this.value = value;
-        }
-    }
-
-    private class WriteBleCharacteristicTask extends AsyncTask<WriteBleCharacteristicTaskParam, Integer, Long> {
-        protected Long doInBackground(WriteBleCharacteristicTaskParam... params) {
-            int count = params.length;
-            long totalSize = 0;
-            for (int i = 0; i < count; i++) {
-                WriteBleCharacteristicTaskParam param = params[i];
-                publishProgress((int) ((i / (float) count) * 100));
-                // Escape early if cancel() is called
-                if (isCancelled()) break;
-
-                Device device = param.device;
-                UUID serviceId = param.serviceId;
-                UUID characteristicId = param.characteristicId;
-                byte[] value = param.value;
-
-                BluetoothGatt gatt;
-                BluetoothGattService service;
-                BluetoothGattCharacteristic characteristic;
-
-                gatt = bleConnect(device);
-                service = gatt.getService(serviceId);
-                if (service == null) {
-                    Log.e("DLF", "service not found " + characteristicId);
-                    return 0L;
-                }
-
-                characteristic = service.getCharacteristic(characteristicId);
-                if (characteristic == null) {
-                    Log.e("DLF", "characteristic not found " + characteristicId);
-                    return 0L;
-                }
-                characteristic.setValue(value);
-                device.setBleCharacteristicWriteCompleted(false);
-                gatt.writeCharacteristic(characteristic);
-                device.waitForBleCharacteristicWriteComplete();
-
-                device.bleDisconnect();
-            }
-            return totalSize;
-        }
-
-        protected void onProgressUpdate(Integer... progress) {
-        }
-
-        protected void onPostExecute(Long result) {
-        }
-    }
-
-    private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
-
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.d("BLE", "onCharacteristicChanged ( characteristic : " + characteristic + ")");
-        }
-
-        @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d("BLE", "onCharacteristicRead ( characteristic :"
-                        + characteristic + " ,status, : " + status + ")");
-            }
-        }
-
-        @Override
-        public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d("BLE", "onCharacteristicWrite ( characteristic :"
-                        + characteristic + " ,status : " + status + ")");
-            }
-            Device device = mListAdapter.getDevice(gatt.getDevice());
-            if (device != null){
-                device.setBleCharacteristicWriteCompleted(true);
-            }
-        }
-
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            BluetoothDevice device = gatt.getDevice();
-
-            Log.d("BLE", "onConnectionStateChange (device : " + device
-                    + ", status : " + status + " , newState :  " + newState
-                    + ")");
-
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    // Automatically discover service once BLE connection is established
-                    gatt.discoverServices();
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    //gatt.close();
-                }
-            }
-        }
-
-        @Override
-        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor device, int status) {
-            Log.d("BLE", "onDescriptorRead (device : " + device + " , status :  "
-                    + status + ")");
-            super.onDescriptorRead(gatt, device, status);
-        }
-
-        @Override
-        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor arg0, int status) {
-            Log.d("BLE", "onDescriptorWrite (arg0 : " + arg0 + " , status :  "
-                    + status + ")");
-            super.onDescriptorWrite(gatt, arg0, status);
-        }
-
-        @Override
-        public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
-            Log.d("BLE", "onReliableWriteCompleted (gatt : " + status
-                    + " , status :  " + status + ")");
-            super.onReliableWriteCompleted(gatt, status);
-        }
-
-        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-            BluetoothDevice device = gatt.getDevice();
-
-            Log.d("BLE", "onReadRemoteRssi (device : " + device + " , rssi :  "
-                    + rssi + " , status :  " + status + ")");
-
-        }
-
-        @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            Log.d("BLE", "onServicesDiscovered");
-            Device device = mListAdapter.getDevice(gatt.getDevice());
-            if (device != null){
-                device.setBleGattServicesDiscovered(true);
-            }
-        }
-    };
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -466,15 +266,15 @@ public class DeviceListFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
-        mListAdapter = new DeviceListAdapter(activity, activity.db.getDevices());
         ListView listview;
+        List<Device> deviceList = activity.db.getDevices(mBluetoothAdapter, getActivity().getApplicationContext());
         View view = getView();
         if (view == null) {
             Log.d("DLF", "view is null");
             return;
         }
         listview = (ListView) view.findViewById(R.id.fdl_list);
-        listview.setAdapter(mListAdapter);
+        listview.setAdapter(DeviceListAdapter.getInstance(activity, deviceList));
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -517,156 +317,5 @@ public class DeviceListFragment extends Fragment {
         }
 
         mActivatedPosition = position;
-    }
-
-    // Adapter for holding devices.
-    public class DeviceListAdapter extends BaseAdapter {
-
-        Context context;
-        List<Device> rowItem;
-
-        DeviceListAdapter(Context context, List<Device> rowItem) {
-            this.context = context;
-            this.rowItem = rowItem;
-        }
-
-        /**
-         * Associate the given ble device with matching device uuid.
-         *
-         * @param bleDevice Bluetooth device to be associated.
-         * @param rssi Received signal strength
-         * @return true if a device with given uuid is found and bleDevice is associated.
-         */
-        protected boolean associateBleDevice(BluetoothDevice bleDevice, int rssi) {
-            Device device = getDevice(bleDevice);
-            if (device == null) {
-                return false;
-            }
-            device.setBleDevice(bleDevice);
-            if (device.getRssi() != rssi) {
-                device.setRssi(rssi);
-                this.notifyDataSetInvalidated();
-            }
-            return true;
-        }
-
-        /**
-         * Finds the Device from a given bluetooth Device.
-         *
-         * @param bleDevice Bluetooth device to search
-         * @return Device associated with the given BLE device.
-         */
-        protected Device getDevice(BluetoothDevice bleDevice) {
-            for (int i = 0; i < rowItem.size(); i++) {
-                Device device = rowItem.get(i);
-                if (device.getBleMacAddress().equals(bleDevice.getAddress())) {
-                    return device;
-                }
-            }
-            return null;
-        }
-
-        /**
-         * Invalidates BLE connection state of all the devices in this list.
-         */
-        protected void invalidateConnectionState() {
-            for (int i = 0; i < rowItem.size(); i++) {
-                Device device = rowItem.get(i);
-                device.setRssi(0);
-            }
-            this.notifyDataSetInvalidated();
-        }
-
-        /**
-         * Add newly discovered device.
-         * @param device - New device.
-         */
-        public void addDevice(Device device) {
-            rowItem.add(device);
-            this.notifyDataSetInvalidated();
-        }
-
-        @Override
-        public int getCount() {
-
-            return rowItem.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-
-            return rowItem.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-
-            return rowItem.indexOf(getItem(position));
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-
-            Device device = rowItem.get(position);
-
-            if (convertView == null) {
-                LayoutInflater mInflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-                convertView = mInflater.inflate(R.layout.item_device_list, null);
-            }
-
-            ImageView imgIcon = (ImageView) convertView.findViewById(R.id.dl_image);
-            TextView txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
-            ToggleButton btnOn = (ToggleButton)convertView.findViewById(R.id.dl_btn_on_off);
-            Button btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
-
-            /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
-            btnOn.setTag(device);
-            btnConnect.setTag(device);
-
-            btnOn.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ToggleButton btnOn = (ToggleButton)v;
-                    Device device = (Device)v.getTag();
-                    byte[] value = {1, 0};
-
-                    if (!btnOn.isChecked()) {
-                        value[1] = 0;
-                    } else {
-                        value[1] = 100;
-                    }
-                    writeBleCharacteristic(device, ASTRAL_UUID_BASE, ASTRAL_UUID_OUTLET, value);
-                }
-            });
-
-            btnConnect.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Device device = (Device)v.getTag();
-                    DatabaseHandler db = new DatabaseHandler(getActivity().getApplicationContext());
-                    db.connectDevice(device);
-                    device.setRegistered();
-                    mListAdapter.notifyDataSetInvalidated();
-                }
-            });
-
-            /* "connect" button should be visible only for the first time.
-             *  "On/Off" button should be visible only if the device is connected.
-             */
-            if (device.isRegistered()) {
-                btnOn.setVisibility(View.VISIBLE);
-                btnConnect.setVisibility(View.INVISIBLE);
-            } else {
-                btnOn.setVisibility(View.INVISIBLE);
-                btnConnect.setVisibility(View.VISIBLE);
-            }
-            btnOn.setEnabled(device.getRssi() != 0);
-
-            // setting the image resource and title
-            imgIcon.setImageResource(R.drawable.ic_launcher);
-            txtTitle.setText(device.getName());
-
-            return convertView;
-        }
     }
 }
