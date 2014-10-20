@@ -25,24 +25,24 @@ public class Device {
     private String _ble_mac_address;
 
     // Bluetooth adapter used for scanning and connecting.
-    private BluetoothAdapter _bluetoothAdapter;
+    private final BluetoothAdapter _bluetoothAdapter;
 
     // Application context.
-    private Context _context;
+    private final Context _context;
 
     // Device object for the given _ble_mac(it need not to be in the range)
     private BluetoothDevice _ble_device;
     private BluetoothGatt _ble_gatt;
 
     // condition which would be open(trigger) only when BLE connection is opened and GATT services are discovered.
-    private ConditionVariable _ble_services_discovered;
-    private ConditionVariable _ble_characteristic_write;
+    private final ConditionVariable _ble_services_discovered;
+    private final ConditionVariable _ble_characteristic_write;
 
     private int _rssi;
     private boolean _is_registered;
 
-    private static int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
-    private static int BLE_GATT_WRITE_TIMEOUT = 3000;
+    private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
+    private static final int BLE_GATT_WRITE_TIMEOUT = 3000;
 
     private static final UUID ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
     private static final UUID ASTRAL_UUID_INFO = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
@@ -134,7 +134,7 @@ public class Device {
      * @param discovered - True if services were discovered.
      *                     False if discovery is still going on.
      */
-    public void setBleGattServicesDiscovered(boolean discovered) {
+    private void setBleGattServicesDiscovered(boolean discovered) {
         if (discovered) {
             this._ble_services_discovered.open();
         } else {
@@ -207,7 +207,6 @@ public class Device {
      * @return BluetoothGatt object associated with the connection.
      */
     private BluetoothGatt bleConnect(Device device, BluetoothAdapter bluetoothAdapter, Context context) {
-        BluetoothDevice bleDevice;
         BluetoothGatt bleGatt;
 
         bleGatt = device.getBleGatt();
@@ -227,29 +226,28 @@ public class Device {
 
     public void dimmerControl(byte brightness) {
         byte[] value = {1, brightness};
-        writeBleCharacteristic(this, ASTRAL_UUID_BASE, ASTRAL_UUID_OUTLET, value);
+        writeBleCharacteristic(ASTRAL_UUID_BASE, ASTRAL_UUID_OUTLET, value);
     }
 
     /**
-     *  Writes the given bytes to given BLE device's characterstic.
+     *  Writes the given bytes to given BLE device's characteristic.
      *
-     * @param device
-     * @param serviceId
-     * @param characteristicId
-     * @param value
+     * @param serviceId Bluetooth GATT Service UUID where the Characteristic can be found.
+     * @param characteristicId Bluetooth GATT Characteristic UUID.
+     * @param value Value to be written to the Characteristic.
      */
-    private void writeBleCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
-        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(device, _bluetoothAdapter, _context, serviceId, characteristicId, value);
+    private void writeBleCharacteristic(UUID serviceId, UUID characteristicId,  byte[] value) {
+        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, _bluetoothAdapter, _context, serviceId, characteristicId, value);
         new WriteBleCharacteristicTask().execute(p);
     }
 
     private class WriteBleCharacteristicTaskParam {
-        Device device;
-        UUID serviceId;
-        UUID characteristicId;
-        byte[] value;
-        BluetoothAdapter bluetoothAdapter;
-        Context context;
+        final Device device;
+        final UUID serviceId;
+        final UUID characteristicId;
+        final byte[] value;
+        final BluetoothAdapter bluetoothAdapter;
+        final Context context;
         public WriteBleCharacteristicTaskParam(Device device, BluetoothAdapter bluetoothAdapter, Context context,  UUID serviceId, UUID characteristicId,  byte[] value) {
             this.device = device;
             this.bluetoothAdapter = bluetoothAdapter;
