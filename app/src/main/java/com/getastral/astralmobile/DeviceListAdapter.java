@@ -152,7 +152,7 @@ public class DeviceListAdapter extends BaseAdapter {
             @Override
             public void onClick(View v) {
                 Device device = (Device)v.getTag();
-                device.setRegistered();
+                device.save();
                 notifyDataSetInvalidated();
             }
         });

@@ -116,7 +116,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
                 device.setApplianceType(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_TYPE)));
                 device.setApplianceMake(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_MAKE)));
                 device.setApplianceModel(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_MODEL)));
-                device.setRegistered();
+                device.save();
 
                 deviceList.add(device);
             } while (cursor.moveToNext());
