@@ -108,6 +108,8 @@ public class Device {
     }
 
     public void setRegistered() {
+        DatabaseHelper db = new DatabaseHelper(this._context);
+        db.saveDevice(this);
         this._is_registered = true;
     }
 

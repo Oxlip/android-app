@@ -152,8 +152,6 @@ public class DeviceListAdapter extends BaseAdapter {
             @Override
             public void onClick(View v) {
                 Device device = (Device)v.getTag();
-                DatabaseHandler db = new DatabaseHandler(v.getContext());
-                db.connectDevice(device);
                 device.setRegistered();
                 notifyDataSetInvalidated();
             }

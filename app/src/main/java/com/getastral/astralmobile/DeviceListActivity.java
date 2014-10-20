@@ -33,7 +33,7 @@ public class DeviceListActivity extends Activity
      * device.
      */
     private boolean mTwoPane;
-    DatabaseHandler db;
+    DatabaseHelper db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +54,7 @@ public class DeviceListActivity extends Activity
                     .setActivateOnItemClick(true);
         }
 
-        db = new DatabaseHandler(this);
+        db = new DatabaseHelper(this);
 
         // TODO: If exposing deep links into your app, handle intents here.
     }
