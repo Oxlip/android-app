@@ -53,6 +53,8 @@ public class Device {
     private static final UUID ASTRAL_UUID_INFO = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
     private static final UUID ASTRAL_UUID_OUTLET = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
 
+    private static final String LOG_TAG_DEVICE = "Device";
+
     /**
      * Construct a new device.
      * @param bluetoothAdapter Bluetooth Adapter to be used when scanning, writing to the BLE device.
@@ -206,7 +208,7 @@ public class Device {
         boolean result;
         result = this.mBleCharacteristicWritten.block(BLE_GATT_WRITE_TIMEOUT);
         if (!result) {
-            Log.e("BLE", "Connection timed out while writing BLE characteristics.");
+            Log.e(LOG_TAG_DEVICE, "BLE characteristic write timed out");
         }
         return result;
     }
@@ -307,13 +309,13 @@ public class Device {
             gatt = bleConnect(device, bluetoothAdapter, context);
             service = gatt.getService(serviceId);
             if (service == null) {
-                Log.e("DLF", "service not found " + characteristicId);
+                Log.e(LOG_TAG_DEVICE, "BLE service not found " + serviceId );
                 return 0L;
             }
 
             characteristic = service.getCharacteristic(characteristicId);
             if (characteristic == null) {
-                Log.e("DLF", "characteristic not found " + characteristicId);
+                Log.e(LOG_TAG_DEVICE, "BLE characteristic not found " + characteristicId);
                 return 0L;
             }
             characteristic.setValue(value);
@@ -357,27 +359,22 @@ public class Device {
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.d("BLE", "onCharacteristicChanged ( characteristic : " + characteristic + ")");
+            Log.v(LOG_TAG_DEVICE, "onCharacteristicChanged ( characteristic : " + characteristic + ")");
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d("BLE", "onCharacteristicRead ( characteristic :"
-                        + characteristic + " ,status, : " + status + ")");
-            }
+            Log.v(LOG_TAG_DEVICE, "onCharacteristicRead ( characteristic :" + characteristic + " ,status, : " + status + ")");
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.d("BLE", "onCharacteristicWrite ( characteristic :"
-                        + characteristic + " ,status : " + status + ")");
-            }
+
+            Log.v(LOG_TAG_DEVICE, "onCharacteristicWrite ( characteristic :" + characteristic + " ,status, : " + status + ")");
+
             DeviceListAdapter deviceListAdapter = DeviceListAdapter.getInstance();
             if (deviceListAdapter == null) {
-                Log.d("DLA", "Empty deviceListAdapter");
                 return;
             }
             Device device = deviceListAdapter.getDevice(gatt.getDevice());
@@ -390,9 +387,7 @@ public class Device {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             BluetoothDevice device = gatt.getDevice();
 
-            Log.d("BLE", "onConnectionStateChange (device : " + device
-                    + ", status : " + status + " , newState :  " + newState
-                    + ")");
+            Log.v(LOG_TAG_DEVICE, "onConnectionStateChange (device : " + device + ", status : " + status + " , newState :  " + newState + ")");
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
@@ -406,39 +401,34 @@ public class Device {
 
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor device, int status) {
-            Log.d("BLE", "onDescriptorRead (device : " + device + " , status :  "
-                    + status + ")");
+            Log.v(LOG_TAG_DEVICE, "onDescriptorRead (device : " + device + " , status :  " + status + ")");
             super.onDescriptorRead(gatt, device, status);
         }
 
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor arg0, int status) {
-            Log.d("BLE", "onDescriptorWrite (arg0 : " + arg0 + " , status :  "
-                    + status + ")");
+            Log.v(LOG_TAG_DEVICE, "onDescriptorWrite (arg0 : " + arg0 + " , status :  " + status + ")");
             super.onDescriptorWrite(gatt, arg0, status);
         }
 
         @Override
         public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
-            Log.d("BLE", "onReliableWriteCompleted (gatt : " + status
-                    + " , status :  " + status + ")");
+            Log.v(LOG_TAG_DEVICE, "onReliableWriteCompleted (gatt : " + gatt + " , status :  " + status + ")");
             super.onReliableWriteCompleted(gatt, status);
         }
 
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             BluetoothDevice device = gatt.getDevice();
 
-            Log.d("BLE", "onReadRemoteRssi (device : " + device + " , rssi :  "
-                    + rssi + " , status :  " + status + ")");
+            Log.v(LOG_TAG_DEVICE, "onReadRemoteRssi (device : " + device + " , rssi :  " + rssi + " , status :  " + status + ")");
 
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            Log.d("BLE", "onServicesDiscovered");
+            Log.v(LOG_TAG_DEVICE, "onServicesDiscovered");
             DeviceListAdapter deviceListAdapter = DeviceListAdapter.getInstance();
             if (deviceListAdapter == null) {
-                Log.d("DLA", "Empty deviceListAdapter");
                 return;
             }
             Device device = deviceListAdapter.getDevice(gatt.getDevice());
@@ -447,5 +437,4 @@ public class Device {
             }
         }
     };
-
 }

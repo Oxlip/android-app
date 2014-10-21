@@ -81,6 +81,8 @@ public class DeviceListFragment extends Fragment {
         }
     };
 
+    private static final String LOG_TAG_DLF = "DeviceListFragment";
+
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -270,7 +272,7 @@ public class DeviceListFragment extends Fragment {
         List<Device> deviceList = activity.db.getDevices(mBluetoothAdapter, getActivity().getApplicationContext());
         View view = getView();
         if (view == null) {
-            Log.d("DLF", "view is null");
+            Log.e(LOG_TAG_DLF, "view is null");
             return;
         }
         listview = (ListView) view.findViewById(R.id.fdl_list);
@@ -293,7 +295,7 @@ public class DeviceListFragment extends Fragment {
         ListView listview;
         View view = getView();
         if (view == null) {
-            Log.d("DLF", "view is null");
+            Log.e(LOG_TAG_DLF, "view is null");
             return;
         }
 
@@ -305,7 +307,7 @@ public class DeviceListFragment extends Fragment {
         ListView listview;
         View view = getView();
         if (view == null) {
-            Log.d("DLF", "view is null");
+            Log.e(LOG_TAG_DLF, "view is null");
             return;
         }
 
