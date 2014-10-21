@@ -211,24 +211,24 @@ public class DeviceListFragment extends Fragment {
 
     // Device scan callback.
     private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-            @Override
-            public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
-                        boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
-                        if (!result) {
-                            Device device = new Device(mBluetoothAdapter, getActivity().getApplicationContext());
-                            device.setName(bleDevice.getName());
-                            device.setBleMacAddress(bleDevice.getAddress());
-                            device.setRssi(rssi);
+        @Override
+        public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
+                    boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
+                    if (!result) {
+                        Device device = new Device(mBluetoothAdapter, getActivity().getApplicationContext());
+                        device.setName(bleDevice.getName());
+                        device.setBleMacAddress(bleDevice.getAddress());
+                        device.setRssi(rssi);
 
-                            listAdapter.addDevice(device);
-                        }
+                        listAdapter.addDevice(device);
                     }
-                });
-            }
+                }
+            });
+        }
     };
 
 
