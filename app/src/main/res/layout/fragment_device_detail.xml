@@ -16,7 +16,7 @@
         android:layout_height="wrap_content"
         android:textSize="26sp"
         android:text="TV"
-        android:layout_toRightOf="@id/dd_image"/>
+        android:layout_toEndOf="@id/dd_image"/>
 
     <TextView
         android:id="@+id/dd_lbl_connected_to"
