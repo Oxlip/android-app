@@ -221,11 +221,7 @@ public class DeviceListFragment extends Fragment {
                     DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
                     boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
                     if (!result) {
-                        Device device = new Device(mBluetoothAdapter, getActivity().getApplicationContext());
-                        device.setName(bleDevice.getName());
-                        device.setBleMacAddress(bleDevice.getAddress());
-                        device.setRssi(rssi);
-
+                        Device device = new Device(mBluetoothAdapter, bleDevice, rssi);
                         listAdapter.addDevice(device);
                     }
                 }
@@ -269,7 +265,7 @@ public class DeviceListFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
         ListView listview;
-        List<Device> deviceList = activity.db.getDevices(mBluetoothAdapter, getActivity().getApplicationContext());
+        List<Device> deviceList = DatabaseHelper.getDevices(mBluetoothAdapter);
         View view = getView();
         if (view == null) {
             Log.e(LOG_TAG_DLF, "view is null");

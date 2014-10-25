@@ -1,95 +1,104 @@
 package com.getastral.astralmobile;
 
 import android.bluetooth.BluetoothAdapter;
-import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
+import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.TableUtils;
+
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Helper class to access the Astral Database.
- *
- *  The database contains all the devices(Plug/Switch/Touch) that are registered by the user.
- *  Basically it is cached version of CloudServer's user specific data.
- **/
-class DatabaseHelper extends SQLiteOpenHelper {
+/**
+ * Database helper is used to manage the creation and upgrading of your database.
+ * This class also provides the DAOs used by the other classes.
+ */
+public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
-    // Database Version
+    private static DatabaseHelper mInstance = null;
+
+    private static final String LOG_TAG_DATABASE_HELPER = "DatabaseHelper";
+
+    // name of the database file
+    private static final String DATABASE_NAME = "astralthings.db";
     private static final int DATABASE_VERSION = 1;
 
-    // Database Name
-    private static final String DATABASE_NAME = "Astral";
-
-    // Devices table Name
-    private static final String TABLE_DEVICES = "Devices";
-
-    // Devices table's column names
-    private static final String FIELD_MAC_ADDRESS = "mac_address";
-    private static final String FIELD_NAME = "name";
-    private static final String FIELD_APPLIANCE_TYPE = "appliance_type";
-    private static final String FIELD_APPLIANCE_MAKE = "appliance_make";
-    private static final String FIELD_APPLIANCE_MODEL = "appliance_model";
+    // the DAO object we use to access the SimpleData table
+    private Dao<DeviceInfo, String> deviceInfoDao = null;
+    private RuntimeExceptionDao<DeviceInfo, String> deviceInfoRuntimeDao = null;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_DEVICES + "(" +
-                FIELD_MAC_ADDRESS + " TEXT PRIMARY KEY," +
-                FIELD_NAME + " TEXT," +
-                FIELD_APPLIANCE_TYPE + " TEXT," +
-                FIELD_APPLIANCE_MAKE + " TEXT," +
-                FIELD_APPLIANCE_MODEL + " TEXT" +
-                ")";
-        db.execSQL(CREATE_CONTACTS_TABLE);
-    }
-
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Drop older table if existed
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_DEVICES);
-
-        // Create tables again
-        onCreate(db);
+    /**
+     * Returns the existing database helper instance or creates new one if required.
+     * @return DatabaseHelper instance.
+     */
+    public static DatabaseHelper getInstance() {
+        if (mInstance == null) {
+            mInstance = new DatabaseHelper(ApplicationGlobals.getAppContext());
+        }
+        return mInstance;
     }
 
     /**
-     * Saves the device information to database.
-     * This should be happening only once(first time when connect button is clicked).
-     *
-     * @param device Device needs to be saved.
+     * Called when the database is first created.
+     * Creates required tables.
      */
-    void saveDevice(Device device) {
-        SQLiteDatabase db = this.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(FIELD_MAC_ADDRESS, device.getBleMacAddress() );
-        values.put(FIELD_NAME, device.getName());
-        values.put(FIELD_APPLIANCE_TYPE, device.getApplianceType());
-        values.put(FIELD_APPLIANCE_MAKE, device.getApplianceMake());
-        values.put(FIELD_APPLIANCE_MODEL, device.getApplianceModel());
-
-        db.insert(TABLE_DEVICES, null, values);
-        db.close();
+    @Override
+    public void onCreate(SQLiteDatabase db, ConnectionSource connectionSource) {
+        try {
+            Log.i(DatabaseHelper.class.getName(), "onCreate");
+            TableUtils.createTable(connectionSource, DeviceInfo.class);
+        } catch (SQLException e) {
+            Log.e(DatabaseHelper.class.getName(), "Can't create database", e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * Check whether the given MAC address is already exists in the database.
-     *
-     * * @param macAddress Mac address needs to be checked.
+     * Called when the application is upgraded and it has a higher version number.
      */
-    Boolean isRegistered(String macAddress) {
-        String countQuery = "SELECT  * FROM " + TABLE_DEVICES + "WHERE " + FIELD_MAC_ADDRESS + "==" + macAddress;
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(countQuery, null);
-        cursor.close();
+    @Override
+    public void onUpgrade(SQLiteDatabase db, ConnectionSource connectionSource, int oldVersion, int newVersion) {
+        try {
+            Log.i(DatabaseHelper.class.getName(), "onUpgrade");
+            TableUtils.dropTable(connectionSource, DeviceInfo.class, true);
+            // after we drop the old databases, we create the new ones
+            onCreate(db, connectionSource);
+        } catch (SQLException e) {
+            Log.e(DatabaseHelper.class.getName(), "Can't drop databases", e);
+            throw new RuntimeException(e);
+        }
+    }
 
-        return cursor.getCount() > 0;
+    /**
+     * Returns the Database Access Object (DAO) for our DeviceInfo class. It will create it or just give the cached
+     * value.
+     */
+    public Dao<DeviceInfo, String> getDeviceInfoDao() throws SQLException {
+        if (deviceInfoDao == null) {
+            deviceInfoDao = getDao(DeviceInfo.class);
+        }
+        return deviceInfoDao;
+    }
+
+    /**
+     * Returns the RuntimeExceptionDao (Database Access Object) version of a Dao for our DeviceInfo class. It will
+     * create it or just give the cached value. RuntimeExceptionDao only through RuntimeExceptions.
+     */
+    public RuntimeExceptionDao<DeviceInfo, String> getDeviceInfoRuntimeExceptionDao() {
+        if (deviceInfoRuntimeDao == null) {
+            deviceInfoRuntimeDao = getRuntimeExceptionDao(DeviceInfo.class);
+        }
+        return deviceInfoRuntimeDao;
     }
 
     /**
@@ -97,57 +106,31 @@ class DatabaseHelper extends SQLiteOpenHelper {
      *
      * @param bluetoothAdapter Bluetooth adapter that should be used to discover device.
      *                         This is just passed to Device() constructor. This class does not start bluetooth scanning.
-     * @param context Application context needs to be passed to Device() constructor.
      * @return List of devices.
      */
-    public List<Device> getDevices(BluetoothAdapter bluetoothAdapter, Context context) {
+    public static List<Device> getDevices(BluetoothAdapter bluetoothAdapter) {
         List<Device> deviceList = new ArrayList<Device>();
-        String selectQuery = "SELECT  * FROM " + TABLE_DEVICES;
-
-        SQLiteDatabase db = this.getWritableDatabase();
-        Cursor cursor = db.rawQuery(selectQuery, null);
-
-        // looping through all rows and adding to list
-        if (cursor.moveToFirst()) {
-            do {
-                Device device = new Device(bluetoothAdapter, context);
-                device.setBleMacAddress(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_MAC_ADDRESS)));
-                device.setName(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_NAME)));
-                device.setApplianceType(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_TYPE)));
-                device.setApplianceMake(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_MAKE)));
-                device.setApplianceModel(cursor.getString(cursor.getColumnIndexOrThrow(FIELD_APPLIANCE_MODEL)));
-                device.save();
-
+        try {
+            List<DeviceInfo> deviceInfoList = getInstance().getDeviceInfoDao().queryForAll();
+            for(DeviceInfo deviceInfo : deviceInfoList) {
+                Device device = new Device(bluetoothAdapter);
+                device.setDeviceInfo(deviceInfo, true);
                 deviceList.add(device);
-            } while (cursor.moveToNext());
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
 
         return deviceList;
     }
 
     /**
-     * Delete device from the database.
-     * @param device Device needs to be removed.
+     * Close the database connections and clear any cached DAOs.
      */
-    public void removeDevice(Device device) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_DEVICES, FIELD_MAC_ADDRESS + " = ?",
-                new String[] { String.valueOf(device.getBleMacAddress()) });
-        db.close();
-    }
-
-    /**
-     * Returns total number devices in the database.
-     *
-     * @return Device count.
-     */
-    public int getCount() {
-        String countQuery = "SELECT  * FROM " + TABLE_DEVICES;
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(countQuery, null);
-        cursor.close();
-
-        // return count
-        return cursor.getCount();
+    @Override
+    public void close() {
+        super.close();
+        deviceInfoDao = null;
+        deviceInfoRuntimeDao = null;
     }
 }

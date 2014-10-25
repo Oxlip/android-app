@@ -13,14 +13,15 @@ import android.os.AsyncTask;
 import android.os.ConditionVariable;
 import android.util.Log;
 
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.dao.Dao;
+
+import java.sql.SQLException;
 import java.util.UUID;
 
 public class Device {
-    /** Device specific information populated from database.*/
-    private String mName;
-    private String mApplianceType;
-    private String mApplianceMake;
-    private String mApplianceModel;
+    /** Device information such as name, address etc*/
+    private DeviceInfo mDeviceInfo;
 
     /** Memory variables which are not stored in database */
     private int mRssi;
@@ -28,14 +29,8 @@ public class Device {
     /** Set to true if the device is stored in database. */
     private boolean isSaved;
 
-    /** BLE MAC address of the device (unique ID).*/
-    private String mBleMacAddress;
-
     /** Bluetooth adapter used for scanning and connecting.*/
     private final BluetoothAdapter mBluetoothAdapter;
-
-    /** Application context. */
-    private final Context mContext;
 
     /* Device object for the given mBleMacAddress(it need not to be in the range) */
     private BluetoothDevice mBleDevice;
@@ -44,6 +39,8 @@ public class Device {
     /* Condition which would be open(trigger) only when BLE connection is opened and GATT services are discovered. */
     private final ConditionVariable mBleServicesDiscovered;
     private final ConditionVariable mBleCharacteristicWritten;
+
+    private DatabaseHelper databaseHelper = null;
 
     private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
     private static final int BLE_GATT_WRITE_TIMEOUT = 3000;
@@ -58,53 +55,23 @@ public class Device {
     /**
      * Construct a new device.
      * @param bluetoothAdapter Bluetooth Adapter to be used when scanning, writing to the BLE device.
-     * @param context Application context for opening the database.
      */
-    public Device(BluetoothAdapter bluetoothAdapter, Context context) {
+    public Device(BluetoothAdapter bluetoothAdapter) {
+        mDeviceInfo = new DeviceInfo();
         mBleServicesDiscovered = new ConditionVariable();
         mBleCharacteristicWritten = new ConditionVariable();
         mBluetoothAdapter = bluetoothAdapter;
-        mContext = context;
     }
 
-    public String getBleMacAddress() {
-        return mBleMacAddress;
-    }
-
-    public void setBleMacAddress(String _ble_mac_address) {
-        this.mBleMacAddress = _ble_mac_address;
-    }
-
-    public String getName() {
-        return mName;
-    }
-
-    public void setName(String _name) {
-        this.mName = _name;
-    }
-
-    public String getApplianceType() {
-        return mApplianceType;
-    }
-
-    public void setApplianceType(String _appliance_type) {
-        this.mApplianceType = _appliance_type;
-    }
-
-    public String getApplianceMake() {
-        return mApplianceMake;
-    }
-
-    public void setApplianceMake(String _appliance_make) {
-        this.mApplianceMake = _appliance_make;
-    }
-
-    public String getApplianceModel() {
-        return mApplianceModel;
-    }
-
-    public void setApplianceModel(String _appliance_model) {
-        this.mApplianceModel = _appliance_model;
+    /**
+     * Construct a new device based on given BLE Device.
+     */
+    public Device(BluetoothAdapter bluetoothAdapter, BluetoothDevice bleDevice, int rssi) {
+        this(bluetoothAdapter);
+        this.mBleDevice = bleDevice;
+        this.mDeviceInfo.name = bleDevice.getName();
+        this.mDeviceInfo.address = bleDevice.getAddress();
+        this.setRssi(rssi);
     }
 
     public int getRssi() {
@@ -116,21 +83,61 @@ public class Device {
     }
 
     /**
+     * You'll need this in your class to get the helper from the manager once per class.
+     */
+    private DatabaseHelper getHelper() {
+        if (databaseHelper == null) {
+            databaseHelper = OpenHelperManager.getHelper(ApplicationGlobals.getAppContext(), DatabaseHelper.class);
+        }
+        return databaseHelper;
+    }
+
+    /**
+     * Setter for mDeviceInfo
+     * @param deviceInfo Device Info to set
+     * @param isSavedInDatabase True if this information is already stored in database.
+     */
+    public void setDeviceInfo(DeviceInfo deviceInfo, boolean isSavedInDatabase) {
+        this.mDeviceInfo = deviceInfo;
+        this.isSaved = isSavedInDatabase;
+    }
+
+    /**
+     * Getter for mDeviceInfo
+     * @return mDeviceInfo
+     */
+    public DeviceInfo getDeviceInfo() {
+        return this.mDeviceInfo;
+    }
+
+    /**
      * Saves the device into database.
      */
     public void save() {
-        DatabaseHelper db = new DatabaseHelper(this.mContext);
-        db.saveDevice(this);
-        this.isSaved = true;
+        try {
+            Dao<DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
+            if (this.isSaved) {
+                deviceInfoDao.create(this.mDeviceInfo);
+            } else {
+                deviceInfoDao.update(this.mDeviceInfo);
+            }
+            this.isSaved = true;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * Deletes the given device from database.
      */
     public void delete() {
-        DatabaseHelper db = new DatabaseHelper(this.mContext);
-        db.removeDevice(this);
-        this.isSaved = false;
+        try {
+            Dao<DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
+            deviceInfoDao.delete(this.mDeviceInfo);
+            this.isSaved = false;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -142,7 +149,7 @@ public class Device {
     }
 
     public void setBleDevice(BluetoothDevice _ble_device) {
-        this.mBleMacAddress = _ble_device.getAddress();
+        this.mDeviceInfo.address = _ble_device.getAddress();
         this.mBleDevice = _ble_device;
     }
 
@@ -241,7 +248,7 @@ public class Device {
             return bleGatt;
         }
         if (mBleDevice == null) {
-            mBleDevice = bluetoothAdapter.getRemoteDevice(this.mBleMacAddress);
+            mBleDevice = bluetoothAdapter.getRemoteDevice(this.mDeviceInfo.address);
         }
         bleGatt = mBleDevice.connectGatt(context , true, mGattCallback);
         device.setBleGatt(bleGatt);
@@ -267,7 +274,7 @@ public class Device {
      * @param value Value to be written to the Characteristic.
      */
     private void writeBleCharacteristic(UUID serviceId, UUID characteristicId,  byte[] value) {
-        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, mBluetoothAdapter, mContext, serviceId, characteristicId, value);
+        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, mBluetoothAdapter, serviceId, characteristicId, value);
         new WriteBleCharacteristicTask().execute(p);
     }
 
@@ -280,12 +287,10 @@ public class Device {
         final UUID characteristicId;
         final byte[] value;
         final BluetoothAdapter bluetoothAdapter;
-        final Context context;
         public WriteBleCharacteristicTaskParam(Device device, BluetoothAdapter bluetoothAdapter,
-                                               Context context,  UUID serviceId, UUID characteristicId,  byte[] value) {
+                                               UUID serviceId, UUID characteristicId,  byte[] value) {
             this.device = device;
             this.bluetoothAdapter = bluetoothAdapter;
-            this.context = context;
             this.serviceId = serviceId;
             this.characteristicId = characteristicId;
             this.value = value;
@@ -340,7 +345,8 @@ public class Device {
                     break;
                 }
 
-                totalSize += writeCharacteristic(param.context, param.bluetoothAdapter, param.device, param.serviceId, param.characteristicId, param.value);
+                totalSize += writeCharacteristic(ApplicationGlobals.getAppContext(), param.bluetoothAdapter,
+                                                 param.device, param.serviceId, param.characteristicId, param.value);
             }
             return totalSize;
         }
