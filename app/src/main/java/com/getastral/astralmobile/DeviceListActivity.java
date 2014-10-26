@@ -33,7 +33,6 @@ public class DeviceListActivity extends Activity
      * device.
      */
     private boolean mTwoPane;
-    DatabaseHelper db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +52,6 @@ public class DeviceListActivity extends Activity
                     .findFragmentById(R.id.device_list))
                     .setActivateOnItemClick(true);
         }
-
-        db = new DatabaseHelper(this);
 
         // TODO: If exposing deep links into your app, handle intents here.
     }

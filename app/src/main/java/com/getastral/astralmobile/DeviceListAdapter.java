@@ -3,7 +3,6 @@ package com.getastral.astralmobile;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,7 +35,6 @@ public class DeviceListAdapter extends BaseAdapter {
      * @return DeviceListAdapter instance.
      */
     public static DeviceListAdapter getInstance() {
-        Log.d(LOG_TAG_DEVICE_LIST_ADAPTER, "Empty deviceListAdapter");
         return mInstance;
     }
 
@@ -84,7 +82,7 @@ public class DeviceListAdapter extends BaseAdapter {
     protected Device getDevice(BluetoothDevice bleDevice) {
         for (int i = 0; i < mDeviceList.size(); i++) {
             Device device = mDeviceList.get(i);
-            if (device.getBleMacAddress().equals(bleDevice.getAddress())) {
+            if (device.getDeviceInfo().address.equals(bleDevice.getAddress())) {
                 return device;
             }
         }
@@ -195,7 +193,7 @@ public class DeviceListAdapter extends BaseAdapter {
         btnOn.setEnabled(device.getRssi() != 0);
 
         imgIcon.setImageResource(R.drawable.ic_launcher);
-        txtTitle.setText(device.getName());
+        txtTitle.setText(device.getDeviceInfo().name);
 
         return convertView;
     }
