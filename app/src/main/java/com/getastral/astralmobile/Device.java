@@ -116,7 +116,7 @@ public class Device {
     public void save() {
         try {
             Dao<DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
-            if (this.isSaved) {
+            if (!this.isSaved) {
                 deviceInfoDao.create(this.mDeviceInfo);
             } else {
                 deviceInfoDao.update(this.mDeviceInfo);
