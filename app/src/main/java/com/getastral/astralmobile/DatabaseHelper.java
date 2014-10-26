@@ -11,6 +11,10 @@ import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +33,11 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String DATABASE_NAME = "astralthings.db";
     private static final int DATABASE_VERSION = 1;
 
-    // the DAO object we use to access the SimpleData table
+    // the DAO objects for various tables
     private Dao<DeviceInfo, String> deviceInfoDao = null;
     private RuntimeExceptionDao<DeviceInfo, String> deviceInfoRuntimeDao = null;
+    private Dao<ApplianceType, String> applianceTypeDao = null;
+    private Dao<ApplianceMake, String> applianceMakeDao = null;
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -48,6 +54,25 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return mInstance;
     }
 
+    private void populateTables() {
+        try {
+            Dao<ApplianceMake, String> applianceMakeDao = getApplianceMakeDao();
+            Dao<ApplianceType, String> applianceTypeDao = getApplianceTypeDao();
+
+            InputStream is = ApplicationGlobals.getAppContext().getResources().openRawResource(R.raw.populate_db);
+            DataInputStream in = new DataInputStream(is);
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String strLine;
+            while ((strLine = br.readLine()) != null) {
+                applianceMakeDao.updateRaw(strLine);
+            }
+            in.close();
+        } catch (Exception e) {
+            Log.d(LOG_TAG_DATABASE_HELPER, "Can't populate database");
+            e.printStackTrace();
+        }
+    }
+
     /**
      * Called when the database is first created.
      * Creates required tables.
@@ -57,8 +82,11 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         try {
             Log.i(DatabaseHelper.class.getName(), "onCreate");
             TableUtils.createTable(connectionSource, DeviceInfo.class);
+            TableUtils.createTable(connectionSource, ApplianceMake.class);
+            TableUtils.createTable(connectionSource, ApplianceType.class);
+            populateTables();
         } catch (SQLException e) {
-            Log.e(DatabaseHelper.class.getName(), "Can't create database", e);
+            Log.e(LOG_TAG_DATABASE_HELPER, "Can't create database", e);
             throw new RuntimeException(e);
         }
     }
@@ -124,6 +152,27 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return deviceList;
     }
 
+    /**
+     * Returns the Database Access Object (DAO) for ApplianceType.
+     * It will create it or just give the cached value.
+     */
+    public Dao<ApplianceType, String> getApplianceTypeDao() throws SQLException {
+        if (applianceTypeDao == null) {
+            applianceTypeDao = getDao(ApplianceType.class);
+        }
+        return applianceTypeDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for ApplianceMake.
+     * It will create it or just give the cached value.
+     */
+    public Dao<ApplianceMake, String> getApplianceMakeDao() throws SQLException {
+        if (applianceMakeDao == null) {
+            applianceMakeDao = getDao(ApplianceMake.class);
+        }
+        return applianceMakeDao;
+    }
     /**
      * Close the database connections and clear any cached DAOs.
      */
