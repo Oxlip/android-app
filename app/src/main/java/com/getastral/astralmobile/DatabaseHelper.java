@@ -39,6 +39,10 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private Dao<ApplianceType, String> applianceTypeDao = null;
     private Dao<ApplianceMake, String> applianceMakeDao = null;
 
+    // cached copy of appliance type and make
+    private static List<ApplianceType> applianceTypeList = null;
+    private static List<ApplianceMake> applianceMakeList = null;
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -151,6 +155,46 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
         return deviceList;
     }
+
+
+    /**
+     * Returns list of appliance types.
+     *
+     * @return List of appliance types.
+     */
+    public static List<ApplianceType> getApplianceTypeList() {
+        if (applianceTypeList != null) {
+            return applianceTypeList;
+        }
+        applianceTypeList = new ArrayList<ApplianceType>();
+        try {
+            applianceTypeList = getInstance().getApplianceTypeDao().queryForAll();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return applianceTypeList;
+    }
+
+    /**
+     * Returns list of appliance makes.
+     *
+     * @return List of appliance makes.
+     */
+    public static List<ApplianceMake> getApplianceMakeList() {
+        if (applianceMakeList != null) {
+            return applianceMakeList;
+        }
+        applianceMakeList = new ArrayList<ApplianceMake>();
+        try {
+            applianceMakeList = getInstance().getApplianceMakeDao().queryForAll();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return applianceMakeList;
+    }
+
 
     /**
      * Returns the Database Access Object (DAO) for ApplianceType.

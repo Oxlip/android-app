@@ -13,15 +13,4 @@
 
     <string name="dl_btn_connect">Connect</string>
 
-    <string-array name="appliances_array">
-        <item>CFL</item>
-        <item>LED</item>
-        <item>Lamp</item>
-        <item>Television</item>
-        <item>Home Theatre</item>
-        <item>Cable/Setup box</item>
-        <item>Fan</item>
-        <item>Gaming Console</item>
-    </string-array>
-
 </resources>

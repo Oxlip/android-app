@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
+import java.util.List;
+
 
 /**
  * A fragment representing a single Device detail screen.
@@ -35,9 +37,13 @@ public class DeviceDetailFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_device_detail, container, false);
         Activity activity = getActivity();
         Spinner spinner = (Spinner) rootView.findViewById(R.id.dd_lst_connected_device);
-        // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(activity,
-                R.array.appliances_array, android.R.layout.simple_spinner_dropdown_item);
+
+        List<ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
+
+        final ArrayAdapter<ApplianceType> adapter =
+                new ArrayAdapter<ApplianceType>(getActivity().getApplicationContext(),
+                        android.R.layout.simple_spinner_dropdown_item, applianceTypeList);
+
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
