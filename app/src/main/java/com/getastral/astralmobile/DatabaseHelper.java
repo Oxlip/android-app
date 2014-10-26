@@ -9,6 +9,8 @@ import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.DatabaseTable;
 import com.j256.ormlite.table.TableUtils;
@@ -19,6 +21,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -232,6 +235,59 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return applianceMakeList;
     }
 
+    /**
+     * Get sensor data for the given date range for a given device.
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param startDate Start date.
+     * @param endDate End date.
+     * @return List of DeviceData for the given range.
+     */
+    public static List<DeviceData> getDeviceDataListForDateRange(String address, Date startDate, Date endDate) {
+        try {
+            QueryBuilder<DeviceData, String> queryBuilder = getInstance().getDeviceDataDao().queryBuilder();
+            Where<DeviceData, String> whereQuery;
+            whereQuery = queryBuilder.where().ge("startDate", startDate).and().le("endDate", endDate);
+            if (address != null) {
+                whereQuery = whereQuery.and().eq("address", address);
+            }
+
+            return getInstance().getDeviceDataDao().query(whereQuery.prepare());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Get all sensor data for the given date range.
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param startDate - Start date from when to count.
+     * @param days - Number of days to retrieve.
+     * @return List of DeviceData for the given number of days.
+     */
+    public static List<DeviceData> getDeviceDataListForDateRange(String address, Date startDate, int days) {
+        Date endDate;
+        Calendar c = Calendar.getInstance();
+        c.setTime(startDate);
+        c.add(Calendar.DATE, days);
+        endDate = c.getTime();
+        return getDeviceDataListForDateRange(address, startDate, endDate);
+    }
+
+    /**
+     * Get all sensor data for the given date range.
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param startDate - Start date from when to count.
+     * @param months - Number of months from startDate.
+     * @return List of DeviceData for the given number of days.
+     */
+    public static List<DeviceData> getDeviceDataListForMonthRange(String address, Date startDate, int months) {
+        Date endDate;
+        Calendar c = Calendar.getInstance();
+        c.setTime(startDate);
+        c.add(Calendar.MONTH, months);
+        endDate = c.getTime();
+        return getDeviceDataListForDateRange(address, startDate, endDate);
+    }
 
     /**
      * Close the database connections and clear any cached DAOs.
@@ -362,13 +418,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         DeviceInfo deviceInfo;
 
         /**
-         * Start time when the reading taken.
+         * Time when the sensor data recording was started.
          */
         @DatabaseField(canBeNull = false)
         Date startDate;
 
         /**
-         * End time of reading.
+         * Time when the sensor data recording was ended.
          */
         @DatabaseField
         Date endDate;
