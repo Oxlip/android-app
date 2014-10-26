@@ -41,6 +41,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private RuntimeExceptionDao<DeviceInfo, String> deviceInfoRuntimeDao = null;
     private Dao<ApplianceType, String> applianceTypeDao = null;
     private Dao<ApplianceMake, String> applianceMakeDao = null;
+    private Dao<DeviceData, String> deviceDataDao = null;
 
     // cached copy of appliance type and make
     private static List<ApplianceType> applianceTypeList = null;
@@ -126,6 +127,39 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
+     * Returns the Database Access Object (DAO) for ApplianceType.
+     * It will create it or just give the cached value.
+     */
+    public Dao<ApplianceType, String> getApplianceTypeDao() throws SQLException {
+        if (applianceTypeDao == null) {
+            applianceTypeDao = getDao(ApplianceType.class);
+        }
+        return applianceTypeDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for ApplianceMake.
+     * It will create it or just give the cached value.
+     */
+    public Dao<ApplianceMake, String> getApplianceMakeDao() throws SQLException {
+        if (applianceMakeDao == null) {
+            applianceMakeDao = getDao(ApplianceMake.class);
+        }
+        return applianceMakeDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for ApplianceMake.
+     * It will create it or just give the cached value.
+     */
+    public Dao<DeviceData, String> getDeviceDataDao() throws SQLException {
+        if (deviceDataDao == null) {
+            deviceDataDao = getDao(DeviceData.class);
+        }
+        return deviceDataDao;
+    }
+
+    /**
      * Returns the RuntimeExceptionDao (Database Access Object) version of a Dao for our DeviceInfo class. It will
      * create it or just give the cached value. RuntimeExceptionDao only through RuntimeExceptions.
      */
@@ -199,27 +233,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
 
-    /**
-     * Returns the Database Access Object (DAO) for ApplianceType.
-     * It will create it or just give the cached value.
-     */
-    public Dao<ApplianceType, String> getApplianceTypeDao() throws SQLException {
-        if (applianceTypeDao == null) {
-            applianceTypeDao = getDao(ApplianceType.class);
-        }
-        return applianceTypeDao;
-    }
-
-    /**
-     * Returns the Database Access Object (DAO) for ApplianceMake.
-     * It will create it or just give the cached value.
-     */
-    public Dao<ApplianceMake, String> getApplianceMakeDao() throws SQLException {
-        if (applianceMakeDao == null) {
-            applianceMakeDao = getDao(ApplianceMake.class);
-        }
-        return applianceMakeDao;
-    }
     /**
      * Close the database connections and clear any cached DAOs.
      */
@@ -334,5 +347,42 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         DeviceInfo() {
             // needed by ormlite
         }
+    }
+
+    /**
+     * Sensor Data from all devices.
+     * Currently expects only current sensor data.
+     */
+    @DatabaseTable(tableName = "DeviceData")
+    public static class DeviceData {
+        /**
+         * Device which generated this data.
+         */
+        @DatabaseField(foreign = true)
+        DeviceInfo deviceInfo;
+
+        /**
+         * Start time when the reading taken.
+         */
+        @DatabaseField(canBeNull = false)
+        Date startDate;
+
+        /**
+         * End time of reading.
+         */
+        @DatabaseField
+        Date endDate;
+
+        /**
+         * Sensor value.
+         */
+        @DatabaseField(canBeNull = false)
+        float sensorValue;
+
+        /**
+         * value type (W=watts or V=volts).
+         */
+        @DatabaseField(canBeNull = false)
+        String valueType;
     }
 }
