@@ -8,7 +8,9 @@ import android.util.Log;
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.DatabaseTable;
 import com.j256.ormlite.table.TableUtils;
 
 import java.io.BufferedReader;
@@ -17,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -225,5 +228,111 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         super.close();
         deviceInfoDao = null;
         deviceInfoRuntimeDao = null;
+    }
+
+    /**
+     * Appliance Make
+     */
+    @DatabaseTable(tableName = "ApplianceMake")
+    static class ApplianceMake {
+        /**
+         * Unique Appliance Manufacturers name.
+         */
+        @DatabaseField(id = true)
+        String name;
+
+        /**
+         * Icon resource name.
+         */
+        @DatabaseField(canBeNull = false)
+        String imageName;
+
+        ApplianceMake() {
+            // needed by ormlite
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    /**
+     * Appliance Type.
+     */
+    @DatabaseTable(tableName = "ApplianceType")
+    static class ApplianceType {
+        /**
+         * Unique type name - Light, Fan, TV etc.
+         */
+        @DatabaseField(id = true)
+        String name;
+
+        /**
+         * True if this appliance is dimmable.
+         */
+        @DatabaseField(canBeNull = false)
+        boolean isDimmable;
+
+        /**
+         * Icon resource name.
+         */
+        @DatabaseField(canBeNull = true)
+        String imageName;
+
+        ApplianceType() {
+            // needed by ormlite
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    /**
+     * Information such as Name, Type etc that is associated with a device.
+     */
+    @DatabaseTable(tableName = "DeviceInfo")
+    public static class DeviceInfo {
+        /**
+         * Unique address of the device(BLE MAC address).
+         */
+        @DatabaseField(id = true)
+        String address;
+
+        /**
+         * Custom name given by the user.
+         */
+        @DatabaseField(index = true)
+        String name;
+
+        /**
+         * Type of the connected appliance - Light, Fan, TV etc
+         */
+        @DatabaseField
+        String applianceType;
+
+        /**
+         * Appliance manufacturer.
+         */
+        @DatabaseField
+        String applianceMake;
+
+        /**
+         * Appliance manufacturer's model number.
+         */
+        @DatabaseField
+        String applianceModel;
+
+        /**
+         * When this appliance was bought.
+         */
+        @DatabaseField
+        Date applianceYear;
+
+        DeviceInfo() {
+            // needed by ormlite
+        }
     }
 }

@@ -21,7 +21,7 @@ import java.util.UUID;
 
 public class Device {
     /** Device information such as name, address etc*/
-    private DeviceInfo mDeviceInfo;
+    private DatabaseHelper.DeviceInfo mDeviceInfo;
 
     /** Memory variables which are not stored in database */
     private int mRssi;
@@ -57,7 +57,7 @@ public class Device {
      * @param bluetoothAdapter Bluetooth Adapter to be used when scanning, writing to the BLE device.
      */
     public Device(BluetoothAdapter bluetoothAdapter) {
-        mDeviceInfo = new DeviceInfo();
+        mDeviceInfo = new DatabaseHelper.DeviceInfo();
         mBleServicesDiscovered = new ConditionVariable();
         mBleCharacteristicWritten = new ConditionVariable();
         mBluetoothAdapter = bluetoothAdapter;
@@ -97,7 +97,7 @@ public class Device {
      * @param deviceInfo Device Info to set
      * @param isSavedInDatabase True if this information is already stored in database.
      */
-    public void setDeviceInfo(DeviceInfo deviceInfo, boolean isSavedInDatabase) {
+    public void setDeviceInfo(DatabaseHelper.DeviceInfo deviceInfo, boolean isSavedInDatabase) {
         this.mDeviceInfo = deviceInfo;
         this.isSaved = isSavedInDatabase;
     }
@@ -106,7 +106,7 @@ public class Device {
      * Getter for mDeviceInfo
      * @return mDeviceInfo
      */
-    public DeviceInfo getDeviceInfo() {
+    public DatabaseHelper.DeviceInfo getDeviceInfo() {
         return this.mDeviceInfo;
     }
 
@@ -115,7 +115,7 @@ public class Device {
      */
     public void save() {
         try {
-            Dao<DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
+            Dao<DatabaseHelper.DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
             if (!this.isSaved) {
                 deviceInfoDao.create(this.mDeviceInfo);
             } else {
@@ -132,7 +132,7 @@ public class Device {
      */
     public void delete() {
         try {
-            Dao<DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
+            Dao<DatabaseHelper.DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
             deviceInfoDao.delete(this.mDeviceInfo);
             this.isSaved = false;
         } catch (SQLException e) {

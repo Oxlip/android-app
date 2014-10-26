@@ -38,10 +38,10 @@ public class DeviceDetailFragment extends Fragment {
         Activity activity = getActivity();
         Spinner spinner = (Spinner) rootView.findViewById(R.id.dd_lst_connected_device);
 
-        List<ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
+        List<DatabaseHelper.ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
 
-        final ArrayAdapter<ApplianceType> adapter =
-                new ArrayAdapter<ApplianceType>(getActivity().getApplicationContext(),
+        final ArrayAdapter<DatabaseHelper.ApplianceType> adapter =
+                new ArrayAdapter<DatabaseHelper.ApplianceType>(getActivity().getApplicationContext(),
                         android.R.layout.simple_spinner_dropdown_item, applianceTypeList);
 
         // Specify the layout to use when the list of choices appears
