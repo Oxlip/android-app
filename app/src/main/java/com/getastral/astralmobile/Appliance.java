@@ -29,6 +29,11 @@ class ApplianceType {
     ApplianceType() {
         // needed by ormlite
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
 
 /**
@@ -50,5 +55,10 @@ class ApplianceMake {
 
     ApplianceMake() {
         // needed by ormlite
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
