@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Database helper is used to manage the creation and upgrading of your database.
@@ -233,6 +234,41 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         }
 
         return applianceMakeList;
+    }
+
+    public static void testInsertDeviceData(DeviceInfo deviceInfo, Date startDate, Date endDate){
+        DeviceData deviceData;
+        Random r = new Random();
+        Random wattRandom = new Random();
+        float watt;
+        Calendar start = Calendar.getInstance();
+        start.setTime(startDate);
+        Calendar end = Calendar.getInstance();
+        end.setTime(endDate);
+        wattRandom.setSeed(start.getTimeInMillis());
+        watt = wattRandom.nextInt(1000);
+        boolean isOff = true;
+
+        for (; !start.after(end); ) {
+            try {
+                deviceData = new DeviceData();
+                deviceData.deviceInfo = deviceInfo;
+                deviceData.startDate = start.getTime();
+                start.add(Calendar.HOUR, r.nextInt(18));
+                deviceData.endDate = start.getTime();
+                if (isOff) {
+                    deviceData.sensorValue = 0;
+                } else {
+                    deviceData.sensorValue = watt;
+                }
+                isOff = !isOff;
+
+                deviceData.valueType = "W";
+                getInstance().getDeviceDataDao().create(deviceData);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
