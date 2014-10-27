@@ -31,4 +31,11 @@
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/dd_lbl_connected_to"/>
 
+    <Button
+        android:id="@+id/btn_test_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/dd_lbl_connected_to"
+        android:text="Add Test Data"/>
+
 </RelativeLayout>

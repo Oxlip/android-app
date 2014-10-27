@@ -92,11 +92,13 @@ public class DeviceListActivity extends Activity
      */
     @Override
     public void onItemSelected(String id) {
+        String deviceAddress = (String) DeviceListAdapter.getInstance().getItem(Integer.parseInt(id));
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.
             Bundle arguments = new Bundle();
+            arguments.putString("deviceAddress", deviceAddress);
             DeviceDetailFragment fragment = new DeviceDetailFragment();
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
@@ -107,6 +109,7 @@ public class DeviceListActivity extends Activity
             // In single-pane mode, simply start the detail activity
             // for the selected item ID.
             Intent detailIntent = new Intent(this, DeviceDetailActivity.class);
+            detailIntent.putExtra("deviceAddress", deviceAddress);
             startActivity(detailIntent);
         }
     }

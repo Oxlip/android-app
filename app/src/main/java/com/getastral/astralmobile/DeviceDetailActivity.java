@@ -43,8 +43,11 @@ public class DeviceDetailActivity extends Activity {
         if (savedInstanceState == null) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
-            Bundle arguments = new Bundle();
             DeviceDetailFragment fragment = new DeviceDetailFragment();
+            Bundle arguments = new Bundle();
+            String deviceAddress = getIntent().getExtras().getString("deviceAddress");
+            arguments.putString("deviceAddress", deviceAddress);
+
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
                     .add(R.id.device_detail_container, fragment)
