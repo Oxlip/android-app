@@ -68,7 +68,7 @@ public class DeviceListFragment extends Fragment {
         /**
          * Callback for when an item has been selected.
          */
-        public void onItemSelected(String id);
+        public void onItemSelected(Device device);
     }
 
     /**
@@ -77,7 +77,7 @@ public class DeviceListFragment extends Fragment {
      */
     private static final Callbacks sDummyCallbacks = new Callbacks() {
         @Override
-        public void onItemSelected(String id) {
+        public void onItemSelected(Device device) {
         }
     };
 
@@ -276,7 +276,8 @@ public class DeviceListFragment extends Fragment {
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mCallbacks.onItemSelected(Integer.toString(position));
+                Device device = (Device) DeviceListAdapter.getInstance().getItem(position);
+                mCallbacks.onItemSelected(device);
             }
         });
     }

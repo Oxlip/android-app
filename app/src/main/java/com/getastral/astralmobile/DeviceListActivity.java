@@ -91,8 +91,8 @@ public class DeviceListActivity extends Activity
      * indicating that the item with the given ID was selected.
      */
     @Override
-    public void onItemSelected(String id) {
-        String deviceAddress = (String) DeviceListAdapter.getInstance().getItem(Integer.parseInt(id));
+    public void onItemSelected(Device device) {
+        String deviceAddress = device.getDeviceInfo().address;
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
