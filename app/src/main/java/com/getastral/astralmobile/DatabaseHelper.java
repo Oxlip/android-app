@@ -8,7 +8,11 @@ import android.util.Log;
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.stmt.QueryBuilder;
+import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.table.DatabaseTable;
 import com.j256.ormlite.table.TableUtils;
 
 import java.io.BufferedReader;
@@ -17,7 +21,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Database helper is used to manage the creation and upgrading of your database.
@@ -38,6 +45,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private RuntimeExceptionDao<DeviceInfo, String> deviceInfoRuntimeDao = null;
     private Dao<ApplianceType, String> applianceTypeDao = null;
     private Dao<ApplianceMake, String> applianceMakeDao = null;
+    private Dao<DeviceData, String> deviceDataDao = null;
 
     // cached copy of appliance type and make
     private static List<ApplianceType> applianceTypeList = null;
@@ -88,6 +96,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             TableUtils.createTable(connectionSource, DeviceInfo.class);
             TableUtils.createTable(connectionSource, ApplianceMake.class);
             TableUtils.createTable(connectionSource, ApplianceType.class);
+            TableUtils.createTable(connectionSource, DeviceData.class);
             populateTables();
         } catch (SQLException e) {
             Log.e(LOG_TAG_DATABASE_HELPER, "Can't create database", e);
@@ -120,6 +129,39 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             deviceInfoDao = getDao(DeviceInfo.class);
         }
         return deviceInfoDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for ApplianceType.
+     * It will create it or just give the cached value.
+     */
+    public Dao<ApplianceType, String> getApplianceTypeDao() throws SQLException {
+        if (applianceTypeDao == null) {
+            applianceTypeDao = getDao(ApplianceType.class);
+        }
+        return applianceTypeDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for ApplianceMake.
+     * It will create it or just give the cached value.
+     */
+    public Dao<ApplianceMake, String> getApplianceMakeDao() throws SQLException {
+        if (applianceMakeDao == null) {
+            applianceMakeDao = getDao(ApplianceMake.class);
+        }
+        return applianceMakeDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for ApplianceMake.
+     * It will create it or just give the cached value.
+     */
+    public Dao<DeviceData, String> getDeviceDataDao() throws SQLException {
+        if (deviceDataDao == null) {
+            deviceDataDao = getDao(DeviceData.class);
+        }
+        return deviceDataDao;
     }
 
     /**
@@ -195,28 +237,95 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return applianceMakeList;
     }
 
+    public static void testInsertDeviceData(String deviceAddress, Date startDate, Date endDate){
+        DeviceData deviceData;
+        Random r = new Random();
+        Random wattRandom = new Random();
+        float watt;
+        Calendar start = Calendar.getInstance();
+        start.setTime(startDate);
+        Calendar end = Calendar.getInstance();
+        end.setTime(endDate);
+        wattRandom.setSeed(start.getTimeInMillis());
+        watt = wattRandom.nextInt(1000);
+        boolean isOff = true;
 
-    /**
-     * Returns the Database Access Object (DAO) for ApplianceType.
-     * It will create it or just give the cached value.
-     */
-    public Dao<ApplianceType, String> getApplianceTypeDao() throws SQLException {
-        if (applianceTypeDao == null) {
-            applianceTypeDao = getDao(ApplianceType.class);
+        for (; !start.after(end); ) {
+            try {
+                deviceData = new DeviceData();
+                deviceData.address = deviceAddress;
+                deviceData.startDate = start.getTime();
+                start.add(Calendar.HOUR, r.nextInt(18));
+                deviceData.endDate = start.getTime();
+                if (isOff) {
+                    deviceData.sensorValue = 0;
+                } else {
+                    deviceData.sensorValue = watt;
+                }
+                isOff = !isOff;
+
+                deviceData.valueType = "W";
+                getInstance().getDeviceDataDao().create(deviceData);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
-        return applianceTypeDao;
     }
 
     /**
-     * Returns the Database Access Object (DAO) for ApplianceMake.
-     * It will create it or just give the cached value.
+     * Get sensor data for the given date range for a given device.
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param startDate Start date.
+     * @param endDate End date.
+     * @return List of DeviceData for the given range.
      */
-    public Dao<ApplianceMake, String> getApplianceMakeDao() throws SQLException {
-        if (applianceMakeDao == null) {
-            applianceMakeDao = getDao(ApplianceMake.class);
+    public static List<DeviceData> getDeviceDataListForDateRange(String address, Date startDate, Date endDate) {
+        try {
+            QueryBuilder<DeviceData, String> queryBuilder = getInstance().getDeviceDataDao().queryBuilder();
+            Where<DeviceData, String> whereQuery;
+            whereQuery = queryBuilder.where().ge("startDate", startDate).and().le("endDate", endDate);
+            if (address != null) {
+                whereQuery = whereQuery.and().eq("address", address);
+            }
+
+            return getInstance().getDeviceDataDao().query(whereQuery.prepare());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
-        return applianceMakeDao;
     }
+
+    /**
+     * Get all sensor data for the given date range.
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param startDate - Start date from when to count.
+     * @param days - Number of days to retrieve.
+     * @return List of DeviceData for the given number of days.
+     */
+    public static List<DeviceData> getDeviceDataListForDateRange(String address, Date startDate, int days) {
+        Date endDate;
+        Calendar c = Calendar.getInstance();
+        c.setTime(startDate);
+        c.add(Calendar.DATE, days);
+        endDate = c.getTime();
+        return getDeviceDataListForDateRange(address, startDate, endDate);
+    }
+
+    /**
+     * Get all sensor data for the given date range.
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param startDate - Start date from when to count.
+     * @param months - Number of months from startDate.
+     * @return List of DeviceData for the given number of days.
+     */
+    public static List<DeviceData> getDeviceDataListForMonthRange(String address, Date startDate, int months) {
+        Date endDate;
+        Calendar c = Calendar.getInstance();
+        c.setTime(startDate);
+        c.add(Calendar.MONTH, months);
+        endDate = c.getTime();
+        return getDeviceDataListForDateRange(address, startDate, endDate);
+    }
+
     /**
      * Close the database connections and clear any cached DAOs.
      */
@@ -225,5 +334,153 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         super.close();
         deviceInfoDao = null;
         deviceInfoRuntimeDao = null;
+    }
+
+    /**
+     * Appliance Make
+     */
+    @DatabaseTable(tableName = "ApplianceMake")
+    static class ApplianceMake {
+        /**
+         * Unique Appliance Manufacturers name.
+         */
+        @DatabaseField(id = true)
+        String name;
+
+        /**
+         * Icon resource name.
+         */
+        @DatabaseField(canBeNull = false)
+        String imageName;
+
+        ApplianceMake() {
+            // needed by ormlite
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    /**
+     * Appliance Type.
+     */
+    @DatabaseTable(tableName = "ApplianceType")
+    static class ApplianceType {
+        /**
+         * Unique type name - Light, Fan, TV etc.
+         */
+        @DatabaseField(id = true)
+        String name;
+
+        /**
+         * True if this appliance is dimmable.
+         */
+        @DatabaseField(canBeNull = false)
+        boolean isDimmable;
+
+        /**
+         * Icon resource name.
+         */
+        @DatabaseField(canBeNull = true)
+        String imageName;
+
+        ApplianceType() {
+            // needed by ormlite
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    /**
+     * Information such as Name, Type etc that is associated with a device.
+     */
+    @DatabaseTable(tableName = "DeviceInfo")
+    public static class DeviceInfo {
+        /**
+         * Unique address of the device(BLE MAC address).
+         */
+        @DatabaseField(id = true)
+        String address;
+
+        /**
+         * Custom name given by the user.
+         */
+        @DatabaseField(index = true)
+        String name;
+
+        /**
+         * Type of the connected appliance - Light, Fan, TV etc
+         */
+        @DatabaseField
+        String applianceType;
+
+        /**
+         * Appliance manufacturer.
+         */
+        @DatabaseField
+        String applianceMake;
+
+        /**
+         * Appliance manufacturer's model number.
+         */
+        @DatabaseField
+        String applianceModel;
+
+        /**
+         * When this appliance was bought.
+         */
+        @DatabaseField
+        Date applianceYear;
+
+        DeviceInfo() {
+            // needed by ormlite
+        }
+    }
+
+    /**
+     * Sensor Data from all devices.
+     * Currently expects only current sensor data.
+     */
+    @DatabaseTable(tableName = "DeviceData")
+    public static class DeviceData {
+        /**
+         * Device which generated this data.
+         */
+        @DatabaseField(canBeNull = false)
+        String address;
+
+        /**
+         * Time when the sensor data recording was started.
+         */
+        @DatabaseField(canBeNull = false)
+        Date startDate;
+
+        /**
+         * Time when the sensor data recording was ended.
+         */
+        @DatabaseField
+        Date endDate;
+
+        /**
+         * Sensor value.
+         */
+        @DatabaseField(canBeNull = false)
+        float sensorValue;
+
+        /**
+         * value type (W=watts or V=volts).
+         */
+        @DatabaseField(canBeNull = false)
+        String valueType;
+
+        @Override
+        public String toString() {
+            return address + " " + startDate + " " + endDate + " " + sensorValue +  " " + valueType;
+        }
     }
 }

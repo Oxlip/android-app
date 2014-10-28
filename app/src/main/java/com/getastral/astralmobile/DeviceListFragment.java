@@ -21,6 +21,13 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -68,7 +75,7 @@ public class DeviceListFragment extends Fragment {
         /**
          * Callback for when an item has been selected.
          */
-        public void onItemSelected(String id);
+        public void onItemSelected(Device device);
     }
 
     /**
@@ -77,7 +84,7 @@ public class DeviceListFragment extends Fragment {
      */
     private static final Callbacks sDummyCallbacks = new Callbacks() {
         @Override
-        public void onItemSelected(String id) {
+        public void onItemSelected(Device device) {
         }
     };
 
@@ -259,6 +266,59 @@ public class DeviceListFragment extends Fragment {
         mCallbacks = sDummyCallbacks;
     }
 
+    //TODO - replace this with data from database
+    private void setChartData(PieChart chart) {
+        int count=5;
+        int mult=2;
+        ArrayList<Entry> yVals1 = new ArrayList<Entry>();
+
+        // IMPORTANT: In a PieChart, no values (Entry) should have the same
+        // xIndex (even if from different DataSets), since no values can be
+        // drawn above each other.
+        for (int i = 0; i < count + 1; i++) {
+            yVals1.add(new Entry((float) (Math.random() * mult) + mult / 5, i));
+        }
+
+        ArrayList<String> xVals = new ArrayList<String>();
+
+        for (int i = 0; i < count + 1; i++)
+            xVals.add(Integer.toString(i));
+
+        PieDataSet set1 = new PieDataSet(yVals1, "Device Usage");
+        set1.setSliceSpace(3f);
+
+        // add a lot of colors
+
+        ArrayList<Integer> colors = new ArrayList<Integer>();
+
+        for (int c : ColorTemplate.VORDIPLOM_COLORS)
+            colors.add(c);
+
+        for (int c : ColorTemplate.JOYFUL_COLORS)
+            colors.add(c);
+
+        for (int c : ColorTemplate.COLORFUL_COLORS)
+            colors.add(c);
+
+        for (int c : ColorTemplate.LIBERTY_COLORS)
+            colors.add(c);
+
+        for (int c : ColorTemplate.PASTEL_COLORS)
+            colors.add(c);
+
+        colors.add(ColorTemplate.getHoloBlue());
+
+        set1.setColors(colors);
+
+        PieData data = new PieData(xVals, set1);
+        chart.setData(data);
+
+        // undo all highlights
+        chart.highlightValues(null);
+
+        chart.invalidate();
+    }
+
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
 
@@ -272,13 +332,23 @@ public class DeviceListFragment extends Fragment {
             return;
         }
         listview = (ListView) view.findViewById(R.id.fdl_list);
+
+        LayoutInflater inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View headerView = inflater.inflate(R.layout.header_device_list, listview, false);
+        PieChart chart = (PieChart) headerView.findViewById(R.id.fdl_header_chart);
+        setChartData(chart);
+
+        listview.addHeaderView(headerView, null, true);
+
         listview.setAdapter(DeviceListAdapter.getInstance(activity, deviceList));
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                mCallbacks.onItemSelected(Integer.toString(position));
+                Device device = (Device) DeviceListAdapter.getInstance().getItem(position);
+                mCallbacks.onItemSelected(device);
             }
         });
+
     }
 
     /**

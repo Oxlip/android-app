@@ -8,6 +8,8 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.util.UUID;
+
 
 /**
  * An activity representing a list of Devices. This activity
@@ -68,7 +70,13 @@ public class DeviceListActivity extends Activity
         switch (item.getItemId()) {
             // action with ID action_settings was selected
             case R.id.main_action_bar_settings:
-                Toast.makeText(this, "Settings selected", Toast.LENGTH_SHORT)
+                for(int i=0; i<4; i++) {
+                    Device d = new Device(null);
+                    d.getDeviceInfo().name = "uPlug";
+                    d.getDeviceInfo().address = UUID.randomUUID().toString();
+                    d.save();
+                }
+                Toast.makeText(this, "4 devices added", Toast.LENGTH_SHORT)
                         .show();
                 break;
             default:
@@ -83,12 +91,14 @@ public class DeviceListActivity extends Activity
      * indicating that the item with the given ID was selected.
      */
     @Override
-    public void onItemSelected(String id) {
+    public void onItemSelected(Device device) {
+        String deviceAddress = device.getDeviceInfo().address;
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.
             Bundle arguments = new Bundle();
+            arguments.putString("deviceAddress", deviceAddress);
             DeviceDetailFragment fragment = new DeviceDetailFragment();
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
@@ -99,6 +109,7 @@ public class DeviceListActivity extends Activity
             // In single-pane mode, simply start the detail activity
             // for the selected item ID.
             Intent detailIntent = new Intent(this, DeviceDetailActivity.class);
+            detailIntent.putExtra("deviceAddress", deviceAddress);
             startActivity(detailIntent);
         }
     }
