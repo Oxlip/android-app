@@ -236,7 +236,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return applianceMakeList;
     }
 
-    public static void testInsertDeviceData(DeviceInfo deviceInfo, Date startDate, Date endDate){
+    public static void testInsertDeviceData(String deviceAddress, Date startDate, Date endDate){
         DeviceData deviceData;
         Random r = new Random();
         Random wattRandom = new Random();
@@ -252,7 +252,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         for (; !start.after(end); ) {
             try {
                 deviceData = new DeviceData();
-                deviceData.deviceInfo = deviceInfo;
+                deviceData.address = deviceAddress;
                 deviceData.startDate = start.getTime();
                 start.add(Calendar.HOUR, r.nextInt(18));
                 deviceData.endDate = start.getTime();
@@ -450,8 +450,8 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         /**
          * Device which generated this data.
          */
-        @DatabaseField(foreign = true)
-        DeviceInfo deviceInfo;
+        @DatabaseField(canBeNull = false)
+        String address;
 
         /**
          * Time when the sensor data recording was started.
@@ -476,5 +476,10 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
          */
         @DatabaseField(canBeNull = false)
         String valueType;
+
+        @Override
+        public String toString() {
+            return address + " " + startDate + " " + endDate + " " + sensorValue +  " " + valueType;
+        }
     }
 }
