@@ -176,6 +176,17 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
+     * Returns DeviceInfo for a given deviceAddress
+     */
+    public static DeviceInfo getDeviceInfo(String deviceAddress) {
+        try {
+            return getInstance().getDeviceInfoDao().queryForId(deviceAddress);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Returns all the devices that are registered to the user.
      *
      * @param bluetoothAdapter Bluetooth adapter that should be used to discover device.
