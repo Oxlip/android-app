@@ -337,6 +337,7 @@ public class DeviceListFragment extends Fragment {
         View headerView = inflater.inflate(R.layout.header_device_list, listview, false);
         PieChart chart = (PieChart) headerView.findViewById(R.id.fdl_header_chart);
         setChartData(chart);
+        chart.animateXY(1500, 1500);
 
         listview.addHeaderView(headerView, null, true);
 

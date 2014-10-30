@@ -116,6 +116,7 @@ public class DeviceDetailFragment extends Fragment {
         });
 
         setData(chart);
+        chart.animateX(2500);
 
         return rootView;
     }
