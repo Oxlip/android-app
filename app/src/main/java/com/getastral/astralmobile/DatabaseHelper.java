@@ -280,7 +280,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
                 start.add(Calendar.HOUR, r.nextInt(18));
                 deviceData.endDate = start.getTime();
                 if (isOff) {
-                    deviceData.sensorValue = 0;
+                    continue;
                 } else {
                     deviceData.sensorValue = watt;
                 }
@@ -502,7 +502,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
         @Override
         public String toString() {
-            return address + " " + startDate + " " + endDate + " " + sensorValue +  " " + valueType;
+            return startDate + " " + endDate + " " + sensorValue +  " " + valueType;
         }
     }
 }
