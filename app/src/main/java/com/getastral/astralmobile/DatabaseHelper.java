@@ -381,7 +381,8 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             if (address != null) {
                 query += " AND DeviceData.address=" + address;
             }
-            query += " GROUP BY DeviceData.address ";
+            query += " GROUP BY DeviceData.address";
+            query += " ORDER BY SUM(sensorValue)";
 
             GenericRawResults<String[]> rawResults = deviceDataDao.queryRaw(query);
             List<DeviceDataSummary> result = new LinkedList<DeviceDataSummary>();
