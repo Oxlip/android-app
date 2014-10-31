@@ -2,7 +2,6 @@ package com.getastral.astralmobile;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,7 +15,6 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.utils.LimitLine;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -119,65 +117,28 @@ public class DeviceDetailFragment extends Fragment {
     }
 
     private void setChart(LineChart chart) {
-        int count = 24;
-        float range = 100;
-
-        ArrayList<String> xVals = new ArrayList<String>();
-        for (int i = 0; i < count; i++) {
-            xVals.add((i) + "");
-        }
-
         ArrayList<Entry> yVals = new ArrayList<Entry>();
+        ArrayList<String> xVals = new ArrayList<String>();
+        List<DatabaseHelper.DeviceDataSummary> deviceDataList;
 
-        for (int i = 0; i < count; i++) {
-            float mult = (range + 1);
-            float val = (float) (Math.random() * mult) + 3;// + (float)
-            // ((mult *
-            // 0.1) / 10);
-            yVals.add(new Entry(val, i));
+        deviceDataList = DatabaseHelper.getDeviceDataSummaryListForPastMonth(this.getArguments().getString("deviceAddress"));
+
+        int i = 0;
+        for (DatabaseHelper.DeviceDataSummary dds: deviceDataList) {
+            yVals.add(new Entry(dds.sensorValueSum, i));
+            xVals.add(dds.date.getDate() + "");
+            i++;
         }
 
         // create a dataset and give it a type
         LineDataSet set1 = new LineDataSet(yVals, "DataSet 1");
-        // set1.setFillAlpha(110);
-        // set1.setFillColor(Color.RED);
-
-        // set the line to be drawn like this "- - - - - -"
-        set1.enableDashedLine(10f, 5f, 0f);
-        set1.setColor(Color.BLACK);
-        set1.setCircleColor(Color.BLACK);
-        set1.setLineWidth(1f);
-        set1.setCircleSize(4f);
-        set1.setFillAlpha(65);
-        set1.setFillColor(Color.BLACK);
-        // set1.setShader(new LinearGradient(0, 0, 0, mChart.getHeight(),
-        // Color.BLACK, Color.WHITE, Shader.TileMode.MIRROR));
-
         ArrayList<LineDataSet> dataSets = new ArrayList<LineDataSet>();
-        dataSets.add(set1); // add the datasets
+        dataSets.add(set1);
 
-        // create a data object with the datasets
         LineData data = new LineData(xVals, dataSets);
 
-        LimitLine ll1 = new LimitLine(130f);
-        ll1.setLineWidth(4f);
-        ll1.enableDashedLine(10f, 10f, 0f);
-        ll1.setDrawValue(true);
-        ll1.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT);
-
-        LimitLine ll2 = new LimitLine(-30f);
-        ll2.setLineWidth(4f);
-        ll2.enableDashedLine(10f, 10f, 0f);
-        ll2.setDrawValue(true);
-        ll2.setLabelPosition(LimitLine.LimitLabelPosition.RIGHT);
-
-        data.addLimitLine(ll1);
-        data.addLimitLine(ll2);
-
         chart.setDrawGridBackground(false);
-
-        chart.setBackgroundColor(getResources().getColor(R.color.background) );
-        // set data
+        chart.setBackgroundColor(getResources().getColor(R.color.background));
         chart.setData(data);
     }
 }
