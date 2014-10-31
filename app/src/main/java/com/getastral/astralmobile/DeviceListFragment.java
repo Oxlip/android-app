@@ -338,6 +338,9 @@ public class DeviceListFragment extends Fragment {
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (position <= 0) {
+                    return;
+                }
                 Device device = (Device) DeviceListAdapter.getInstance().getItem(position - 1);
                 mCallbacks.onItemSelected(device);
             }
