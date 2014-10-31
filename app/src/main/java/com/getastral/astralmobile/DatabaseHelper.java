@@ -281,12 +281,12 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
                 deviceData.startDate = start.getTime();
                 start.add(Calendar.HOUR, r.nextInt(18));
                 deviceData.endDate = start.getTime();
+                isOff = !isOff;
                 if (isOff) {
                     continue;
                 } else {
                     deviceData.sensorValue = watt;
                 }
-                isOff = !isOff;
 
                 deviceData.valueType = "W";
                 getInstance().getDeviceDataDao().create(deviceData);
