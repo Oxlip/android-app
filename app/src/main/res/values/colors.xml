@@ -3,6 +3,9 @@
     <color name="background">#34363a</color>
     <color name="foreground">#fffffa</color>
 
+    <color name="topbar">#2e3034</color>
+    <color name="gray">#b4bec2</color>
+
     <color name="red">#FF0000</color>
     <color name="dark_red">#800000</color>
     <color name="orange">#FF9900</color>

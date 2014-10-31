@@ -5,4 +5,15 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="topbar_title_text">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textSize">22sp</item>
+    </style>
+
+    <style name="topbar_descriptive_text">
+        <item name="android:textColor">@color/gray</item>
+        <item name="android:textSize">8sp</item>
+        <item name="android:gravity">center</item>
+    </style>
+
 </resources>
