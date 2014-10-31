@@ -169,6 +169,9 @@ public class DeviceListFragment extends Fragment {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
         scanLeDevice(true);
+
+        PieChart chart = (PieChart) getView().findViewById(R.id.fdl_header_chart);
+        setChartData(chart);
     }
 
     @Override
@@ -266,7 +269,6 @@ public class DeviceListFragment extends Fragment {
         mCallbacks = sDummyCallbacks;
     }
 
-    //TODO - replace this with data from database
     private void setChartData(PieChart chart) {
         int foregroundColor = getResources().getColor(R.color.foreground);
         ArrayList<Entry> yVals = new ArrayList<Entry>();
@@ -282,7 +284,7 @@ public class DeviceListFragment extends Fragment {
             i++;
         }
 
-        PieDataSet pieDataSet = new PieDataSet(yVals, "Appliances");
+        PieDataSet pieDataSet = new PieDataSet(yVals, "");
         pieDataSet.setSliceSpace(3f);
 
         // add a lot of colors
@@ -304,12 +306,13 @@ public class DeviceListFragment extends Fragment {
         l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_CENTER);
         l.setXEntrySpace(7f);
         l.setYEntrySpace(5f);
+        l.setTextSize(12f);
         chart.getPaint(PieChart.PAINT_LEGEND_LABEL).setColor(foregroundColor);
 
         // undo all highlights
         chart.highlightValues(null);
 
-        chart.invalidate();
+        chart.animateXY(1500, 1500);
     }
 
     @Override
@@ -330,7 +333,6 @@ public class DeviceListFragment extends Fragment {
         View headerView = inflater.inflate(R.layout.header_device_list, listview, false);
         PieChart chart = (PieChart) headerView.findViewById(R.id.fdl_header_chart);
         setChartData(chart);
-        chart.animateXY(1500, 1500);
 
         listview.addHeaderView(headerView, null, true);
 
