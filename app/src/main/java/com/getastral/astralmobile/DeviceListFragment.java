@@ -25,7 +25,7 @@ import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.utils.ColorTemplate;
+import com.github.mikephil.charting.utils.Legend;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -268,17 +268,13 @@ public class DeviceListFragment extends Fragment {
 
     //TODO - replace this with data from database
     private void setChartData(PieChart chart) {
-        int count=5;
-        int mult=2;
+        int foregroundColor = getResources().getColor(R.color.foreground);
         ArrayList<Entry> yVals = new ArrayList<Entry>();
         ArrayList<String> xVals = new ArrayList<String>();
         List<DatabaseHelper.DeviceDataSummary> summaryList;
 
         summaryList = DatabaseHelper.getDeviceDataSummaryListForPastNDays(null, 30);
 
-        // IMPORTANT: In a PieChart, no values (Entry) should have the same
-        // xIndex (even if from different DataSets), since no values can be
-        // drawn above each other.
         int i = 0;
         for (DatabaseHelper.DeviceDataSummary dds: summaryList) {
             yVals.add(new Entry(dds.sensorValueSum, i));
@@ -286,33 +282,29 @@ public class DeviceListFragment extends Fragment {
             i++;
         }
 
-        PieDataSet set1 = new PieDataSet(yVals, "Device Usage");
-        set1.setSliceSpace(3f);
+        PieDataSet pieDataSet = new PieDataSet(yVals, "Appliances");
+        pieDataSet.setSliceSpace(3f);
 
         // add a lot of colors
+        pieDataSet.setColors(getResources().getIntArray(R.array.main_chart));
 
-        ArrayList<Integer> colors = new ArrayList<Integer>();
-        for (int c : ColorTemplate.VORDIPLOM_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.JOYFUL_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.LIBERTY_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.PASTEL_COLORS)
-            colors.add(c);
-
-        for (int c : ColorTemplate.COLORFUL_COLORS)
-            colors.add(c);
-
-        colors.add(ColorTemplate.getHoloBlue());
-
-        set1.setColors(colors);
-
-        PieData data = new PieData(xVals, set1);
+        PieData data = new PieData(xVals, pieDataSet);
         chart.setData(data);
+
+        chart.setDrawXValues(false);
+        chart.setUsePercentValues(true);
+
+        chart.setHoleColor(getResources().getColor(R.color.background));
+        chart.setCenterText("Energy\nUsage");
+        chart.setCenterTextSize(24f);
+        chart.getPaint(PieChart.PAINT_CENTER_TEXT).setColor(foregroundColor);
+
+        chart.setDescription("");
+        Legend l = chart.getLegend();
+        l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_CENTER);
+        l.setXEntrySpace(7f);
+        l.setYEntrySpace(5f);
+        chart.getPaint(PieChart.PAINT_LEGEND_LABEL).setColor(foregroundColor);
 
         // undo all highlights
         chart.highlightValues(null);
