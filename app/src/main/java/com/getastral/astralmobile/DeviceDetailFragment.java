@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.Spinner;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -52,7 +51,6 @@ public class DeviceDetailFragment extends Fragment {
         Button btnTest = (Button) rootView.findViewById(R.id.dd_btn_test_data);
         Button btnSave = (Button) rootView.findViewById(R.id.dd_btn_save);
         LineChart chart = (LineChart) rootView.findViewById(R.id.ddl_chart);
-        ListView lstDeviceData = (ListView) rootView.findViewById(R.id.dd_lst_device_data);
         String deviceAddress = this.getArguments().getString("deviceAddress");
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
         Calendar c = Calendar.getInstance();
@@ -70,7 +68,6 @@ public class DeviceDetailFragment extends Fragment {
 
         ArrayAdapter<DatabaseHelper.DeviceData> ddAdapter = new ArrayAdapter<DatabaseHelper.DeviceData>(getActivity(),
                 android.R.layout.simple_list_item_1, DatabaseHelper.getDeviceDataListForDateRange(deviceAddress, c.getTime(), 31));
-        lstDeviceData.setAdapter(ddAdapter);
 
         txtName.setText(deviceInfo.name);
         int position = 0;
@@ -115,12 +112,13 @@ public class DeviceDetailFragment extends Fragment {
             }
         });
 
-        setData(chart);
+        setChart(chart);
         chart.animateX(2500);
 
         return rootView;
     }
-    private void setData(LineChart chart) {
+
+    private void setChart(LineChart chart) {
         int count = 24;
         float range = 100;
 
@@ -176,6 +174,9 @@ public class DeviceDetailFragment extends Fragment {
         data.addLimitLine(ll1);
         data.addLimitLine(ll2);
 
+        chart.setDrawGridBackground(false);
+
+        chart.setBackgroundColor(getResources().getColor(R.color.background) );
         // set data
         chart.setData(data);
     }
