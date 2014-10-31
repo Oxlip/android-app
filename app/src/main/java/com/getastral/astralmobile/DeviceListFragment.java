@@ -270,40 +270,41 @@ public class DeviceListFragment extends Fragment {
     private void setChartData(PieChart chart) {
         int count=5;
         int mult=2;
-        ArrayList<Entry> yVals1 = new ArrayList<Entry>();
+        ArrayList<Entry> yVals = new ArrayList<Entry>();
+        ArrayList<String> xVals = new ArrayList<String>();
+        List<DatabaseHelper.DeviceDataSummary> summaryList;
+
+        summaryList = DatabaseHelper.getDeviceDataSummaryListForPastNDays(null, 30);
 
         // IMPORTANT: In a PieChart, no values (Entry) should have the same
         // xIndex (even if from different DataSets), since no values can be
         // drawn above each other.
-        for (int i = 0; i < count + 1; i++) {
-            yVals1.add(new Entry((float) (Math.random() * mult) + mult / 5, i));
+        int i = 0;
+        for (DatabaseHelper.DeviceDataSummary dds: summaryList) {
+            yVals.add(new Entry(dds.sensorValueSum, i));
+            xVals.add(dds.deviceName);
+            i++;
         }
 
-        ArrayList<String> xVals = new ArrayList<String>();
-
-        for (int i = 0; i < count + 1; i++)
-            xVals.add(Integer.toString(i));
-
-        PieDataSet set1 = new PieDataSet(yVals1, "Device Usage");
+        PieDataSet set1 = new PieDataSet(yVals, "Device Usage");
         set1.setSliceSpace(3f);
 
         // add a lot of colors
 
         ArrayList<Integer> colors = new ArrayList<Integer>();
-
         for (int c : ColorTemplate.VORDIPLOM_COLORS)
             colors.add(c);
 
         for (int c : ColorTemplate.JOYFUL_COLORS)
             colors.add(c);
 
-        for (int c : ColorTemplate.COLORFUL_COLORS)
-            colors.add(c);
-
         for (int c : ColorTemplate.LIBERTY_COLORS)
             colors.add(c);
 
         for (int c : ColorTemplate.PASTEL_COLORS)
+            colors.add(c);
+
+        for (int c : ColorTemplate.COLORFUL_COLORS)
             colors.add(c);
 
         colors.add(ColorTemplate.getHoloBlue());
