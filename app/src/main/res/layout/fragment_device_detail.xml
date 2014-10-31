@@ -1,21 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+<ScrollView
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:focusableInTouchMode="true">
+
 
     <ImageView
         android:id="@+id/dd_image"
         android:src="@drawable/ic_launcher"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_width="80dp"
+        android:layout_height="80dp" />
 
-    <TextView
+    <EditText
         android:id="@+id/dd_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textSize="26sp"
-        android:text="TV"
+        android:text=""
+        android:selectAllOnFocus="true"
+        android:background="@android:color/transparent"
         android:layout_toEndOf="@id/dd_image"/>
 
     <TextView
@@ -29,13 +40,28 @@
         android:id="@+id/dd_lst_connected_device"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/dd_lbl_connected_to"/>
+        android:layout_below="@+id/dd_image"
+        android:layout_toEndOf="@id/dd_lbl_connected_to"/>
+
+    <Button
+        android:id="@+id/dd_btn_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/dd_lst_connected_device"
+        android:text="Save"/>
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/ddl_chart"
+        android:layout_below="@+id/dd_btn_save"
+        android:minHeight="300dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
 
     <Button
         android:id="@+id/dd_btn_test_data"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/dd_lbl_connected_to"
+        android:layout_below="@+id/ddl_chart"
         android:text="Add Test Data"/>
 
     <ListView
@@ -44,5 +70,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/dd_btn_test_data">
     </ListView>
-
 </RelativeLayout>
+
+</ScrollView>
+</LinearLayout>
