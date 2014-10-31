@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.stmt.QueryBuilder;
@@ -23,6 +24,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -346,6 +348,69 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         c.add(Calendar.MONTH, months);
         endDate = c.getTime();
         return getDeviceDataListForDateRange(address, startDate, endDate);
+    }
+
+    public static class DeviceDataSummary {
+        final String deviceName;
+        final String deviceAddress;
+        final Float sensorValueSum;
+
+        DeviceDataSummary(String deviceName, String deviceAddress, Float sensorValueSum) {
+            this.deviceName = deviceName;
+            this.sensorValueSum = sensorValueSum;
+            this.deviceAddress = deviceAddress;
+        }
+    }
+
+    /**
+     * Get sensor data summary for the given date range for a given device.
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param startDate Start date.
+     * @param endDate End date.
+     * @return List of DeviceData summary for the given range.
+     */
+    public static List<DeviceDataSummary> getDeviceDataSummaryListForDateRange(String address, Date startDate, Date endDate) {
+        try {
+            java.sql.Date sDate, eDate;
+            sDate = new java.sql.Date(startDate.getTime());
+            eDate = new java.sql.Date(endDate.getTime());
+
+            Dao<DeviceData, String> deviceDataDao = getInstance().getDeviceDataDao();
+            String query = "SELECT name, DeviceData.address, SUM(sensorValue) FROM DeviceData, DeviceInfo" +
+                           " WHERE DeviceData.address=DeviceInfo.address AND startDate >= '" + sDate + "' AND endDate <= '" + eDate + "'";
+            if (address != null) {
+                query += " AND DeviceData.address=" + address;
+            }
+            query += " GROUP BY DeviceData.address ";
+
+            GenericRawResults<String[]> rawResults = deviceDataDao.queryRaw(query);
+            List<DeviceDataSummary> result = new LinkedList<DeviceDataSummary>();
+
+            for (String[] resultArray : rawResults) {
+                Float sum = Float.valueOf(resultArray[2]);
+                DeviceDataSummary d = new DeviceDataSummary(resultArray[0], resultArray[1], sum);
+                result.add(d);
+            }
+            return result;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Get sensor data summary for the given date range for a given device..
+     * @param address Address of the device. (if null all device data for the given time range will be returned).
+     * @param days - Number of previous days to retrieve from today.
+     * @return List of DeviceData for the given number of days.
+     */
+    public static List<DeviceDataSummary> getDeviceDataSummaryListForPastNDays(String address, int days) {
+        Date startDate;
+        Date endDate;
+        Calendar c = Calendar.getInstance();
+        endDate = c.getTime();
+        c.add(Calendar.DATE, -days);
+        startDate = c.getTime();
+        return getDeviceDataSummaryListForDateRange(address, startDate, endDate);
     }
 
     /**
