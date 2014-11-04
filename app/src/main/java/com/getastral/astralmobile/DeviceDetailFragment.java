@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -41,9 +42,20 @@ public class DeviceDetailFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    private void loadApplianceImage(View rootView, DatabaseHelper.DeviceInfo deviceInfo ) {
+        DatabaseHelper.ApplianceType applianceType = DatabaseHelper.getApplianceTypeByName(deviceInfo.applianceType);
+        if (applianceType == null) {
+            return;
+        }
+        int imgId = getResources().getIdentifier(applianceType.imageName, "drawable", getActivity().getPackageName());
+        ImageView img = (ImageView) rootView.findViewById(R.id.dd_image);
+        img.setImageDrawable(getResources().getDrawable(imgId));
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_device_detail, container, false);
+
         final EditText txtName = (EditText) rootView.findViewById(R.id.dd_name);
         final Spinner sprApplianceType = (Spinner) rootView.findViewById(R.id.dd_lst_connected_device);
         Button btnTest = (Button) rootView.findViewById(R.id.dd_btn_test_data);
@@ -51,6 +63,9 @@ public class DeviceDetailFragment extends Fragment {
         LineChart chart = (LineChart) rootView.findViewById(R.id.ddl_chart);
         String deviceAddress = this.getArguments().getString("deviceAddress");
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
+
+        loadApplianceImage(rootView, deviceInfo);
+
         Calendar c = Calendar.getInstance();
         c.add(Calendar.MONTH, -1);
 

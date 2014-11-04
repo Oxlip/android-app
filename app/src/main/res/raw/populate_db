@@ -1,8 +1,8 @@
 INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('Lamp', 1, 'lamp');
-INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('Fan', 1, null);
-INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('Television', 0, null);
-INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('Home Theatre', 0, null);
-INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('XBox', 0, null);
+INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('Fan', 1, 'fan');
+INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('Television', 0, 'tv');
+INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('Home Theatre', 0, 'home_theatre');
+INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('XBox', 0, 'gaming_console');
 
 INSERT INTO ApplianceMake(name) VALUES('Sony');
 INSERT INTO ApplianceMake(name) VALUES('Samsung');

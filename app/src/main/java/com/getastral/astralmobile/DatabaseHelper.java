@@ -26,9 +26,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -56,8 +58,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static List<ApplianceType> applianceTypeList = null;
     private static List<ApplianceMake> applianceMakeList = null;
 
+    // Hash table for faster lookup
+    private static Map<String, ApplianceType> applianceTypeMap = new HashMap<String, ApplianceType>();
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        for (DatabaseHelper.ApplianceType applianceType: getApplianceTypeList()) {
+            applianceTypeMap.put(applianceType.name, applianceType);
+        }
     }
 
     /**
@@ -243,6 +251,15 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         }
 
         return applianceTypeList;
+    }
+
+    /**
+     * Returns Appliance Type associated with the given name.
+     * @param name - Name of the appliance
+     * @return Appliance Type.
+     */
+    public static ApplianceType getApplianceTypeByName(String name) {
+        return applianceTypeMap.get(name);
     }
 
     /**

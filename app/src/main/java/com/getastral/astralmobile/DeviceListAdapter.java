@@ -124,6 +124,18 @@ public class DeviceListAdapter extends BaseAdapter {
         return mDeviceList.indexOf(getItem(position));
     }
 
+    private void loadApplianceImage(View rootView, String applianceTypeName) {
+        Context context = ApplicationGlobals.getAppContext();
+        DatabaseHelper.ApplianceType applianceType = DatabaseHelper.getApplianceTypeByName(applianceTypeName);
+        if (applianceType == null) {
+            return;
+        }
+
+        int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
+        ImageView img = (ImageView) rootView.findViewById(R.id.dl_image);
+        img.setImageDrawable(context.getResources().getDrawable(imgId));
+    }
+
     /**
      * Renders the UI for the given device item.
      */
@@ -142,7 +154,8 @@ public class DeviceListAdapter extends BaseAdapter {
             convertView = mInflater.inflate(R.layout.item_device_list, null);
         }
 
-        imgIcon = (ImageView) convertView.findViewById(R.id.dl_image);
+        loadApplianceImage(convertView, device.getDeviceInfo().applianceType);
+
         txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
         btnOn = (ToggleButton)convertView.findViewById(R.id.dl_btn_on_off);
         btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
@@ -192,7 +205,6 @@ public class DeviceListAdapter extends BaseAdapter {
         /* Enable the on button only if the device is in range */
         btnOn.setEnabled(device.getRssi() != 0);
 
-        imgIcon.setImageResource(R.drawable.ic_launcher);
         txtTitle.setText(device.getDeviceInfo().name);
 
         return convertView;
