@@ -3,7 +3,7 @@
 
     <string name="app_name">Astral Mobile</string>
     <string name="title_device_list">Devices</string>
-    <string name="title_device_detail">Device Detail</string>
+    <string name="title_device_detail">Detail</string>
 
     <string name="main_action_bar_scan">Scan</string>
     <string name="main_action_bar_settings">Settings</string>
