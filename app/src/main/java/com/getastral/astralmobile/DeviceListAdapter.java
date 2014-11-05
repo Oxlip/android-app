@@ -3,6 +3,9 @@ package com.getastral.astralmobile;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -133,7 +136,9 @@ public class DeviceListAdapter extends BaseAdapter {
 
         int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
         ImageView img = (ImageView) rootView.findViewById(R.id.dl_image);
-        img.setImageDrawable(context.getResources().getDrawable(imgId));
+        Drawable imgDrawable = context.getResources().getDrawable(imgId);
+        imgDrawable.mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_ATOP);
+        img.setImageDrawable(imgDrawable);
     }
 
     /**
