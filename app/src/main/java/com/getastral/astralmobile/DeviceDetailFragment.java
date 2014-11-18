@@ -2,6 +2,9 @@ package com.getastral.astralmobile;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,7 +52,9 @@ public class DeviceDetailFragment extends Fragment {
         }
         int imgId = getResources().getIdentifier(applianceType.imageName, "drawable", getActivity().getPackageName());
         ImageView img = (ImageView) rootView.findViewById(R.id.dd_image);
-        img.setImageDrawable(getResources().getDrawable(imgId));
+        Drawable imgDrawable = getResources().getDrawable(imgId);
+        imgDrawable.mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_ATOP);
+        img.setImageDrawable(imgDrawable);
     }
 
     @Override
