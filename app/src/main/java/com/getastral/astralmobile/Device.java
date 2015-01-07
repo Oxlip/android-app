@@ -45,10 +45,21 @@ public class Device {
     private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
     private static final int BLE_GATT_WRITE_TIMEOUT = 3000;
 
-    /** The following UUIDs should in sync with firmware. */
-    private static final UUID ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
-    private static final UUID ASTRAL_UUID_INFO = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
-    private static final UUID ASTRAL_UUID_OUTLET = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
+    /** The following UUIDs should in sync with firmware.
+     * check nrf51-firmware/app/include/ble_uuids.h
+     * */
+    private static final UUID BLE_ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_DIMMER_SERVICE = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_CS_SERVICE = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_HS_SERVICE = UUID.fromString("c0f41003-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_LS_SERVICE = UUID.fromString("c0f41004-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_MS_SERVICE = UUID.fromString("c0f41005-9324-4085-aba0-0902c0e8950a");
+
+    private static final UUID BLE_UUID_DIMMER_CHAR = UUID.fromString("c0f42001-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_CS_CHAR = UUID.fromString("c0f42002-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_HS_CHAR = UUID.fromString("c0f42003-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_LS_CHAR = UUID.fromString("c0f42004-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_MS_CHAR = UUID.fromString("c0f42005-9324-4085-aba0-0902c0e8950a");
 
     private static final String LOG_TAG_DEVICE = "Device";
 
@@ -263,7 +274,7 @@ public class Device {
      */
     public void dimmerControl(byte brightness) {
         byte[] value = {1, brightness};
-        writeBleCharacteristic(ASTRAL_UUID_BASE, ASTRAL_UUID_OUTLET, value);
+        writeBleCharacteristic(BLE_UUID_DIMMER_SERVICE, BLE_UUID_DIMMER_CHAR, value);
     }
 
     /**
