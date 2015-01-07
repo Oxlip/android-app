@@ -6,5 +6,5 @@ INSERT INTO ApplianceType(name, isDimmable, imageName) VALUES('XBox', 0, 'gaming
 
 INSERT INTO ApplianceMake(name) VALUES('Sony');
 INSERT INTO ApplianceMake(name) VALUES('Samsung');
-INSERT INTO ApplianceMake(name) VALUES('LG);
+INSERT INTO ApplianceMake(name) VALUES('LG');
 INSERT INTO ApplianceMake(name) VALUES('Microsoft');

@@ -490,7 +490,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         /**
          * Icon resource name.
          */
-        @DatabaseField(canBeNull = false)
+        @DatabaseField(canBeNull = true)
         String imageName;
 
         ApplianceMake() {
