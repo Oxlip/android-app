@@ -270,6 +270,10 @@ public class DeviceListFragment extends Fragment {
     }
 
     private void setChartData(PieChart chart) {
+        if (chart == null) {
+            return;
+        }
+
         int foregroundColor = getResources().getColor(R.color.foreground);
         ArrayList<Entry> yVals = new ArrayList<Entry>();
         ArrayList<String> xVals = new ArrayList<String>();
@@ -320,7 +324,7 @@ public class DeviceListFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
-        ListView listview;
+        final ListView listview;
         List<Device> deviceList = DatabaseHelper.getDevices(mBluetoothAdapter);
         View view = getView();
         if (view == null) {
@@ -333,20 +337,24 @@ public class DeviceListFragment extends Fragment {
         View headerView = inflater.inflate(R.layout.header_device_list, listview, false);
         PieChart chart = (PieChart) headerView.findViewById(R.id.fdl_header_chart);
         setChartData(chart);
-
-        listview.addHeaderView(headerView, null, true);
+        if (deviceList.size() > 1) {
+            listview.addHeaderView(headerView, null, true);
+        }
 
         listview.setAdapter(DeviceListAdapter.getInstance(activity, deviceList));
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position <= 0) {
+                int headerCount = listview.getHeaderViewsCount();
+                position = position - headerCount;
+                if (position < 0) {
                     return;
                 }
-                Device device = (Device) DeviceListAdapter.getInstance().getItem(position - 1);
+                Device device = (Device) DeviceListAdapter.getInstance().getItem(position);
                 mCallbacks.onItemSelected(device);
             }
         });
+
 
     }
 
