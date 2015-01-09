@@ -18,6 +18,9 @@ import android.view.MenuItem;
  */
 public class DeviceDetailActivity extends Activity {
 
+    DeviceDetailFragment mFragment;
+    String mDeviceAddress;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         ActionBar actionBar;
@@ -43,16 +46,22 @@ public class DeviceDetailActivity extends Activity {
         if (savedInstanceState == null) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
-            DeviceDetailFragment fragment = new DeviceDetailFragment();
+            mFragment = new DeviceDetailFragment();
             Bundle arguments = new Bundle();
-            String deviceAddress = getIntent().getExtras().getString("deviceAddress");
-            arguments.putString("deviceAddress", deviceAddress);
+            mDeviceAddress = getIntent().getExtras().getString("deviceAddress");
+            arguments.putString("deviceAddress", mDeviceAddress);
 
-            fragment.setArguments(arguments);
+            mFragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
-                    .add(R.id.device_detail_container, fragment)
+                    .add(R.id.device_detail_container, mFragment)
                     .commit();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        mFragment.onBackPressed(mDeviceAddress);
+        super.onBackPressed();
     }
 
     @Override
@@ -65,6 +74,7 @@ public class DeviceDetailActivity extends Activity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
+            mFragment.onBackPressed(mDeviceAddress);
             navigateUpTo(new Intent(this, DeviceListActivity.class));
             return true;
         }

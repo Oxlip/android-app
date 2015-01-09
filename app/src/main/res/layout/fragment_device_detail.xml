@@ -7,65 +7,58 @@
         android:layout_width="fill_parent"
         android:layout_height="fill_parent">
 
-        <RelativeLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
+        <GridLayout
+            android:rowCount="4"
+            android:columnCount="3"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:descendantFocusability="beforeDescendants"
             android:focusableInTouchMode="true">
 
-
             <ImageView
+                android:contentDescription="@string/app_name"
                 android:id="@+id/dd_image"
                 android:src="@drawable/ic_launcher"
+                android:layout_column="0"
+                android:layout_row="0"
+                android:layout_rowSpan="2"
                 android:layout_width="80dp"
                 android:layout_height="80dp" />
 
             <EditText
                 android:id="@+id/dd_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:inputType="textCapWords"
+                android:layout_column="2"
+                android:layout_row="0"
                 android:textSize="26sp"
                 android:text=""
-                android:selectAllOnFocus="true"
-                android:background="@android:color/transparent"
-                android:layout_toEndOf="@id/dd_image"/>
-
-            <TextView
-                android:id="@+id/dd_lbl_connected_to"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/dd_image"
-                android:text="Connected to"/>
+                android:textColor="@android:color/white"
+                android:background="@android:color/transparent"/>
 
             <Spinner
                 android:id="@+id/dd_lst_connected_device"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/dd_image"
-                android:layout_toEndOf="@id/dd_lbl_connected_to"/>
+                android:textColor="@android:color/white"
+                android:layout_column="2"
+                android:layout_row="1"/>
 
-            <Button
-                android:id="@+id/dd_btn_save"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/dd_lst_connected_device"
-                android:text="Save"/>
-
-            <com.github.mikephil.charting.charts.LineChart
+            <com.github.mikephil.charting.charts.BarChart
                 android:id="@+id/ddl_chart"
-                android:layout_below="@+id/dd_btn_save"
-                android:minHeight="300dp"
+                android:layout_column="0"
+                android:layout_columnSpan="3"
+                android:layout_row="2"
+                android:minHeight="400dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
             <Button
                 android:id="@+id/dd_btn_test_data"
+                android:layout_row="3"
+                android:layout_column="0"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/ddl_chart"
-                android:text="Generate random current data"/>
+                android:text="Random"/>
 
-        </RelativeLayout>
+        </GridLayout>
 
     </ScrollView>
 </LinearLayout>
