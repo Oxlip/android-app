@@ -278,6 +278,7 @@ public class DeviceListFragment extends Fragment {
         ArrayList<Entry> yVals = new ArrayList<Entry>();
         ArrayList<String> xVals = new ArrayList<String>();
         List<DatabaseHelper.DeviceDataSummary> summaryList;
+        boolean noData;
 
         summaryList = DatabaseHelper.getDeviceDataSummaryListForPastNDays(null, 30);
 
@@ -288,6 +289,11 @@ public class DeviceListFragment extends Fragment {
             i++;
         }
 
+        noData = yVals.size() == 0;
+        if (noData) {
+            yVals.add(new Entry(100, 1));
+            xVals.add("");
+        }
         PieDataSet pieDataSet = new PieDataSet(yVals, "");
         pieDataSet.setSliceSpace(3f);
 
@@ -298,20 +304,34 @@ public class DeviceListFragment extends Fragment {
         chart.setData(data);
 
         chart.setDrawXValues(false);
-        chart.setUsePercentValues(true);
 
         chart.setHoleColor(getResources().getColor(R.color.background));
-        chart.setCenterText("Energy\nUsage");
-        chart.setCenterTextSize(24f);
+
         chart.getPaint(PieChart.PAINT_CENTER_TEXT).setColor(foregroundColor);
 
-        chart.setDescription("");
+        //chart.setDrawCenterText(!noData);
+        chart.setDrawYValues(!noData);
+        chart.setDrawLegend(!noData);
+
+        chart.setCenterTextSize(24f);
+        if (noData) {
+            chart.setCenterText( "NA");
+        } else {
+            chart.setCenterText( "Energy\nUsage");
+        }
+
+        chart.setUsePercentValues(true);
+
         Legend l = chart.getLegend();
         l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_CENTER);
         l.setXEntrySpace(7f);
         l.setYEntrySpace(5f);
         l.setTextSize(12f);
+
+        chart.setDescription("");
+
         chart.getPaint(PieChart.PAINT_LEGEND_LABEL).setColor(foregroundColor);
+        chart.setTransparentCircleRadius(0);
 
         // undo all highlights
         chart.highlightValues(null);
@@ -337,9 +357,7 @@ public class DeviceListFragment extends Fragment {
         View headerView = inflater.inflate(R.layout.header_device_list, listview, false);
         PieChart chart = (PieChart) headerView.findViewById(R.id.fdl_header_chart);
         setChartData(chart);
-        if (deviceList.size() > 1) {
-            listview.addHeaderView(headerView, null, true);
-        }
+        listview.addHeaderView(headerView, null, true);
 
         listview.setAdapter(DeviceListAdapter.getInstance(activity, deviceList));
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
