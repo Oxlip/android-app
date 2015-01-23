@@ -1,4 +1,4 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
@@ -44,7 +44,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String LOG_TAG_DATABASE_HELPER = "DatabaseHelper";
 
     // name of the database file
-    private static final String DATABASE_NAME = "astralthings.db";
+    private static final String DATABASE_NAME = "nuton.db";
     private static final int DATABASE_VERSION = 1;
 
     // the DAO objects for various tables

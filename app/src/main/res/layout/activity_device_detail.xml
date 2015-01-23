@@ -4,5 +4,5 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    tools:context="com.getastral.astralmobile.DeviceDetailActivity"
+    tools:context="com.nuton.mobile.DeviceDetailActivity"
     tools:ignore="MergeRootFrame" />

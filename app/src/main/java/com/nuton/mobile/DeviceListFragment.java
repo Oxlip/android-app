@@ -1,4 +1,4 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
 import android.app.Activity;
 import android.app.Fragment;

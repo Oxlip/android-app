@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Astral</string>
+    <string name="app_name">Nuton</string>
     <string name="title_device_list">Devices</string>
     <string name="title_device_detail">Detail</string>
 

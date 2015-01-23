@@ -1,4 +1,4 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
