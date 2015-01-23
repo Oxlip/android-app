@@ -5,7 +5,6 @@
     <string name="title_device_list">Devices</string>
     <string name="title_device_detail">Detail</string>
 
-    <string name="main_action_bar_scan">Scan</string>
     <string name="main_action_bar_settings">Settings</string>
 
     <string name="ble_not_supported">BLE is not supported by this Android version.</string>

@@ -131,9 +131,9 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         if (!mScanning) {
-            menu.findItem(R.id.main_action_bar_progress).setActionView(null);
+            menu.findItem(R.id.main_action_bar_sync).setIcon(R.drawable.sync);
         } else {
-            menu.findItem(R.id.main_action_bar_progress).setActionView(R.layout.progress_ble_scan);
+            menu.findItem(R.id.main_action_bar_sync).setActionView(R.layout.progress_ble_scan);
         }
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -152,7 +152,7 @@ public class DeviceListFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.main_action_bar_scan:
+            case R.id.main_action_bar_sync:
                 scanLeDevice();
                 break;
         }
