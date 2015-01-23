@@ -153,22 +153,20 @@ public class DeviceListFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.main_action_bar_scan:
-                scanLeDevice(true);
+                scanLeDevice();
                 break;
         }
         return true;
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
-        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-        // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
-        scanLeDevice(true);
 
         PieChart chart = (PieChart) getView().findViewById(R.id.fdl_header_chart);
         setChartData(chart);
@@ -187,37 +185,39 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        scanLeDevice(false);
+        stopLeScan();
     }
 
-    private void stopLeScan() {
-        Activity activity;
 
+    private void stopLeScan() {
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
         mScanning = false;
 
-        activity = getActivity();
-        if (activity != null) {
-            activity.invalidateOptionsMenu();
-        }
+        getActivity().invalidateOptionsMenu();
     }
 
-    private void scanLeDevice(final boolean enable) {
-        if (enable) {
-            DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
-            listAdapter.invalidateConnectionState();
-            // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    stopLeScan();
-                }
-            }, SCAN_PERIOD);
-            mScanning = true;
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
-        } else {
-            stopLeScan();
+    private void scanLeDevice() {
+        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
+        // fire an intent to display a dialog asking the user to grant permission to enable it.
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
+        DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
+        listAdapter.invalidateConnectionState();
+        // Stops scanning after a pre-defined scan period.
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                stopLeScan();
+            }
+        }, SCAN_PERIOD);
+
+        mScanning = true;
+
+        mBluetoothAdapter.startLeScan(mLeScanCallback);
+
         getActivity().invalidateOptionsMenu();
     }
 
