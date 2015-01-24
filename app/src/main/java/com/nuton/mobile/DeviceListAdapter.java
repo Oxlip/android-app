@@ -143,7 +143,7 @@ public class DeviceListAdapter extends BaseAdapter {
         RoundedImageView riv = (RoundedImageView) rootView.findViewById(R.id.dl_image);
         riv.setImageDrawable(imgDrawable);
         riv.setBackgroundColor(Color.GRAY);
-        riv.setBorderColor(Color.LTGRAY);
+        riv.setBorderColor(Color.DKGRAY);
     }
 
     /**

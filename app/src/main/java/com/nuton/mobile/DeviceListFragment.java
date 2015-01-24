@@ -131,7 +131,7 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         if (!mScanning) {
-            menu.findItem(R.id.main_action_bar_sync).setIcon(R.drawable.sync);
+            menu.findItem(R.id.main_action_bar_sync).setIcon(R.drawable.ic_action_sync);
         } else {
             menu.findItem(R.id.main_action_bar_sync).setActionView(R.layout.progress_ble_scan);
         }
