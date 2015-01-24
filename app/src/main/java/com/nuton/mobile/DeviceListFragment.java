@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -112,10 +111,7 @@ public class DeviceListFragment extends Fragment {
             Toast.makeText(activity, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
             getActivity().finish();
         }
-        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
-        // BluetoothAdapter through BluetoothManager.
-        final BluetoothManager bluetoothManager = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+        mBluetoothAdapter = ApplicationGlobals.getBluetoothAdapter();
         // Checks if Bluetooth is supported on the device.
         if (mBluetoothAdapter == null) {
             Toast.makeText(activity, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
@@ -231,7 +227,7 @@ public class DeviceListFragment extends Fragment {
                     DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
                     boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
                     if (!result) {
-                        Device device = new Device(mBluetoothAdapter, bleDevice, rssi);
+                        Device device = new Device(bleDevice, rssi);
                         listAdapter.addDevice(device);
                     }
                 }
@@ -345,7 +341,7 @@ public class DeviceListFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
         final ListView listview;
-        List<Device> deviceList = DatabaseHelper.getDevices(mBluetoothAdapter);
+        List<Device> deviceList = DatabaseHelper.getDevices();
         View view = getView();
         if (view == null) {
             Log.e(LOG_TAG_DLF, "view is null");

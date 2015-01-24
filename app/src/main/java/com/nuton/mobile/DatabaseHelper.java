@@ -1,6 +1,5 @@
 package com.nuton.mobile;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -213,16 +212,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     /**
      * Returns all the devices that are registered to the user.
      *
-     * @param bluetoothAdapter Bluetooth adapter that should be used to discover device.
-     *                         This is just passed to Device() constructor. This class does not start bluetooth scanning.
      * @return List of devices.
      */
-    public static List<Device> getDevices(BluetoothAdapter bluetoothAdapter) {
+    public static List<Device> getDevices() {
         List<Device> deviceList = new ArrayList<Device>();
         try {
             List<DeviceInfo> deviceInfoList = getInstance().getDeviceInfoDao().queryForAll();
             for(DeviceInfo deviceInfo : deviceInfoList) {
-                Device device = new Device(bluetoothAdapter);
+                Device device = new Device();
                 device.setDeviceInfo(deviceInfo, true);
                 deviceList.add(device);
             }

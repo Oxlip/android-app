@@ -71,7 +71,7 @@ public class DeviceListActivity extends Activity
             // action with ID action_settings was selected
             case R.id.main_action_bar_settings:
                 for(int i=0; i<4; i++) {
-                    Device d = new Device(null);
+                    Device d = new Device();
                     d.getDeviceInfo().name = "uPlug";
                     d.getDeviceInfo().address = UUID.randomUUID().toString();
                     d.save();

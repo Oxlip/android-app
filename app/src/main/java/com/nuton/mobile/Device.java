@@ -29,9 +29,6 @@ public class Device {
     /** Set to true if the device is stored in database. */
     private boolean isSaved;
 
-    /** Bluetooth adapter used for scanning and connecting.*/
-    private final BluetoothAdapter mBluetoothAdapter;
-
     /* Device object for the given mBleMacAddress(it need not to be in the range) */
     private BluetoothDevice mBleDevice;
     private BluetoothGatt mBleGatt;
@@ -65,20 +62,18 @@ public class Device {
 
     /**
      * Construct a new device.
-     * @param bluetoothAdapter Bluetooth Adapter to be used when scanning, writing to the BLE device.
      */
-    public Device(BluetoothAdapter bluetoothAdapter) {
+    public Device() {
         mDeviceInfo = new DatabaseHelper.DeviceInfo();
         mBleServicesDiscovered = new ConditionVariable();
         mBleCharacteristicWritten = new ConditionVariable();
-        mBluetoothAdapter = bluetoothAdapter;
     }
 
     /**
      * Construct a new device based on given BLE Device.
      */
-    public Device(BluetoothAdapter bluetoothAdapter, BluetoothDevice bleDevice, int rssi) {
-        this(bluetoothAdapter);
+    public Device(BluetoothDevice bleDevice, int rssi) {
+        this();
         this.mBleDevice = bleDevice;
         this.mDeviceInfo.name = bleDevice.getName();
         this.mDeviceInfo.address = bleDevice.getAddress();
@@ -285,7 +280,7 @@ public class Device {
      * @param value Value to be written to the Characteristic.
      */
     private void writeBleCharacteristic(UUID serviceId, UUID characteristicId,  byte[] value) {
-        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, mBluetoothAdapter, serviceId, characteristicId, value);
+        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, serviceId, characteristicId, value);
         new WriteBleCharacteristicTask().execute(p);
     }
 
@@ -297,11 +292,8 @@ public class Device {
         final UUID serviceId;
         final UUID characteristicId;
         final byte[] value;
-        final BluetoothAdapter bluetoothAdapter;
-        public WriteBleCharacteristicTaskParam(Device device, BluetoothAdapter bluetoothAdapter,
-                                               UUID serviceId, UUID characteristicId,  byte[] value) {
+        public WriteBleCharacteristicTaskParam(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
             this.device = device;
-            this.bluetoothAdapter = bluetoothAdapter;
             this.serviceId = serviceId;
             this.characteristicId = characteristicId;
             this.value = value;
@@ -316,13 +308,13 @@ public class Device {
      * the UI if needed.
      */
     private class WriteBleCharacteristicTask extends AsyncTask<WriteBleCharacteristicTaskParam, Integer, Long> {
-        private Long writeCharacteristic(Context context, BluetoothAdapter bluetoothAdapter,
-                                         Device device, UUID serviceId, UUID characteristicId,  byte[] value){
+        private Long writeCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value){
+            BluetoothAdapter bluetoothAdapter = ApplicationGlobals.getBluetoothAdapter();
             BluetoothGatt gatt;
             BluetoothGattService service;
             BluetoothGattCharacteristic characteristic;
 
-            gatt = bleConnect(device, bluetoothAdapter, context);
+            gatt = bleConnect(device, bluetoothAdapter, ApplicationGlobals.getAppContext());
             service = gatt.getService(serviceId);
             if (service == null) {
                 Log.e(LOG_TAG_DEVICE, "BLE service not found " + serviceId );
@@ -356,8 +348,7 @@ public class Device {
                     break;
                 }
 
-                totalSize += writeCharacteristic(ApplicationGlobals.getAppContext(), param.bluetoothAdapter,
-                                                 param.device, param.serviceId, param.characteristicId, param.value);
+                totalSize += writeCharacteristic(param.device, param.serviceId, param.characteristicId, param.value);
             }
             return totalSize;
         }
