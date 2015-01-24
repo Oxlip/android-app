@@ -93,6 +93,10 @@ public class DeviceListActivity extends Activity
     @Override
     public void onItemSelected(Device device) {
         String deviceAddress = device.getDeviceInfo().address;
+        if (!device.isRegistered()) {
+            Toast.makeText(getApplicationContext(), "Not connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
