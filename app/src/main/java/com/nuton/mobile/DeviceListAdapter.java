@@ -132,6 +132,10 @@ public class DeviceListAdapter extends BaseAdapter {
     private void loadApplianceImage(View rootView, String applianceTypeName) {
         Context context = ApplicationGlobals.getAppContext();
         DatabaseHelper.ApplianceType applianceType = DatabaseHelper.getApplianceTypeByName(applianceTypeName);
+
+        RoundedImageView riv = (RoundedImageView) rootView.findViewById(R.id.dl_image);
+        riv.setBackgroundColor(Color.GRAY);
+        riv.setBorderColor(Color.DKGRAY);
         if (applianceType == null) {
             return;
         }
@@ -140,10 +144,7 @@ public class DeviceListAdapter extends BaseAdapter {
         Drawable imgDrawable = context.getResources().getDrawable(imgId);
         imgDrawable.mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
 
-        RoundedImageView riv = (RoundedImageView) rootView.findViewById(R.id.dl_image);
         riv.setImageDrawable(imgDrawable);
-        riv.setBackgroundColor(Color.GRAY);
-        riv.setBorderColor(Color.DKGRAY);
     }
 
     /**
