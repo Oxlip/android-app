@@ -15,6 +15,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
+import com.makeramen.RoundedImageView;
+
 import java.util.List;
 
 /**
@@ -135,10 +137,13 @@ public class DeviceListAdapter extends BaseAdapter {
         }
 
         int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
-        ImageView img = (ImageView) rootView.findViewById(R.id.dl_image);
         Drawable imgDrawable = context.getResources().getDrawable(imgId);
-        imgDrawable.mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_ATOP);
-        img.setImageDrawable(imgDrawable);
+        imgDrawable.mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+
+        RoundedImageView riv = (RoundedImageView) rootView.findViewById(R.id.dl_image);
+        riv.setImageDrawable(imgDrawable);
+        riv.setBackgroundColor(Color.GRAY);
+        riv.setBorderColor(Color.LTGRAY);
     }
 
     /**
