@@ -1,15 +1,15 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
 import android.app.Activity;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -101,7 +101,6 @@ public class DeviceListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         Activity activity = getActivity();
         super.onCreate(savedInstanceState);
-        //getActionBar().setTitle(R.string.title_activity_ble_scan);
         mHandler = new Handler();
 
         setHasOptionsMenu(true);
@@ -112,10 +111,7 @@ public class DeviceListFragment extends Fragment {
             Toast.makeText(activity, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
             getActivity().finish();
         }
-        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
-        // BluetoothAdapter through BluetoothManager.
-        final BluetoothManager bluetoothManager = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+        mBluetoothAdapter = ApplicationGlobals.getBluetoothAdapter();
         // Checks if Bluetooth is supported on the device.
         if (mBluetoothAdapter == null) {
             Toast.makeText(activity, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
@@ -130,10 +126,12 @@ public class DeviceListFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        MenuItem menuSync = menu.findItem(R.id.main_action_bar_sync);
         if (!mScanning) {
-            menu.findItem(R.id.main_action_bar_progress).setActionView(null);
+            menu.findItem(R.id.main_action_bar_sync).setIcon(R.drawable.ic_action_sync);
         } else {
-            menu.findItem(R.id.main_action_bar_progress).setActionView(R.layout.progress_ble_scan);
+            MenuItemCompat.setActionView(menuSync, R.layout.progress_ble_scan);
+            //menu.findItem(menuSync).setActionView(R.layout.progress_ble_scan);
         }
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -152,23 +150,21 @@ public class DeviceListFragment extends Fragment {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.main_action_bar_scan:
-                scanLeDevice(true);
+            case R.id.main_action_bar_sync:
+                scanLeDevice();
                 break;
         }
         return true;
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
-        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-        // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
-        scanLeDevice(true);
 
         PieChart chart = (PieChart) getView().findViewById(R.id.fdl_header_chart);
         setChartData(chart);
@@ -187,37 +183,39 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        scanLeDevice(false);
+        stopLeScan();
     }
 
-    private void stopLeScan() {
-        Activity activity;
 
+    private void stopLeScan() {
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
         mScanning = false;
 
-        activity = getActivity();
-        if (activity != null) {
-            activity.invalidateOptionsMenu();
-        }
+        getActivity().invalidateOptionsMenu();
     }
 
-    private void scanLeDevice(final boolean enable) {
-        if (enable) {
-            DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
-            listAdapter.invalidateConnectionState();
-            // Stops scanning after a pre-defined scan period.
-            mHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    stopLeScan();
-                }
-            }, SCAN_PERIOD);
-            mScanning = true;
-            mBluetoothAdapter.startLeScan(mLeScanCallback);
-        } else {
-            stopLeScan();
+    private void scanLeDevice() {
+        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
+        // fire an intent to display a dialog asking the user to grant permission to enable it.
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
+        DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
+        listAdapter.invalidateConnectionState();
+        // Stops scanning after a pre-defined scan period.
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                stopLeScan();
+            }
+        }, SCAN_PERIOD);
+
+        mScanning = true;
+
+        mBluetoothAdapter.startLeScan(mLeScanCallback);
+
         getActivity().invalidateOptionsMenu();
     }
 
@@ -231,7 +229,7 @@ public class DeviceListFragment extends Fragment {
                     DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
                     boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
                     if (!result) {
-                        Device device = new Device(mBluetoothAdapter, bleDevice, rssi);
+                        Device device = new Device(bleDevice, rssi);
                         listAdapter.addDevice(device);
                     }
                 }
@@ -270,10 +268,15 @@ public class DeviceListFragment extends Fragment {
     }
 
     private void setChartData(PieChart chart) {
+        if (chart == null) {
+            return;
+        }
+
         int foregroundColor = getResources().getColor(R.color.foreground);
         ArrayList<Entry> yVals = new ArrayList<Entry>();
         ArrayList<String> xVals = new ArrayList<String>();
         List<DatabaseHelper.DeviceDataSummary> summaryList;
+        boolean noData;
 
         summaryList = DatabaseHelper.getDeviceDataSummaryListForPastNDays(null, 30);
 
@@ -284,6 +287,11 @@ public class DeviceListFragment extends Fragment {
             i++;
         }
 
+        noData = yVals.size() == 0;
+        if (noData) {
+            yVals.add(new Entry(100, 1));
+            xVals.add("");
+        }
         PieDataSet pieDataSet = new PieDataSet(yVals, "");
         pieDataSet.setSliceSpace(3f);
 
@@ -294,20 +302,34 @@ public class DeviceListFragment extends Fragment {
         chart.setData(data);
 
         chart.setDrawXValues(false);
-        chart.setUsePercentValues(true);
 
         chart.setHoleColor(getResources().getColor(R.color.background));
-        chart.setCenterText("Energy\nUsage");
-        chart.setCenterTextSize(24f);
+
         chart.getPaint(PieChart.PAINT_CENTER_TEXT).setColor(foregroundColor);
 
-        chart.setDescription("");
+        //chart.setDrawCenterText(!noData);
+        chart.setDrawYValues(!noData);
+        chart.setDrawLegend(!noData);
+
+        chart.setCenterTextSize(24f);
+        if (noData) {
+            chart.setCenterText( "NA");
+        } else {
+            chart.setCenterText( "Energy\nUsage");
+        }
+
+        chart.setUsePercentValues(true);
+
         Legend l = chart.getLegend();
         l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_CENTER);
         l.setXEntrySpace(7f);
         l.setYEntrySpace(5f);
         l.setTextSize(12f);
+
+        chart.setDescription("");
+
         chart.getPaint(PieChart.PAINT_LEGEND_LABEL).setColor(foregroundColor);
+        chart.setTransparentCircleRadius(0);
 
         // undo all highlights
         chart.highlightValues(null);
@@ -320,8 +342,7 @@ public class DeviceListFragment extends Fragment {
 
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
-        ListView listview;
-        List<Device> deviceList = DatabaseHelper.getDevices(mBluetoothAdapter);
+        final ListView listview;
         View view = getView();
         if (view == null) {
             Log.e(LOG_TAG_DLF, "view is null");
@@ -333,20 +354,22 @@ public class DeviceListFragment extends Fragment {
         View headerView = inflater.inflate(R.layout.header_device_list, listview, false);
         PieChart chart = (PieChart) headerView.findViewById(R.id.fdl_header_chart);
         setChartData(chart);
-
         listview.addHeaderView(headerView, null, true);
 
-        listview.setAdapter(DeviceListAdapter.getInstance(activity, deviceList));
+        listview.setAdapter(DeviceListAdapter.getInstance(activity));
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position <= 0) {
+                int headerCount = listview.getHeaderViewsCount();
+                position = position - headerCount;
+                if (position < 0) {
                     return;
                 }
-                Device device = (Device) DeviceListAdapter.getInstance().getItem(position - 1);
+                Device device = (Device) DeviceListAdapter.getInstance().getItem(position);
                 mCallbacks.onItemSelected(device);
             }
         });
+
 
     }
 

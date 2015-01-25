@@ -17,10 +17,10 @@
     <color name="green">#00FF00</color>
 
     <array name="main_chart">
-        <item>@color/green</item>
-        <item>@color/green_blue</item>
         <item>@color/blue</item>
+        <item>@color/green</item>
         <item>@color/dark_slate_blue</item>
+        <item>@color/green_blue</item>
         <item>@color/light_slate_blue</item>
         <item>@color/orange</item>
         <item>@color/dark_red</item>

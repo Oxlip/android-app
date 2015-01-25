@@ -1,16 +1,21 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
+
+import com.makeramen.RoundedImageView;
 
 import java.util.List;
 
@@ -41,16 +46,21 @@ public class DeviceListAdapter extends BaseAdapter {
     /**
      * Creates new instance if required.
      * @param context
-     * @param deviceList
      * @return DeviceListAdapter instance.
      */
-    public static DeviceListAdapter getInstance(Context context, List<Device> deviceList) {
+    public static DeviceListAdapter getInstance(Context context) {
         if(mInstance == null) {
             mInstance = new DeviceListAdapter();
             mInstance.mContext = context;
-            mInstance.mDeviceList = deviceList;
+            mInstance.mDeviceList = DatabaseHelper.getDevices();
         }
         return mInstance;
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        mInstance.mDeviceList = DatabaseHelper.getDevices();
+        super.notifyDataSetChanged();
     }
 
     /**
@@ -124,14 +134,31 @@ public class DeviceListAdapter extends BaseAdapter {
         return mDeviceList.indexOf(getItem(position));
     }
 
+    private void loadApplianceImage(View rootView, String applianceTypeName) {
+        Context context = ApplicationGlobals.getAppContext();
+        DatabaseHelper.ApplianceType applianceType = DatabaseHelper.getApplianceTypeByName(applianceTypeName);
+
+        RoundedImageView riv = (RoundedImageView) rootView.findViewById(R.id.dl_image);
+        riv.setBackgroundColor(Color.GRAY);
+        riv.setBorderColor(Color.DKGRAY);
+        if (applianceType == null) {
+            return;
+        }
+
+        int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
+        Drawable imgDrawable = context.getResources().getDrawable(imgId);
+        imgDrawable.mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+
+        riv.setImageDrawable(imgDrawable);
+    }
+
     /**
      * Renders the UI for the given device item.
      */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ImageView imgIcon;
         TextView txtTitle;
-        ToggleButton btnOn;
+        SwitchCompat btnOn;
         Button btnConnect;
         Device device;
 
@@ -142,9 +169,10 @@ public class DeviceListAdapter extends BaseAdapter {
             convertView = mInflater.inflate(R.layout.item_device_list, null);
         }
 
-        imgIcon = (ImageView) convertView.findViewById(R.id.dl_image);
+        loadApplianceImage(convertView, device.getDeviceInfo().applianceType);
+
         txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
-        btnOn = (ToggleButton)convertView.findViewById(R.id.dl_btn_on_off);
+        btnOn = (SwitchCompat)convertView.findViewById(R.id.dl_btn_on_off);
         btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
 
         /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
@@ -192,7 +220,6 @@ public class DeviceListAdapter extends BaseAdapter {
         /* Enable the on button only if the device is in range */
         btnOn.setEnabled(device.getRssi() != 0);
 
-        imgIcon.setImageResource(R.drawable.ic_launcher);
         txtTitle.setText(device.getDeviceInfo().name);
 
         return convertView;

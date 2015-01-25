@@ -1,8 +1,8 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -27,7 +27,7 @@ import java.util.UUID;
  * {@link DeviceListFragment.Callbacks} interface
  * to listen for item selections.
  */
-public class DeviceListActivity extends Activity
+public class DeviceListActivity extends ActionBarActivity
         implements DeviceListFragment.Callbacks {
 
     /**
@@ -71,8 +71,8 @@ public class DeviceListActivity extends Activity
             // action with ID action_settings was selected
             case R.id.main_action_bar_settings:
                 for(int i=0; i<4; i++) {
-                    Device d = new Device(null);
-                    d.getDeviceInfo().name = "uPlug";
+                    Device d = new Device();
+                    d.getDeviceInfo().name = "Aura";
                     d.getDeviceInfo().address = UUID.randomUUID().toString();
                     d.save();
                 }
@@ -93,6 +93,10 @@ public class DeviceListActivity extends Activity
     @Override
     public void onItemSelected(Device device) {
         String deviceAddress = device.getDeviceInfo().address;
+        if (!device.isRegistered()) {
+            Toast.makeText(getApplicationContext(), "Not connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (mTwoPane) {
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a

@@ -1,4 +1,4 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -29,9 +29,6 @@ public class Device {
     /** Set to true if the device is stored in database. */
     private boolean isSaved;
 
-    /** Bluetooth adapter used for scanning and connecting.*/
-    private final BluetoothAdapter mBluetoothAdapter;
-
     /* Device object for the given mBleMacAddress(it need not to be in the range) */
     private BluetoothDevice mBleDevice;
     private BluetoothGatt mBleGatt;
@@ -45,29 +42,38 @@ public class Device {
     private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
     private static final int BLE_GATT_WRITE_TIMEOUT = 3000;
 
-    /** The following UUIDs should in sync with firmware. */
-    private static final UUID ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
-    private static final UUID ASTRAL_UUID_INFO = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
-    private static final UUID ASTRAL_UUID_OUTLET = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
+    /** The following UUIDs should in sync with firmware.
+     * check nrf51-firmware/app/include/ble_uuids.h
+     * */
+    private static final UUID BLE_ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_DIMMER_SERVICE = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_CS_SERVICE = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_HS_SERVICE = UUID.fromString("c0f41003-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_LS_SERVICE = UUID.fromString("c0f41004-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_MS_SERVICE = UUID.fromString("c0f41005-9324-4085-aba0-0902c0e8950a");
+
+    private static final UUID BLE_UUID_DIMMER_CHAR = UUID.fromString("c0f42001-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_CS_CHAR = UUID.fromString("c0f42002-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_HS_CHAR = UUID.fromString("c0f42003-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_LS_CHAR = UUID.fromString("c0f42004-9324-4085-aba0-0902c0e8950a");
+    private static final UUID BLE_UUID_MS_CHAR = UUID.fromString("c0f42005-9324-4085-aba0-0902c0e8950a");
 
     private static final String LOG_TAG_DEVICE = "Device";
 
     /**
      * Construct a new device.
-     * @param bluetoothAdapter Bluetooth Adapter to be used when scanning, writing to the BLE device.
      */
-    public Device(BluetoothAdapter bluetoothAdapter) {
+    public Device() {
         mDeviceInfo = new DatabaseHelper.DeviceInfo();
         mBleServicesDiscovered = new ConditionVariable();
         mBleCharacteristicWritten = new ConditionVariable();
-        mBluetoothAdapter = bluetoothAdapter;
     }
 
     /**
      * Construct a new device based on given BLE Device.
      */
-    public Device(BluetoothAdapter bluetoothAdapter, BluetoothDevice bleDevice, int rssi) {
-        this(bluetoothAdapter);
+    public Device(BluetoothDevice bleDevice, int rssi) {
+        this();
         this.mBleDevice = bleDevice;
         this.mDeviceInfo.name = bleDevice.getName();
         this.mDeviceInfo.address = bleDevice.getAddress();
@@ -263,7 +269,7 @@ public class Device {
      */
     public void dimmerControl(byte brightness) {
         byte[] value = {1, brightness};
-        writeBleCharacteristic(ASTRAL_UUID_BASE, ASTRAL_UUID_OUTLET, value);
+        writeBleCharacteristic(BLE_UUID_DIMMER_SERVICE, BLE_UUID_DIMMER_CHAR, value);
     }
 
     /**
@@ -274,7 +280,7 @@ public class Device {
      * @param value Value to be written to the Characteristic.
      */
     private void writeBleCharacteristic(UUID serviceId, UUID characteristicId,  byte[] value) {
-        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, mBluetoothAdapter, serviceId, characteristicId, value);
+        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, serviceId, characteristicId, value);
         new WriteBleCharacteristicTask().execute(p);
     }
 
@@ -286,11 +292,8 @@ public class Device {
         final UUID serviceId;
         final UUID characteristicId;
         final byte[] value;
-        final BluetoothAdapter bluetoothAdapter;
-        public WriteBleCharacteristicTaskParam(Device device, BluetoothAdapter bluetoothAdapter,
-                                               UUID serviceId, UUID characteristicId,  byte[] value) {
+        public WriteBleCharacteristicTaskParam(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
             this.device = device;
-            this.bluetoothAdapter = bluetoothAdapter;
             this.serviceId = serviceId;
             this.characteristicId = characteristicId;
             this.value = value;
@@ -305,13 +308,13 @@ public class Device {
      * the UI if needed.
      */
     private class WriteBleCharacteristicTask extends AsyncTask<WriteBleCharacteristicTaskParam, Integer, Long> {
-        private Long writeCharacteristic(Context context, BluetoothAdapter bluetoothAdapter,
-                                         Device device, UUID serviceId, UUID characteristicId,  byte[] value){
+        private Long writeCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value){
+            BluetoothAdapter bluetoothAdapter = ApplicationGlobals.getBluetoothAdapter();
             BluetoothGatt gatt;
             BluetoothGattService service;
             BluetoothGattCharacteristic characteristic;
 
-            gatt = bleConnect(device, bluetoothAdapter, context);
+            gatt = bleConnect(device, bluetoothAdapter, ApplicationGlobals.getAppContext());
             service = gatt.getService(serviceId);
             if (service == null) {
                 Log.e(LOG_TAG_DEVICE, "BLE service not found " + serviceId );
@@ -345,8 +348,7 @@ public class Device {
                     break;
                 }
 
-                totalSize += writeCharacteristic(ApplicationGlobals.getAppContext(), param.bluetoothAdapter,
-                                                 param.device, param.serviceId, param.characteristicId, param.value);
+                totalSize += writeCharacteristic(param.device, param.serviceId, param.characteristicId, param.value);
             }
             return totalSize;
         }

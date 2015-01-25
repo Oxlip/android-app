@@ -2,13 +2,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
     android:baselineAligned="false"
     android:divider="?android:attr/dividerHorizontal"
     android:orientation="horizontal"
+    android:background="@color/background"
     android:showDividers="middle"
-    tools:context="com.getastral.astralmobile.DeviceListActivity">
+    tools:context="com.nuton.mobile.DeviceListActivity">
 
     <!--
     This layout is a two-pane layout for the Devices
@@ -23,7 +22,7 @@
 
     <fragment
         android:id="@+id/device_list"
-        android:name="com.getastral.astralmobile.DeviceListFragment"
+        android:name="com.nuton.mobile.DeviceListFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
@@ -33,6 +32,6 @@
         android:id="@+id/device_detail_container"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="3" />
+        android:layout_weight="2" />
 
 </LinearLayout>

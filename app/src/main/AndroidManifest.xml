@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.getastral.astralmobile" >
+    package="com.nuton.mobile" >
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -10,17 +10,15 @@
         android:required="false" />
 
     <application
-        android:name="com.getastral.astralmobile.ApplicationGlobals"
+        android:name="com.nuton.mobile.ApplicationGlobals"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".DeviceListActivity"
-            android:label="@string/title_device_list" >
+            android:name=".DeviceListActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -30,7 +28,7 @@
             android:parentActivityName=".DeviceListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.getastral.astralmobile.DeviceListActivity" />
+                android:value="com.nuton.mobile.DeviceListActivity" />
         </activity>
     </application>
 

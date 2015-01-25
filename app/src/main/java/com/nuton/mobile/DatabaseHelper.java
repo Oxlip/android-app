@@ -1,6 +1,5 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
-import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
@@ -26,9 +25,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -42,7 +43,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static final String LOG_TAG_DATABASE_HELPER = "DatabaseHelper";
 
     // name of the database file
-    private static final String DATABASE_NAME = "astralthings.db";
+    private static final String DATABASE_NAME = "nuton.db";
     private static final int DATABASE_VERSION = 1;
 
     // the DAO objects for various tables
@@ -56,8 +57,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static List<ApplianceType> applianceTypeList = null;
     private static List<ApplianceMake> applianceMakeList = null;
 
+    // Hash table for faster lookup
+    private static Map<String, ApplianceType> applianceTypeMap = new HashMap<String, ApplianceType>();
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        for (DatabaseHelper.ApplianceType applianceType: getApplianceTypeList()) {
+            applianceTypeMap.put(applianceType.name, applianceType);
+        }
     }
 
     /**
@@ -205,16 +212,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     /**
      * Returns all the devices that are registered to the user.
      *
-     * @param bluetoothAdapter Bluetooth adapter that should be used to discover device.
-     *                         This is just passed to Device() constructor. This class does not start bluetooth scanning.
      * @return List of devices.
      */
-    public static List<Device> getDevices(BluetoothAdapter bluetoothAdapter) {
+    public static List<Device> getDevices() {
         List<Device> deviceList = new ArrayList<Device>();
         try {
             List<DeviceInfo> deviceInfoList = getInstance().getDeviceInfoDao().queryForAll();
             for(DeviceInfo deviceInfo : deviceInfoList) {
-                Device device = new Device(bluetoothAdapter);
+                Device device = new Device();
                 device.setDeviceInfo(deviceInfo, true);
                 deviceList.add(device);
             }
@@ -243,6 +248,15 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         }
 
         return applianceTypeList;
+    }
+
+    /**
+     * Returns Appliance Type associated with the given name.
+     * @param name - Name of the appliance
+     * @return Appliance Type.
+     */
+    public static ApplianceType getApplianceTypeByName(String name) {
+        return applianceTypeMap.get(name);
     }
 
     /**
@@ -473,7 +487,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         /**
          * Icon resource name.
          */
-        @DatabaseField(canBeNull = false)
+        @DatabaseField(canBeNull = true)
         String imageName;
 
         ApplianceMake() {

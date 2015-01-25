@@ -26,13 +26,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="12"
+                android:text="1"
                 style="@style/topbar_title_text"
                 />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CONECTED DEVICES"
+                android:text="CONNECTED DEVICES"
                 android:textColor="@color/gray"
                 style="@style/topbar_descriptive_text"
                 />
@@ -52,7 +52,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="6PM"
+                android:text="NA"
                 style="@style/topbar_title_text"/>
             <TextView
                 android:layout_width="wrap_content"
@@ -75,7 +75,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="32"
+                android:text="NA"
                 style="@style/topbar_title_text"/>
             <TextView
                 android:layout_width="wrap_content"

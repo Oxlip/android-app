@@ -1,9 +1,9 @@
-package com.getastral.astralmobile;
+package com.nuton.mobile;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 
 
@@ -16,7 +16,10 @@ import android.view.MenuItem;
  * This activity is mostly just a 'shell' activity containing nothing
  * more than a {@link DeviceDetailFragment}.
  */
-public class DeviceDetailActivity extends Activity {
+public class DeviceDetailActivity extends ActionBarActivity {
+
+    DeviceDetailFragment mFragment;
+    String mDeviceAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +29,7 @@ public class DeviceDetailActivity extends Activity {
         setContentView(R.layout.activity_device_detail);
 
         // Show the Up button in the action bar.
-        actionBar = getActionBar();
+        actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
@@ -43,16 +46,22 @@ public class DeviceDetailActivity extends Activity {
         if (savedInstanceState == null) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
-            DeviceDetailFragment fragment = new DeviceDetailFragment();
+            mFragment = new DeviceDetailFragment();
             Bundle arguments = new Bundle();
-            String deviceAddress = getIntent().getExtras().getString("deviceAddress");
-            arguments.putString("deviceAddress", deviceAddress);
+            mDeviceAddress = getIntent().getExtras().getString("deviceAddress");
+            arguments.putString("deviceAddress", mDeviceAddress);
 
-            fragment.setArguments(arguments);
+            mFragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
-                    .add(R.id.device_detail_container, fragment)
+                    .add(R.id.device_detail_container, mFragment)
                     .commit();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        mFragment.onBackPressed(mDeviceAddress);
+        super.onBackPressed();
     }
 
     @Override
@@ -65,6 +74,7 @@ public class DeviceDetailActivity extends Activity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
+            mFragment.onBackPressed(mDeviceAddress);
             navigateUpTo(new Intent(this, DeviceListActivity.class));
             return true;
         }
