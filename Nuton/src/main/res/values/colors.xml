@@ -3,6 +3,12 @@
     <color name="background">#34363a</color>
     <color name="foreground">#fffffa</color>
 
+    <color name="primary">#34363a</color>
+    <color name="primaryDark">#fffffa</color>
+
+    <color name="secondary">#aabb3a</color>
+    <color name="secondaryDark">#dd00aa</color>
+
     <color name="topbar">#2e3034</color>
     <color name="gray">#b4bec2</color>
 
