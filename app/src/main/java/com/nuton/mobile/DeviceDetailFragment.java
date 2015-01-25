@@ -13,6 +13,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.data.BarData;
@@ -44,18 +45,6 @@ public class DeviceDetailFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
-    private void loadApplianceImage(View rootView, DatabaseHelper.DeviceInfo deviceInfo ) {
-        DatabaseHelper.ApplianceType applianceType = DatabaseHelper.getApplianceTypeByName(deviceInfo.applianceType);
-        if (applianceType == null) {
-            return;
-        }
-        int imgId = getResources().getIdentifier(applianceType.imageName, "drawable", getActivity().getPackageName());
-        ImageView img = (ImageView) rootView.findViewById(R.id.dd_image);
-        Drawable imgDrawable = getResources().getDrawable(imgId);
-        imgDrawable.mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_ATOP);
-        img.setImageDrawable(imgDrawable);
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_device_detail, container, false);
@@ -66,16 +55,13 @@ public class DeviceDetailFragment extends Fragment {
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
 
         txtName.setText(deviceInfo.name);
-        loadApplianceImage(rootView, deviceInfo);
 
         List<DatabaseHelper.ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
 
-        final ArrayAdapter<DatabaseHelper.ApplianceType> adapter =
-                new ArrayAdapter<DatabaseHelper.ApplianceType>(getActivity(), android.R.layout.simple_spinner_dropdown_item, applianceTypeList);
-
+        DeviceTypeAdapter adapter = new DeviceTypeAdapter(R.layout.spinner_appliance_type, applianceTypeList);
+        adapter.setDropDownViewResource(R.layout.spinner_appliance_type);
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item );
-        // Apply the adapter to the spinner
         sprApplianceType.setAdapter(adapter);
 
         int position = 0;
@@ -155,5 +141,49 @@ public class DeviceDetailFragment extends Fragment {
         chart.setDrawLegend(false);
         chart.setDrawYValues(false);
         chart.setData(data);
+    }
+
+    public class DeviceTypeAdapter extends ArrayAdapter<DatabaseHelper.ApplianceType>
+    {
+        List<DatabaseHelper.ApplianceType> applianceTypeList = null;
+
+        public DeviceTypeAdapter(int resource, List<DatabaseHelper.ApplianceType> applianceTypeList)
+        {
+            super(ApplicationGlobals.getAppContext(), resource, applianceTypeList);
+            this.applianceTypeList = applianceTypeList;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent)
+        {   // Ordinary view in Spinner, we use android.R.layout.simple_spinner_item
+            return getDropDownView(position, convertView, parent);
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView, ViewGroup parent)
+        {
+            DatabaseHelper.ApplianceType applianceType = applianceTypeList.get(position);
+            if (applianceType == null)
+            {
+                return null;
+            }
+
+            if(convertView == null)
+            {
+                LayoutInflater inflater = getActivity().getLayoutInflater();
+                convertView = inflater.inflate(R.layout.spinner_appliance_type, parent, false);
+            }
+            TextView txtView = (TextView)convertView.findViewById(R.id.spinner_appliance_type_name);
+            txtView.setText(applianceType.name);
+
+            int imgId = getResources().getIdentifier(applianceType.imageName, "drawable", getActivity().getPackageName());
+            ImageView img = (ImageView) convertView.findViewById(R.id.spinner_appliance_image);
+            Drawable imgDrawable = getResources().getDrawable(imgId);
+            imgDrawable.mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_ATOP);
+            img.setImageDrawable(imgDrawable);
+
+            return convertView;
+        }
+
     }
 }
