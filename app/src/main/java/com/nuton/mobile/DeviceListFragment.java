@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -100,7 +101,6 @@ public class DeviceListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         Activity activity = getActivity();
         super.onCreate(savedInstanceState);
-        //getActionBar().setTitle(R.string.title_activity_ble_scan);
         mHandler = new Handler();
 
         setHasOptionsMenu(true);
@@ -126,10 +126,12 @@ public class DeviceListFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        MenuItem menuSync = menu.findItem(R.id.main_action_bar_sync);
         if (!mScanning) {
             menu.findItem(R.id.main_action_bar_sync).setIcon(R.drawable.ic_action_sync);
         } else {
-            menu.findItem(R.id.main_action_bar_sync).setActionView(R.layout.progress_ble_scan);
+            MenuItemCompat.setActionView(menuSync, R.layout.progress_ble_scan);
+            //menu.findItem(menuSync).setActionView(R.layout.progress_ble_scan);
         }
         super.onCreateOptionsMenu(menu, inflater);
     }

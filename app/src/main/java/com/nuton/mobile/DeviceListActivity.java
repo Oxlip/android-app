@@ -1,8 +1,8 @@
 package com.nuton.mobile;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -27,7 +27,7 @@ import java.util.UUID;
  * {@link DeviceListFragment.Callbacks} interface
  * to listen for item selections.
  */
-public class DeviceListActivity extends Activity
+public class DeviceListActivity extends ActionBarActivity
         implements DeviceListFragment.Callbacks {
 
     /**

@@ -1,9 +1,9 @@
 package com.nuton.mobile;
 
-import android.app.ActionBar;
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 
 
@@ -16,7 +16,7 @@ import android.view.MenuItem;
  * This activity is mostly just a 'shell' activity containing nothing
  * more than a {@link DeviceDetailFragment}.
  */
-public class DeviceDetailActivity extends Activity {
+public class DeviceDetailActivity extends ActionBarActivity {
 
     DeviceDetailFragment mFragment;
     String mDeviceAddress;
@@ -29,7 +29,7 @@ public class DeviceDetailActivity extends Activity {
         setContentView(R.layout.activity_device_detail);
 
         // Show the Up button in the action bar.
-        actionBar = getActionBar();
+        actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }

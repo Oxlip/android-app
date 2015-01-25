@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -157,7 +158,7 @@ public class DeviceListAdapter extends BaseAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         TextView txtTitle;
-        ToggleButton btnOn;
+        SwitchCompat btnOn;
         Button btnConnect;
         Device device;
 
@@ -171,7 +172,7 @@ public class DeviceListAdapter extends BaseAdapter {
         loadApplianceImage(convertView, device.getDeviceInfo().applianceType);
 
         txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
-        btnOn = (ToggleButton)convertView.findViewById(R.id.dl_btn_on_off);
+        btnOn = (SwitchCompat)convertView.findViewById(R.id.dl_btn_on_off);
         btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
 
         /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
