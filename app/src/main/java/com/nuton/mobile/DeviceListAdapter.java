@@ -45,16 +45,21 @@ public class DeviceListAdapter extends BaseAdapter {
     /**
      * Creates new instance if required.
      * @param context
-     * @param deviceList
      * @return DeviceListAdapter instance.
      */
-    public static DeviceListAdapter getInstance(Context context, List<Device> deviceList) {
+    public static DeviceListAdapter getInstance(Context context) {
         if(mInstance == null) {
             mInstance = new DeviceListAdapter();
             mInstance.mContext = context;
-            mInstance.mDeviceList = deviceList;
+            mInstance.mDeviceList = DatabaseHelper.getDevices();
         }
         return mInstance;
+    }
+
+    @Override
+    public void notifyDataSetChanged() {
+        mInstance.mDeviceList = DatabaseHelper.getDevices();
+        super.notifyDataSetChanged();
     }
 
     /**

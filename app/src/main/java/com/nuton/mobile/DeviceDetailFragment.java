@@ -121,6 +121,7 @@ public class DeviceDetailFragment extends Fragment {
         deviceInfo.name = txtName.getText().toString();
         deviceInfo.applianceType = sprApplianceType.getSelectedItem().toString();
         DatabaseHelper.saveDeviceInfo(deviceInfo);
+        DeviceListAdapter.getInstance().notifyDataSetChanged();
     }
 
     private void setChart(BarChart chart) {

@@ -341,7 +341,6 @@ public class DeviceListFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         DeviceListActivity activity = (DeviceListActivity)getActivity();
         final ListView listview;
-        List<Device> deviceList = DatabaseHelper.getDevices();
         View view = getView();
         if (view == null) {
             Log.e(LOG_TAG_DLF, "view is null");
@@ -355,7 +354,7 @@ public class DeviceListFragment extends Fragment {
         setChartData(chart);
         listview.addHeaderView(headerView, null, true);
 
-        listview.setAdapter(DeviceListAdapter.getInstance(activity, deviceList));
+        listview.setAdapter(DeviceListAdapter.getInstance(activity));
         listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
