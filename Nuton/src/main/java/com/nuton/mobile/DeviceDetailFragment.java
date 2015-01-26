@@ -25,7 +25,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-
 /**
  * A fragment representing a single Device detail screen.
  * This fragment is either contained in a {@link DeviceListActivity}
