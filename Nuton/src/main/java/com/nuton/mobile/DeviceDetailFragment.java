@@ -75,6 +75,15 @@ public class DeviceDetailFragment extends Fragment {
 
         sprApplianceType.setSelection(position);
 
+        at.markushi.ui.CircleButton circleButton = (at.markushi.ui.CircleButton)rootView.findViewById(R.id.dd_btn_update_firmware);
+        circleButton.setOnClickListener( new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DfuService dfuService = new DfuService();
+                dfuService.updateFirmware(deviceInfo);
+            }
+        });
+
         Button btnTest = (Button) rootView.findViewById(R.id.dd_btn_test_data);
         btnTest.setTag(deviceAddress);
         btnTest.setOnClickListener(new View.OnClickListener() {
