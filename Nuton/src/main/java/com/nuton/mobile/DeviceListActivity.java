@@ -41,6 +41,9 @@ public class DeviceListActivity extends ActionBarActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_list);
 
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setIcon(R.drawable.ic_action_logo);
+
         if (findViewById(R.id.device_detail_container) != null) {
             // The detail container view will be present only in the
             // large-screen layouts (res/values-large and
