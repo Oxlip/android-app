@@ -30,6 +30,16 @@ public class FirmwareDownloadHelper {
     private String downloadedPackageUriString = null;
     // for download complete notification.
     final Object downloadSync = new Object();
+
+    private void notifyDownloadComplete(Context context, boolean success, String errorStr) {
+        if (!success) {
+            Toast.makeText(context, "Nuton firmware download failed - " + errorStr, Toast.LENGTH_SHORT).show();
+        }
+        synchronized(downloadSync) {
+            downloadSync.notify();
+        }
+    }
+
     // Handler for Downloader manager's broadcast event.
     private BroadcastReceiver downloadCompleteReceiver = new BroadcastReceiver() {
         @Override
@@ -46,22 +56,21 @@ public class FirmwareDownloadHelper {
             Cursor cursor = dm.query(query);
             // it shouldn't be empty, but just in case
             if (!cursor.moveToFirst()) {
-                Toast.makeText(context, "Nuton firmware download failed - unknown reason", Toast.LENGTH_SHORT).show();
-                downloadSync.notify();
+                notifyDownloadComplete(context, false, "unknown reason");
                 return;
             }
 
             // check for failures
             int statusIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
             if (DownloadManager.STATUS_SUCCESSFUL != cursor.getInt(statusIndex)) {
-                Toast.makeText(context, "Nuton firmware download failed", Toast.LENGTH_SHORT).show();
-                downloadSync.notify();
+                notifyDownloadComplete(context, false, "" + cursor.getInt(statusIndex));
                 return;
             }
 
             int uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
             downloadedPackageUriString = cursor.getString(uriIndex);
-            downloadSync.notify();
+
+            notifyDownloadComplete(context, true, "");
         }
     };
 
