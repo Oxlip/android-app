@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.util.Log;
 import android.widget.Toast;
 
 
@@ -102,12 +103,13 @@ public class FirmwareDownloadHelper {
         request.setTitle("Nuton Firmware update");
         request.setDescription("Nuton Firmware update for " + name);
         request.setVisibleInDownloadsUi(false);
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_ONLY_COMPLETION);
-        //request.setDestinationInExternalFilesDir(ApplicationGlobals.getAppContext() , null, "aura.hex");
+        request.setDestinationInExternalPublicDir("/NutonFirmware", "aura.bin");
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
 
         downloadId = dm.enqueue(request);
         synchronized (downloadSync) {
             try {
+                Log.d("DOWNLOAD", "waiting");
                 // wait for 20 second - our firmware is less than 100K so download should finish before this timeout.
                 downloadSync.wait(20 * 1000);
             } catch (InterruptedException e) {
@@ -115,6 +117,7 @@ public class FirmwareDownloadHelper {
                 e.printStackTrace();
             }
         }
+        Log.d("DOWNLOAD", "finished - " + downloadedPackageUriString);
 
         return downloadedPackageUriString;
     }

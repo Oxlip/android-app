@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.util.Log;
 
 import no.nordicsemi.android.dfu.DfuBaseService;
 
@@ -32,13 +33,12 @@ public class DfuService extends DfuBaseService{
         /* TODO - Add check here whether this device needs update or not. */
         FirmwareDownloadHelper downloadHelper = new FirmwareDownloadHelper();
         String firmwareUri = downloadHelper.download(getFirmwareUrl(deviceInfo), deviceInfo.name);
-        DfuIntent.start(deviceInfo, firmwareUri);
+        DfuIntent.start(deviceInfo, Uri.parse(firmwareUri));
     }
 
     @Override
     protected Class<? extends Activity> getNotificationTarget() {
-        /*TODO - write code to show progress*/
-        return null;
+        return NotificationActivity.class;
     }
 }
 class DfuIntent {
@@ -46,24 +46,24 @@ class DfuIntent {
      * Helper function to start DFU.
      *
      * @param deviceInfo   Device which needs firmware update.
-     * @param firmwarePath Local hex file URI path.
+     * @param firmwareUri  Local firmware file URI in hex or bin format.
      */
-    public static void start(DatabaseHelper.DeviceInfo deviceInfo, String firmwarePath) {
+    public static void start(DatabaseHelper.DeviceInfo deviceInfo, Uri firmwareUri) {
         Context context = ApplicationGlobals.getAppContext();
         Intent service = new Intent(context, DfuService.class);
+
         service.putExtra(DfuService.EXTRA_DEVICE_ADDRESS, deviceInfo.address);
         service.putExtra(DfuService.EXTRA_DEVICE_NAME, deviceInfo.name);
         service.putExtra(DfuService.EXTRA_FILE_MIME_TYPE, DfuService.MIME_TYPE_OCTET_STREAM);
         service.putExtra(DfuService.EXTRA_FILE_TYPE, DfuService.TYPE_APPLICATION);
-        //service.putExtra(DfuBaseService.EXTRA_FILE_PATH, firmwarePath);
-        service.putExtra(DfuService.EXTRA_FILE_URI, firmwarePath);
+        service.putExtra(DfuService.EXTRA_FILE_URI, firmwareUri);
 
         /*
         service.putExtra(DfuService.EXTRA_INIT_FILE_PATH, mInitFilePath);
         service.putExtra(DfuService.EXTRA_INIT_FILE_URI, mInitFileStreamUri);
         service.putExtra(DfuService.EXTRA_RESTORE_BOND, mRestoreBond);
         */
-
+        Log.d("DFU", "start updating " + firmwareUri.getPath());
         context.startService(service);
     }
 
