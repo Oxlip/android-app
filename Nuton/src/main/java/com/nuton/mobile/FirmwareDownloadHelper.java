@@ -30,7 +30,7 @@ public class FirmwareDownloadHelper {
     //result should be stored here - null on failure.
     private String downloadedPackageUriString = null;
     // for download complete notification.
-    final Object downloadSync = new Object();
+    private final Object downloadSync = new Object();
 
     private void notifyDownloadComplete(Context context, boolean success, String errorStr) {
         if (!success) {
@@ -113,7 +113,7 @@ public class FirmwareDownloadHelper {
                 // wait for 20 second - our firmware is less than 100K so download should finish before this timeout.
                 downloadSync.wait(20 * 1000);
             } catch (InterruptedException e) {
-                Toast.makeText(ApplicationGlobals.getAppContext(), "Nuton firmware download timedout", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ApplicationGlobals.getAppContext(), "Nuton firmware download timed out", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
         }

@@ -5,7 +5,6 @@
     android:baselineAligned="false"
     android:divider="?android:attr/dividerHorizontal"
     android:orientation="horizontal"
-    android:background="@color/background"
     android:showDividers="middle"
     tools:context="com.nuton.mobile.DeviceListActivity">
 

@@ -157,16 +157,16 @@ public class DeviceListFragment extends Fragment {
         return true;
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-    }
 
     @Override
     public void onResume() {
         super.onResume();
 
-        PieChart chart = (PieChart) getView().findViewById(R.id.fdl_header_chart);
+        View view = getView();
+        if (view == null) {
+            return;
+        }
+        PieChart chart = (PieChart) view.findViewById(R.id.fdl_header_chart);
         setChartData(chart);
     }
 
@@ -191,7 +191,10 @@ public class DeviceListFragment extends Fragment {
         mBluetoothAdapter.stopLeScan(mLeScanCallback);
         mScanning = false;
 
-        getActivity().invalidateOptionsMenu();
+        Activity activity = getActivity();
+        if (activity != null) {
+            getActivity().invalidateOptionsMenu();
+        }
     }
 
     private void scanLeDevice() {

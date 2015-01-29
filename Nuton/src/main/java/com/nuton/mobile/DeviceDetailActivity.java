@@ -18,8 +18,8 @@ import android.view.MenuItem;
  */
 public class DeviceDetailActivity extends ActionBarActivity {
 
-    DeviceDetailFragment mFragment;
-    String mDeviceAddress;
+    private DeviceDetailFragment mFragment;
+    private String mDeviceAddress;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -32,6 +32,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.nuton.mobile.DeviceListActivity" />
         </activity>
+        <activity android:name=".NotificationActivity"/>
         <service android:name="com.nuton.mobile.DfuService"/>
     </application>
 </manifest>

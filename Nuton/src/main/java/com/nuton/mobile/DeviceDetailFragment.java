@@ -12,7 +12,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,7 +43,6 @@ public class DeviceDetailFragment extends Fragment {
     private final BroadcastReceiver mDfuUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
-            Log.d("DeviceDetailFragment", "got DFU update broadcast");
             // DFU is in progress or an error occurred
             final String action = intent.getAction();
 
@@ -53,7 +51,6 @@ public class DeviceDetailFragment extends Fragment {
                 final int currentPart = intent.getIntExtra(DfuService.EXTRA_PART_CURRENT, 1);
                 final int totalParts = intent.getIntExtra(DfuService.EXTRA_PARTS_TOTAL, 1);
                 //updateProgressBar(progress, currentPart, totalParts, false);
-                Toast.makeText(context, "DFU update progress " + progress, Toast.LENGTH_SHORT).show();
             } else if (DfuService.BROADCAST_ERROR.equals(action)) {
                 final int error = intent.getIntExtra(DfuService.EXTRA_DATA, 0);
                 //updateProgressBar(error, 0, 0, true);
@@ -77,11 +74,6 @@ public class DeviceDetailFragment extends Fragment {
      * fragment (e.g. upon screen orientation changes).
      */
     public DeviceDetailFragment() {
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
     }
 
     private static IntentFilter makeDfuUpdateIntentFilter() {
@@ -122,7 +114,7 @@ public class DeviceDetailFragment extends Fragment {
 
         List<DatabaseHelper.ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
 
-        DeviceTypeAdapter adapter = new DeviceTypeAdapter(R.layout.spinner_appliance_type, applianceTypeList);
+        DeviceTypeAdapter adapter = new DeviceTypeAdapter(applianceTypeList);
         adapter.setDropDownViewResource(R.layout.spinner_appliance_type);
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item );
@@ -173,6 +165,9 @@ public class DeviceDetailFragment extends Fragment {
     public void onBackPressed(String deviceAddress)
     {
         View view = getView();
+        if (view == null) {
+            return;
+        }
         final EditText txtName = (EditText) view.findViewById(R.id.dd_name);
         final Spinner sprApplianceType = (Spinner) view.findViewById(R.id.dd_lst_connected_device);
 
@@ -220,9 +215,9 @@ public class DeviceDetailFragment extends Fragment {
     {
         List<DatabaseHelper.ApplianceType> applianceTypeList = null;
 
-        public DeviceTypeAdapter(int resource, List<DatabaseHelper.ApplianceType> applianceTypeList)
+        public DeviceTypeAdapter(List<DatabaseHelper.ApplianceType> applianceTypeList)
         {
-            super(ApplicationGlobals.getAppContext(), resource, applianceTypeList);
+            super(ApplicationGlobals.getAppContext(), R.layout.spinner_appliance_type, applianceTypeList);
             this.applianceTypeList = applianceTypeList;
         }
 

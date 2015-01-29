@@ -58,7 +58,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static List<ApplianceMake> applianceMakeList = null;
 
     // Hash table for faster lookup
-    private static Map<String, ApplianceType> applianceTypeMap = new HashMap<String, ApplianceType>();
+    private static final Map<String, ApplianceType> applianceTypeMap = new HashMap<String, ApplianceType>();
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

@@ -6,6 +6,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
         android:background="@color/topbar"
         android:paddingLeft="15dp"
         android:paddingRight="15dp"
@@ -21,18 +22,19 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/text_top_bar_connected_devices"
                 android:layout_marginBottom="5dp"
                 android:background="@drawable/topbar_power"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="1"
+                android:text="0"
                 style="@style/topbar_title_text"
                 />
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CONNECTED DEVICES"
+                android:text="@string/text_top_bar_connected_devices"
                 android:textColor="@color/gray"
                 style="@style/topbar_descriptive_text"
                 />
@@ -47,17 +49,18 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/text_peak_use_hour"
                 android:layout_marginBottom="9dp"
                 android:background="@drawable/topbar_time"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NA"
+                android:text="@string/text_na"
                 style="@style/topbar_title_text"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="PEAK USE HOUR"
+                android:text="@string/text_peak_use_hour"
                 style="@style/topbar_descriptive_text"/>
         </LinearLayout>
 
@@ -70,17 +73,18 @@
             <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:contentDescription="@string/text_kw_used"
                 android:layout_marginBottom="8dp"
                 android:background="@drawable/topbar_energy"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NA"
+                android:text="@string/text_na"
                 style="@style/topbar_title_text"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="KILOWATTS USED"
+                android:text="@string/text_kw_used"
                 style="@style/topbar_descriptive_text"/>
         </LinearLayout>
     </LinearLayout>
