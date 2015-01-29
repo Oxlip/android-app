@@ -5,6 +5,11 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.Spinner;
+
+import java.util.List;
 
 
 /**
@@ -23,16 +28,11 @@ public class DeviceDetailActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        ActionBar actionBar;
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_detail);
 
-        // Show the Up button in the action bar.
-        actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
+        mDeviceAddress = getIntent().getExtras().getString("deviceAddress");
+        populateActionBar();
 
         // savedInstanceState is non-null when there is fragment state
         // saved from previous configurations of this activity
@@ -48,7 +48,6 @@ public class DeviceDetailActivity extends ActionBarActivity {
             // using a fragment transaction.
             mFragment = new DeviceDetailFragment();
             Bundle arguments = new Bundle();
-            mDeviceAddress = getIntent().getExtras().getString("deviceAddress");
             arguments.putString("deviceAddress", mDeviceAddress);
 
             mFragment.setArguments(arguments);
@@ -58,10 +57,60 @@ public class DeviceDetailActivity extends ActionBarActivity {
         }
     }
 
+    /**
+     * Fill the action bar with Text box for appliance name and spinner for appliance type.
+     */
+    private void populateActionBar() {
+        /*Inflate the custom view*/
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setCustomView(R.layout.actionbar_device_detail);
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+        View view = actionBar.getCustomView();
+        final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(mDeviceAddress);
+
+        /* Fill appliance name */
+        final EditText txtName = (EditText) view.findViewById(R.id.action_bar_device_name);
+        txtName.setText(deviceInfo.name);
+
+        /* Fill appliance type */
+        List<DatabaseHelper.ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
+        DeviceTypeAdapter adapter = new DeviceTypeAdapter(applianceTypeList);
+        adapter.setDropDownViewResource(R.layout.spinner_appliance_type);
+
+        final Spinner sprApplianceType = (Spinner) view.findViewById(R.id.action_bar_device_type);
+        sprApplianceType.setAdapter(adapter);
+
+        int position = 0;
+        if (deviceInfo.applianceType != null) {
+            for (DatabaseHelper.ApplianceType applianceType: applianceTypeList) {
+                if (applianceType.name.equals(deviceInfo.applianceType)) {
+                    break;
+                }
+                position++;
+            }
+        }
+        sprApplianceType.setSelection(position);
+    }
+
     @Override
     public void onBackPressed() {
-        mFragment.onBackPressed(mDeviceAddress);
         super.onBackPressed();
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar == null) {
+            return;
+        }
+        View view = actionBar.getCustomView();
+        final EditText txtName = (EditText) view.findViewById(R.id.action_bar_device_name);
+        final Spinner sprApplianceType = (Spinner) view.findViewById(R.id.action_bar_device_type);
+
+        final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(mDeviceAddress);
+        deviceInfo.name = txtName.getText().toString();
+        deviceInfo.applianceType = sprApplianceType.getSelectedItem().toString();
+        DatabaseHelper.saveDeviceInfo(deviceInfo);
+        DeviceListAdapter.getInstance().notifyDataSetChanged();
     }
 
     @Override
@@ -74,7 +123,6 @@ public class DeviceDetailActivity extends ActionBarActivity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
-            mFragment.onBackPressed(mDeviceAddress);
             navigateUpTo(new Intent(this, DeviceListActivity.class));
             return true;
         }

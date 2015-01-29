@@ -6,21 +6,15 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -105,32 +99,8 @@ public class DeviceDetailFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_device_detail, container, false);
 
-        final EditText txtName = (EditText) rootView.findViewById(R.id.dd_name);
-        final Spinner sprApplianceType = (Spinner) rootView.findViewById(R.id.dd_lst_connected_device);
         String deviceAddress = this.getArguments().getString("deviceAddress");
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
-
-        txtName.setText(deviceInfo.name);
-
-        List<DatabaseHelper.ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
-
-        DeviceTypeAdapter adapter = new DeviceTypeAdapter(applianceTypeList);
-        adapter.setDropDownViewResource(R.layout.spinner_appliance_type);
-        // Specify the layout to use when the list of choices appears
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item );
-        sprApplianceType.setAdapter(adapter);
-
-        int position = 0;
-        if (deviceInfo.applianceType != null) {
-            for (DatabaseHelper.ApplianceType applianceType: applianceTypeList) {
-                if (applianceType.name.equals(deviceInfo.applianceType)) {
-                    break;
-                }
-                position++;
-            }
-        }
-
-        sprApplianceType.setSelection(position);
 
         at.markushi.ui.CircleButton circleButton = (at.markushi.ui.CircleButton)rootView.findViewById(R.id.dd_btn_update_firmware);
         circleButton.setOnClickListener( new View.OnClickListener() {
@@ -162,20 +132,9 @@ public class DeviceDetailFragment extends Fragment {
         return rootView;
     }
 
-    public void onBackPressed(String deviceAddress)
-    {
-        View view = getView();
-        if (view == null) {
-            return;
-        }
-        final EditText txtName = (EditText) view.findViewById(R.id.dd_name);
-        final Spinner sprApplianceType = (Spinner) view.findViewById(R.id.dd_lst_connected_device);
-
-        final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
-        deviceInfo.name = txtName.getText().toString();
-        deviceInfo.applianceType = sprApplianceType.getSelectedItem().toString();
-        DatabaseHelper.saveDeviceInfo(deviceInfo);
-        DeviceListAdapter.getInstance().notifyDataSetChanged();
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     private void setChart(BarChart chart) {
@@ -209,49 +168,5 @@ public class DeviceDetailFragment extends Fragment {
         chart.setDrawLegend(false);
         chart.setDrawYValues(false);
         chart.setData(data);
-    }
-
-    public class DeviceTypeAdapter extends ArrayAdapter<DatabaseHelper.ApplianceType>
-    {
-        List<DatabaseHelper.ApplianceType> applianceTypeList = null;
-
-        public DeviceTypeAdapter(List<DatabaseHelper.ApplianceType> applianceTypeList)
-        {
-            super(ApplicationGlobals.getAppContext(), R.layout.spinner_appliance_type, applianceTypeList);
-            this.applianceTypeList = applianceTypeList;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent)
-        {   // Ordinary view in Spinner, we use android.R.layout.simple_spinner_item
-            return getDropDownView(position, convertView, parent);
-        }
-
-        @Override
-        public View getDropDownView(int position, View convertView, ViewGroup parent)
-        {
-            DatabaseHelper.ApplianceType applianceType = applianceTypeList.get(position);
-            if (applianceType == null)
-            {
-                return null;
-            }
-
-            if(convertView == null)
-            {
-                LayoutInflater inflater = getActivity().getLayoutInflater();
-                convertView = inflater.inflate(R.layout.spinner_appliance_type, parent, false);
-            }
-            TextView txtView = (TextView)convertView.findViewById(R.id.spinner_appliance_type_name);
-            txtView.setText(applianceType.name);
-
-            int imgId = getResources().getIdentifier(applianceType.imageName, "drawable", getActivity().getPackageName());
-            ImageView img = (ImageView) convertView.findViewById(R.id.spinner_appliance_image);
-            Drawable imgDrawable = getResources().getDrawable(imgId);
-            imgDrawable.mutate().setColorFilter(Color.GRAY, PorterDuff.Mode.SRC_ATOP);
-            img.setImageDrawable(imgDrawable);
-
-            return convertView;
-        }
-
     }
 }
