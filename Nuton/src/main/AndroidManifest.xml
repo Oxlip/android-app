@@ -34,5 +34,8 @@
         </activity>
         <activity android:name=".NotificationActivity"/>
         <service android:name="com.nuton.mobile.DfuService"/>
+        <meta-data
+            android:name="com.crashlytics.ApiKey"
+            android:value="15e8e89afd5f332d76446cabb30bbb50674a6175" />
     </application>
 </manifest>

@@ -5,6 +5,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 
+import com.crashlytics.android.Crashlytics;
+
+import io.fabric.sdk.android.Fabric;
+
 public class ApplicationGlobals extends Application {
 
     private static Context mContext;
@@ -12,6 +16,7 @@ public class ApplicationGlobals extends Application {
 
     public void onCreate(){
         super.onCreate();
+        Fabric.with(this, new Crashlytics());
         ApplicationGlobals.mContext = getApplicationContext();
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
         // BluetoothAdapter through BluetoothManager.
