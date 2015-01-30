@@ -5,10 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.widget.Toast;
-
-import java.util.UUID;
 
 
 /**
@@ -66,27 +63,6 @@ public class DeviceListActivity extends ActionBarActivity
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_actions, menu);
         return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            // action with ID action_settings was selected
-            case R.id.main_action_bar_settings:
-                for(int i=0; i<4; i++) {
-                    Device d = new Device();
-                    d.getDeviceInfo().name = "Aura";
-                    d.getDeviceInfo().address = UUID.randomUUID().toString();
-                    d.save();
-                }
-                Toast.makeText(this, "4 devices added", Toast.LENGTH_SHORT)
-                        .show();
-                break;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
-
-        return false;
     }
 
     /**
