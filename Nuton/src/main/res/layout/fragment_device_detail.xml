@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
+
+        <GridLayout
+            android:rowCount="7"
+            android:columnCount="2"
+            android:layout_margin="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:descendantFocusability="beforeDescendants"
+            android:focusableInTouchMode="true">
+
+            <at.markushi.ui.CircleButton
+                android:id="@+id/dd_btn_update_firmware"
+                android:src="@drawable/ic_chip"
+                android:layout_row="0"
+                android:layout_column="1"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                app:cb_color="@android:color/transparent"
+                app:cb_pressedRingWidth="8dip"
+                android:layout_gravity="end"/>
+
+            <TextView
+                android:id="@+id/dd_txt_firmware_version"
+                android:layout_row="1"
+                android:layout_column="1"
+                android:text="@string/text_na"
+                android:textSize="12sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"/>
+
+            <View
+                android:layout_row="2"
+                android:layout_column="0"
+                android:layout_columnSpan="2"
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:background="@android:color/darker_gray"/>
+
+            <CheckBox
+                android:layout_row="3"
+                android:layout_column="0"
+                android:text="Turn on/off automatically"/>
+            <CheckBox
+                android:layout_row="4"
+                android:layout_column="0"
+                android:text="Enable remote control"/>
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/ddl_chart"
+                android:layout_row="5"
+                android:layout_column="0"
+                android:layout_columnSpan="2"
+                android:minHeight="400dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:id="@+id/dd_btn_test_data"
+                android:layout_row="6"
+                android:layout_column="0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Random"/>
+
+        </GridLayout>
+
+    </ScrollView>
+</LinearLayout>

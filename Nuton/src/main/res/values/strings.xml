@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Nuton</string>
+    <string name="title_device_detail">Detail</string>
+
+    <string name="text_top_bar_connected_devices">CONNECTED DEVICES</string>
+    <string name="text_peak_use_hour">PEAK USE HOUR</string>
+    <string name="text_kw_used">KILOWATTS USED</string>
+    <string name="text_na">NA</string>
+
+    <string name="actionbar_device_name_hint">Appliance Name</string>
+
+    <string name="ble_not_supported">BLE is not supported by this Android version.</string>
+    <string name="error_bluetooth_not_supported">This phone does not have support for BLE hardware.</string>
+    <string name="dl_btn_connect">Connect</string>
+</resources>
