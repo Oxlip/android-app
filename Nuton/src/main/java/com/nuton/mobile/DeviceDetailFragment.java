@@ -2,6 +2,8 @@ package com.nuton.mobile;
 
 import android.app.Fragment;
 import android.app.NotificationManager;
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,6 +17,7 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -22,6 +25,7 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -95,14 +99,32 @@ public class DeviceDetailFragment extends Fragment {
         broadcastManager.unregisterReceiver(mDfuUpdateReceiver);
     }
 
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_device_detail, container, false);
+        final View view = inflater.inflate(R.layout.fragment_device_detail, container, false);
 
         String deviceAddress = this.getArguments().getString("deviceAddress");
+        Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+        device.setBleEventCallback(new Device.BleEventCallback() {
+            @Override
+            public void onBleReadCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+                final String firmwareVersion = new String(characteristic.getValue(), StandardCharsets.UTF_8);
+                if (characteristic.getUuid().compareTo(Device.BLE_UUID_DIS_FW_CHAR) == 0) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            TextView textView = (TextView) view.findViewById(R.id.dd_txt_firmware_version);
+                            textView.setText(firmwareVersion);
+                        }
+                    });
+                }
+            }
+        });
+
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
 
-        at.markushi.ui.CircleButton circleButton = (at.markushi.ui.CircleButton)rootView.findViewById(R.id.dd_btn_update_firmware);
+        at.markushi.ui.CircleButton circleButton = (at.markushi.ui.CircleButton)view.findViewById(R.id.dd_btn_update_firmware);
         circleButton.setOnClickListener( new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -111,7 +133,10 @@ public class DeviceDetailFragment extends Fragment {
             }
         });
 
-        Button btnTest = (Button) rootView.findViewById(R.id.dd_btn_test_data);
+        TextView textView = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
+        textView.setText(device.getFirmwareVersion());
+
+        Button btnTest = (Button) view.findViewById(R.id.dd_btn_test_data);
         btnTest.setTag(deviceAddress);
         btnTest.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,11 +150,19 @@ public class DeviceDetailFragment extends Fragment {
             }
         });
 
-        BarChart chart = (BarChart) rootView.findViewById(R.id.ddl_chart);
+        BarChart chart = (BarChart) view.findViewById(R.id.ddl_chart);
         setChart(chart);
         chart.animateX(2500);
 
-        return rootView;
+        return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        String deviceAddress = this.getArguments().getString("deviceAddress");
+        Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+        device.setBleEventCallback(null);
+        super.onDestroyView();
     }
 
     @Override

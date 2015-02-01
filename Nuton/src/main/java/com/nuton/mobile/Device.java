@@ -16,6 +16,7 @@ import android.util.Log;
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 
+import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.util.UUID;
 
@@ -35,9 +36,17 @@ public class Device {
 
     /* Condition which would be open(trigger) only when BLE connection is opened and GATT services are discovered. */
     private final ConditionVariable mBleServicesDiscovered;
-    private final ConditionVariable mBleCharacteristicWritten;
+    private final ConditionVariable mBleCharacteristicRwOperation;
+
+    /* Firmware version of the device */
+    private String firmwareVersion = null;
 
     private DatabaseHelper databaseHelper = null;
+
+    public interface BleEventCallback {
+        void onBleReadCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristicId);
+    };
+    private BleEventCallback bleEventCallback;
 
     private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
     private static final int BLE_GATT_WRITE_TIMEOUT = 3000;
@@ -45,18 +54,21 @@ public class Device {
     /** The following UUIDs should in sync with firmware.
      * check nrf51-firmware/app/include/ble_uuids.h
      * */
-    private static final UUID BLE_ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_DIMMER_SERVICE = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_CS_SERVICE = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_HS_SERVICE = UUID.fromString("c0f41003-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_LS_SERVICE = UUID.fromString("c0f41004-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_MS_SERVICE = UUID.fromString("c0f41005-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_DIMMER_SERVICE = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_CS_SERVICE = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_HS_SERVICE = UUID.fromString("c0f41003-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_LS_SERVICE = UUID.fromString("c0f41004-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_MS_SERVICE = UUID.fromString("c0f41005-9324-4085-aba0-0902c0e8950a");
 
-    private static final UUID BLE_UUID_DIMMER_CHAR = UUID.fromString("c0f42001-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_CS_CHAR = UUID.fromString("c0f42002-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_HS_CHAR = UUID.fromString("c0f42003-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_LS_CHAR = UUID.fromString("c0f42004-9324-4085-aba0-0902c0e8950a");
-    private static final UUID BLE_UUID_MS_CHAR = UUID.fromString("c0f42005-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_DIMMER_CHAR = UUID.fromString("c0f42001-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_CS_CHAR = UUID.fromString("c0f42002-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_HS_CHAR = UUID.fromString("c0f42003-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_LS_CHAR = UUID.fromString("c0f42004-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BLE_UUID_MS_CHAR = UUID.fromString("c0f42005-9324-4085-aba0-0902c0e8950a");
+
+    public static final UUID BLE_UUID_DIS_SERVICE = UUID.fromString("0000180a-0000-1000-8000-00805f9b34fb");
+    public static final UUID BLE_UUID_DIS_FW_CHAR = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
 
     private static final String LOG_TAG_DEVICE = "Device";
 
@@ -66,7 +78,7 @@ public class Device {
     public Device() {
         mDeviceInfo = new DatabaseHelper.DeviceInfo();
         mBleServicesDiscovered = new ConditionVariable();
-        mBleCharacteristicWritten = new ConditionVariable();
+        mBleCharacteristicRwOperation = new ConditionVariable();
     }
 
     /**
@@ -78,6 +90,10 @@ public class Device {
         this.mDeviceInfo.name = bleDevice.getName();
         this.mDeviceInfo.address = bleDevice.getAddress();
         this.setRssi(rssi);
+    }
+
+    public void setBleEventCallback(BleEventCallback bleEventCallback) {
+        this.bleEventCallback = bleEventCallback;
     }
 
     public int getRssi() {
@@ -198,30 +214,30 @@ public class Device {
     }
 
     /**
-     * Set BLE Characteristic Write operation status.
+     * Set BLE Characteristic Read/Write operation status.
      *
      * @param completed - True if operation was completed.
      *                    False if operation is still going on.
      */
-    private void setBleCharacteristicWriteCompleted(boolean completed) {
+    private void setBleCharacteristicRWCompleted(boolean completed) {
         if (completed) {
-            this.mBleCharacteristicWritten.open();
+            this.mBleCharacteristicRwOperation.open();
         } else {
-            this.mBleCharacteristicWritten.close();
+            this.mBleCharacteristicRwOperation.close();
         }
     }
 
     /**
-     * Wait for BLE write characteristic to complete.
+     * Wait for BLE Read/Write characteristic operation to complete.
      *
-     * @return True if BLE write completed(either successfully or failed).
+     * @return True if BLE Read/Write operation was completed(either successfully or failed).
      *         False if timed out.
      */
-    private boolean waitForBleCharacteristicWriteComplete() {
+    private boolean waitForBleCharacteristicRWComplete() {
         boolean result;
-        result = this.mBleCharacteristicWritten.block(BLE_GATT_WRITE_TIMEOUT);
+        result = this.mBleCharacteristicRwOperation.block(BLE_GATT_WRITE_TIMEOUT);
         if (!result) {
-            Log.e(LOG_TAG_DEVICE, "BLE characteristic write timed out");
+            Log.e(LOG_TAG_DEVICE, "BLE characteristic RW timed out");
         }
         return result;
     }
@@ -273,6 +289,30 @@ public class Device {
     }
 
     /**
+     * Gets current firmware version using BLE Device Information Service.
+     * @return firmware version.
+     */
+    public String getFirmwareVersion() {
+        if (firmwareVersion != null) {
+            return firmwareVersion;
+        }
+        readBleCharacteristic(BLE_UUID_DIS_SERVICE, BLE_UUID_DIS_FW_CHAR);
+        return null;
+    }
+
+    /**
+     *  Reads given BLE device's characteristic.
+     *
+     * @param serviceId Bluetooth GATT Service UUID where the Characteristic can be found.
+     * @param characteristicId Bluetooth GATT Characteristic UUID.
+     */
+    private void readBleCharacteristic(UUID serviceId, UUID characteristicId) {
+        BleCharRwTaskParam p = new BleCharRwTaskParam(this, serviceId, characteristicId, null, false);
+        BleCharRwTask bleCharRwTask = new BleCharRwTask();
+        bleCharRwTask.execute(p);
+    }
+
+    /**
      *  Writes the given bytes to given BLE device's characteristic.
      *
      * @param serviceId Bluetooth GATT Service UUID where the Characteristic can be found.
@@ -280,75 +320,83 @@ public class Device {
      * @param value Value to be written to the Characteristic.
      */
     private void writeBleCharacteristic(UUID serviceId, UUID characteristicId,  byte[] value) {
-        WriteBleCharacteristicTaskParam p = new WriteBleCharacteristicTaskParam(this, serviceId, characteristicId, value);
-        new WriteBleCharacteristicTask().execute(p);
+        BleCharRwTaskParam p = new BleCharRwTaskParam(this, serviceId, characteristicId, value, true);
+        new BleCharRwTask().execute(p);
     }
 
     /**
-     * Parameters for WriteBleCharacteristicTask
+     * Parameters for BleCharRwTask
      */
-    private class WriteBleCharacteristicTaskParam {
+    private class BleCharRwTaskParam {
+        final boolean isWrite;
         final Device device;
         final UUID serviceId;
         final UUID characteristicId;
-        final byte[] value;
-        public WriteBleCharacteristicTaskParam(Device device, UUID serviceId, UUID characteristicId,  byte[] value) {
+        byte[] value;
+
+        public BleCharRwTaskParam(Device device, UUID serviceId, UUID characteristicId, byte[] value, boolean isWrite) {
             this.device = device;
             this.serviceId = serviceId;
             this.characteristicId = characteristicId;
+            this.isWrite = isWrite;
             this.value = value;
         }
     }
 
     /**
-     * AsyncTask to write to BLE Characteristic.
+     * AsyncTask to read/write to BLE Characteristic.
      *
      * All BLE operations are async, so handling it in UI thread would create a unpleasant experience.
      * Instead we create a new thread for each BLE write which would execute asynchronously and update
      * the UI if needed.
      */
-    private class WriteBleCharacteristicTask extends AsyncTask<WriteBleCharacteristicTaskParam, Integer, Long> {
-        private Long writeCharacteristic(Device device, UUID serviceId, UUID characteristicId,  byte[] value){
+    private class BleCharRwTask extends AsyncTask<BleCharRwTaskParam, Integer, Long> {
+        private Long rwCharacteristic(BleCharRwTaskParam param){
             BluetoothAdapter bluetoothAdapter = ApplicationGlobals.getBluetoothAdapter();
             BluetoothGatt gatt;
             BluetoothGattService service;
             BluetoothGattCharacteristic characteristic;
+            Device device = param.device;
 
             gatt = bleConnect(device, bluetoothAdapter, ApplicationGlobals.getAppContext());
-            service = gatt.getService(serviceId);
+            service = gatt.getService(param.serviceId);
             if (service == null) {
-                Log.e(LOG_TAG_DEVICE, "BLE service not found " + serviceId );
+                Log.e(LOG_TAG_DEVICE, "BLE service not found " + param.serviceId );
                 return 0L;
             }
 
-            characteristic = service.getCharacteristic(characteristicId);
+            characteristic = service.getCharacteristic(param.characteristicId);
             if (characteristic == null) {
-                Log.e(LOG_TAG_DEVICE, "BLE characteristic not found " + characteristicId);
+                Log.e(LOG_TAG_DEVICE, "BLE characteristic not found " + param.characteristicId);
                 return 0L;
             }
-            characteristic.setValue(value);
-            device.setBleCharacteristicWriteCompleted(false);
-            gatt.writeCharacteristic(characteristic);
-            device.waitForBleCharacteristicWriteComplete();
+            device.setBleCharacteristicRWCompleted(false);
+            if (param.isWrite) {
+                characteristic.setValue(param.value);
+                gatt.writeCharacteristic(characteristic);
+            } else {
+                gatt.readCharacteristic(characteristic);
+            }
+            device.waitForBleCharacteristicRWComplete();
 
             device.bleDisconnect();
 
             return 0L;
         }
 
-        protected Long doInBackground(WriteBleCharacteristicTaskParam... params) {
+        protected Long doInBackground(BleCharRwTaskParam... params) {
             // total number of BLE write requests(currently we support only one).
             int count = params.length;
             long totalSize = 0;
             for (int i = 0; i < count; i++) {
-                WriteBleCharacteristicTaskParam param = params[i];
+                BleCharRwTaskParam param = params[i];
                 publishProgress((int) ((i / (float) count) * 100));
                 // Escape early if cancel() is called
                 if (isCancelled()) {
                     break;
                 }
 
-                totalSize += writeCharacteristic(param.device, param.serviceId, param.characteristicId, param.value);
+                totalSize += rwCharacteristic(param);
             }
             return totalSize;
         }
@@ -357,6 +405,26 @@ public class Device {
         }
 
         protected void onPostExecute(Long result) {
+        }
+    }
+
+    private void onCharacteristicRW(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status, boolean isWrite) {
+        Log.v(LOG_TAG_DEVICE, "onCharacteristicRW " + (isWrite ? "Write" : "READ") +  " ( characteristic :" + characteristic + " ,status, : " + status + ")");
+        DeviceListAdapter deviceListAdapter = DeviceListAdapter.getInstance();
+        if (deviceListAdapter == null) {
+            return;
+        }
+        Device device = deviceListAdapter.getDevice(gatt.getDevice());
+        if (device != null){
+            device.setBleCharacteristicRWCompleted(true);
+        }
+
+        if (characteristic.getUuid().compareTo(Device.BLE_UUID_DIS_FW_CHAR) == 0) {
+            byte[] bytes = characteristic.getValue();
+            firmwareVersion = new String(bytes, StandardCharsets.UTF_8);
+        }
+        if (!isWrite & bleEventCallback != null) {
+            bleEventCallback.onBleReadCharacteristic(gatt, characteristic);
         }
     }
 
@@ -372,23 +440,14 @@ public class Device {
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-            Log.v(LOG_TAG_DEVICE, "onCharacteristicRead ( characteristic :" + characteristic + " ,status, : " + status + ")");
+            super.onCharacteristicRead(gatt, characteristic, status);
+            onCharacteristicRW(gatt, characteristic, status, false);
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             super.onCharacteristicWrite(gatt, characteristic, status);
-
-            Log.v(LOG_TAG_DEVICE, "onCharacteristicWrite ( characteristic :" + characteristic + " ,status, : " + status + ")");
-
-            DeviceListAdapter deviceListAdapter = DeviceListAdapter.getInstance();
-            if (deviceListAdapter == null) {
-                return;
-            }
-            Device device = deviceListAdapter.getDevice(gatt.getDevice());
-            if (device != null){
-                device.setBleCharacteristicWriteCompleted(true);
-            }
+            onCharacteristicRW(gatt, characteristic, status, true);
         }
 
         @Override

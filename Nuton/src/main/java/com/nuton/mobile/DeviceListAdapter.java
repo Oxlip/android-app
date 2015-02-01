@@ -90,9 +90,19 @@ public class DeviceListAdapter extends BaseAdapter {
      * @return Device associated with the given BLE device.
      */
     protected Device getDevice(BluetoothDevice bleDevice) {
+        return getDevice(bleDevice.getAddress());
+    }
+
+    /**
+     * Finds the Device from a given bluetooth Device.
+     *
+     * @param deviceAddress Bluetooth device to search
+     * @return Device associated with the given BLE device.
+     */
+    protected Device getDevice(String deviceAddress) {
         for (int i = 0; i < mDeviceList.size(); i++) {
             Device device = mDeviceList.get(i);
-            if (device.getDeviceInfo().address.equals(bleDevice.getAddress())) {
+            if (device.getDeviceInfo().address.equals(deviceAddress)) {
                 return device;
             }
         }
