@@ -266,8 +266,10 @@ public class Device {
 
         bleGatt = device.getBleGatt();
         if (bleGatt != null) {
-            device.waitForBleServiceDiscovery();
-            return bleGatt;
+            // Already connection was established and service discovery might be happening now.
+            if (device.waitForBleServiceDiscovery()) {
+                return bleGatt;
+            }
         }
         if (mBleDevice == null) {
             mBleDevice = bluetoothAdapter.getRemoteDevice(this.mDeviceInfo.address);
@@ -496,12 +498,16 @@ public class Device {
             Log.v(LOG_TAG_DEVICE, "onServicesDiscovered");
             DeviceListAdapter deviceListAdapter = DeviceListAdapter.getInstance();
             if (deviceListAdapter == null) {
+                Log.v(LOG_TAG_DEVICE, "empty device list");
                 return;
             }
             Device device = deviceListAdapter.getDevice(gatt.getDevice());
             if (device != null){
                 device.setBleGattServicesDiscovered(true);
+            } else {
+                Log.v(LOG_TAG_DEVICE, "Device not found");
             }
+
         }
     };
 }
