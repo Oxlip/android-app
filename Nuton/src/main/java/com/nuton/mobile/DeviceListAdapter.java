@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
@@ -190,19 +191,13 @@ public class DeviceListAdapter extends BaseAdapter {
         btnConnect.setTag(device);
 
         /* Button Click Handler for on/off button*/
-        btnOn.setOnClickListener(new View.OnClickListener() {
+        btnOn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+        {
             @Override
-            public void onClick(View v) {
-                ToggleButton btnOn = (ToggleButton)v;
-                Device device = (Device)v.getTag();
-                byte brightness;
-
-                if (!btnOn.isChecked()) {
-                    brightness = 0;
-                } else {
-                    brightness = 100;
-                }
-                device.dimmerControl(brightness);
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+            {
+                Device device = (Device)buttonView.getTag();
+                device.dimmerControl((byte) (isChecked ? 100: 0));
             }
         });
 
