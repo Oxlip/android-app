@@ -82,7 +82,7 @@ public class DeviceListActivity extends ActionBarActivity
             // fragment transaction.
             Bundle arguments = new Bundle();
             arguments.putString("deviceAddress", deviceAddress);
-            AuraDetailFragment fragment = new AuraDetailFragment();
+            DetailFragment fragment = new AuraDetailFragment();
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
                     .replace(R.id.device_detail_container, fragment)

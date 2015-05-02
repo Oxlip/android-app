@@ -23,7 +23,7 @@ import java.util.List;
  */
 public class DeviceDetailActivity extends ActionBarActivity {
 
-    private AuraDetailFragment mFragment;
+    private DetailFragment mFragment;
     private String mDeviceAddress;
 
     @Override
