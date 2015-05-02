@@ -34,7 +34,7 @@ import java.util.List;
  * A list fragment representing a list of Devices. This fragment
  * also supports tablet devices by allowing list items to be given an
  * 'activated' state upon selection. This helps indicate which item is
- * currently being viewed in a {@link DeviceDetailFragment}.
+ * currently being viewed in a {@link AuraDetailFragment}.
  * <p>
  * Activities containing this fragment MUST implement the {@link Callbacks}
  * interface.

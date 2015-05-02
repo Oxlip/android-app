@@ -19,11 +19,11 @@ import java.util.List;
  * in a {@link DeviceListActivity}.
  * <p>
  * This activity is mostly just a 'shell' activity containing nothing
- * more than a {@link DeviceDetailFragment}.
+ * more than a {@link AuraDetailFragment}.
  */
 public class DeviceDetailActivity extends ActionBarActivity {
 
-    private DeviceDetailFragment mFragment;
+    private AuraDetailFragment mFragment;
     private String mDeviceAddress;
 
     @Override
@@ -46,7 +46,7 @@ public class DeviceDetailActivity extends ActionBarActivity {
         if (savedInstanceState == null) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
-            mFragment = new DeviceDetailFragment();
+            mFragment = new AuraDetailFragment();
             Bundle arguments = new Bundle();
             arguments.putString("deviceAddress", mDeviceAddress);
 

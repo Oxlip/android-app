@@ -37,7 +37,7 @@ import java.util.List;
  * in two-pane mode (on tablets) or a {@link DeviceDetailActivity}
  * on handsets.
  */
-public class DeviceDetailFragment extends Fragment {
+public class AuraDetailFragment extends Fragment {
     private final BroadcastReceiver mDfuUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(final Context context, final Intent intent) {
@@ -71,7 +71,7 @@ public class DeviceDetailFragment extends Fragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public DeviceDetailFragment() {
+    public AuraDetailFragment() {
     }
 
     private static IntentFilter makeDfuUpdateIntentFilter() {
@@ -102,7 +102,7 @@ public class DeviceDetailFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.fragment_device_detail, container, false);
+        final View view = inflater.inflate(R.layout.fragment_aura_detail, container, false);
 
         String deviceAddress = this.getArguments().getString("deviceAddress");
         Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);

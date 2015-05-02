@@ -18,7 +18,7 @@ import android.widget.Toast;
  * <p>
  * The activity makes heavy use of fragments. The list of items is a
  * {@link DeviceListFragment} and the item details
- * (if present) is a {@link DeviceDetailFragment}.
+ * (if present) is a {@link AuraDetailFragment}.
  * <p>
  * This activity also implements the required
  * {@link DeviceListFragment.Callbacks} interface
@@ -82,7 +82,7 @@ public class DeviceListActivity extends ActionBarActivity
             // fragment transaction.
             Bundle arguments = new Bundle();
             arguments.putString("deviceAddress", deviceAddress);
-            DeviceDetailFragment fragment = new DeviceDetailFragment();
+            AuraDetailFragment fragment = new AuraDetailFragment();
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
                     .replace(R.id.device_detail_container, fragment)
