@@ -14,7 +14,6 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
 import com.makeramen.RoundedImageView;
 
@@ -177,7 +176,7 @@ public class DeviceListAdapter extends BaseAdapter {
 
         if (convertView == null) {
             LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-            convertView = mInflater.inflate(R.layout.item_device_list, null);
+            convertView = mInflater.inflate(R.layout.aura_list_item, null);
         }
 
         loadApplianceImage(convertView, device.getDeviceInfo().applianceType);
