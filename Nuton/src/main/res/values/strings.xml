@@ -14,4 +14,10 @@
     <string name="ble_not_supported">BLE is not supported by this Android version.</string>
     <string name="error_bluetooth_not_supported">This phone does not have support for BLE hardware.</string>
     <string name="dl_btn_connect">Connect</string>
+
+    <string name="aura_detail_auto_off">Turn on/off based automatically.</string>
+    <string name="aura_detail_enable_remote">Enable internet control.</string>
+
+    <string name="lyra_detail_detect_motion">Detect motion.</string>
+    <string name="lyra_detail_detect_tap">Detect tap.</string>
 </resources>

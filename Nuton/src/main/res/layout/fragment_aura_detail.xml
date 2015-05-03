@@ -49,11 +49,11 @@
             <CheckBox
                 android:layout_row="3"
                 android:layout_column="0"
-                android:text="Turn on/off automatically"/>
+                android:text="@string/aura_detail_auto_off"/>
             <CheckBox
                 android:layout_row="4"
                 android:layout_column="0"
-                android:text="Enable remote control"/>
+                android:text="@string/aura_detail_enable_remote"/>
 
             <com.github.mikephil.charting.charts.BarChart
                 android:id="@+id/ddl_chart"
