@@ -162,68 +162,90 @@ public class DeviceListAdapter extends BaseAdapter {
         riv.setImageDrawable(imgDrawable);
     }
 
+    public View loadNewDeviceView(Device device) {
+        View view;
+        Button btnConnect;
+
+        LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+        view = mInflater.inflate(R.layout.not_connected_list_item, null);
+
+        btnConnect = (Button)view.findViewById(R.id.dl_btn_connect);
+        btnConnect.setTag(device);
+        /* Button Click Handler for connect button*/
+        btnConnect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Device device = (Device) v.getTag();
+                device.save();
+                notifyDataSetInvalidated();
+            }
+        });
+
+        return  view;
+    }
+
+    public View loadLyraView(Device device) {
+        View view;
+
+        LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+        view = mInflater.inflate(R.layout.lyra_list_item, null);
+
+        return  view;
+    }
+
+    public View loadAuraView(Device device) {
+        SwitchCompat btnOn;
+        View view;
+
+        LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+        view = mInflater.inflate(R.layout.aura_list_item, null);
+
+        loadApplianceImage(view, device.getDeviceInfo().applianceType);
+
+        btnOn = (SwitchCompat)view.findViewById(R.id.dl_btn_on_off);
+
+        /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
+        btnOn.setTag(device);
+
+        /* Button Click Handler for on/off button*/
+        btnOn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                Device device = (Device) buttonView.getTag();
+                device.dimmerControl((byte) (isChecked ? 100 : 0));
+            }
+        });
+
+        /* Enable the on button only if the device is in range */
+        btnOn.setEnabled(device.getRssi() != 0);
+
+        return  view;
+    }
+
     /**
      * Renders the UI for the given device item.
      */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         TextView txtTitle;
-        SwitchCompat btnOn;
-        Button btnConnect;
         Device device;
 
         device = mDeviceList.get(position);
 
+        /* Load different view based on device type. */
         if (convertView == null) {
-            LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-            convertView = mInflater.inflate(R.layout.aura_list_item, null);
+            if (device.isRegistered()) {
+                if (device.getDeviceInfo().deviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
+                    convertView = loadAuraView(device);
+                } else {
+                    convertView = loadLyraView(device);
+                }
+            } else {
+                convertView = loadNewDeviceView(device);
+            }
         }
-
-        loadApplianceImage(convertView, device.getDeviceInfo().applianceType);
 
         txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
-        btnOn = (SwitchCompat)convertView.findViewById(R.id.dl_btn_on_off);
-        btnConnect = (Button)convertView.findViewById(R.id.dl_btn_connect);
-
-        /* Store the device in the buttons so that it can be retrieved when the button is clicked*/
-        btnOn.setTag(device);
-        btnConnect.setTag(device);
-
-        /* Button Click Handler for on/off button*/
-        btnOn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
-        {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-            {
-                Device device = (Device)buttonView.getTag();
-                device.dimmerControl((byte) (isChecked ? 100: 0));
-            }
-        });
-
-        /* Button Click Handler for connect button*/
-        btnConnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Device device = (Device)v.getTag();
-                device.save();
-                notifyDataSetInvalidated();
-            }
-        });
-
-        /* "connect" button should be visible only for the first time.
-         *  "On/Off" button should be visible only if the device is connected.
-         */
-        if (device.isRegistered()) {
-            btnOn.setVisibility(View.VISIBLE);
-            btnConnect.setVisibility(View.INVISIBLE);
-        } else {
-            btnOn.setVisibility(View.INVISIBLE);
-            btnConnect.setVisibility(View.VISIBLE);
-        }
-
-        /* Enable the on button only if the device is in range */
-        btnOn.setEnabled(device.getRssi() != 0);
-
         txtTitle.setText(device.getDeviceInfo().name);
 
         return convertView;

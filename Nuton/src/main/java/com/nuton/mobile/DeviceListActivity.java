@@ -80,9 +80,19 @@ public class DeviceListActivity extends ActionBarActivity
             // In two-pane mode, show the detail view in this activity by
             // adding or replacing the detail fragment using a
             // fragment transaction.
+            DetailFragment fragment;
+            int deviceType = device.getDeviceInfo().deviceType;
             Bundle arguments = new Bundle();
             arguments.putString("deviceAddress", deviceAddress);
-            DetailFragment fragment = new AuraDetailFragment();
+
+            if (deviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
+                fragment = new AuraDetailFragment();
+            } else if (deviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_LYRA) {
+                fragment = new LyraDetailFragment();
+            } else {
+                return;
+            }
+
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
                     .replace(R.id.device_detail_container, fragment)
@@ -93,6 +103,7 @@ public class DeviceListActivity extends ActionBarActivity
             // for the selected item ID.
             Intent detailIntent = new Intent(this, DeviceDetailActivity.class);
             detailIntent.putExtra("deviceAddress", deviceAddress);
+            detailIntent.putExtra("deviceType", device.getDeviceInfo().deviceType);
             startActivity(detailIntent);
         }
     }

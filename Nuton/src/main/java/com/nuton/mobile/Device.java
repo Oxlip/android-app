@@ -88,6 +88,13 @@ public class Device {
         this();
         this.mBleDevice = bleDevice;
         this.mDeviceInfo.name = bleDevice.getName();
+        if (this.mDeviceInfo.name.startsWith("Aura") ) {
+            this.mDeviceInfo.deviceType = DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA;
+        } else if (this.mDeviceInfo.name.startsWith("Lyra") ) {
+            this.mDeviceInfo.deviceType = DatabaseHelper.DeviceInfo.DEVICE_TYPE_LYRA;
+        } else {
+            this.mDeviceInfo.deviceType = DatabaseHelper.DeviceInfo.DEVICE_TYPE_UNKNOWN;
+        }
         this.mDeviceInfo.address = bleDevice.getAddress();
         this.setRssi(rssi);
     }

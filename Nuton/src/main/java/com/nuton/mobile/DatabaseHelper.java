@@ -544,6 +544,15 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         @DatabaseField(id = true)
         String address;
 
+        /*
+         * Device type - Aura, Lyra etc
+         */
+        public static final int DEVICE_TYPE_UNKNOWN = -1;
+        public static final int DEVICE_TYPE_AURA = 1;
+        public static final int DEVICE_TYPE_LYRA = 2;
+        @DatabaseField
+        Integer deviceType;
+
         /**
          * Custom name given by the user.
          */

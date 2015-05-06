@@ -25,6 +25,7 @@ public class DeviceDetailActivity extends ActionBarActivity {
 
     private DetailFragment mFragment;
     private String mDeviceAddress;
+    private int mDeviceType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +33,7 @@ public class DeviceDetailActivity extends ActionBarActivity {
         setContentView(R.layout.activity_device_detail);
 
         mDeviceAddress = getIntent().getExtras().getString("deviceAddress");
+        mDeviceType =  getIntent().getExtras().getInt("deviceType");
         populateActionBar();
 
         // savedInstanceState is non-null when there is fragment state
@@ -46,7 +48,14 @@ public class DeviceDetailActivity extends ActionBarActivity {
         if (savedInstanceState == null) {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
-            mFragment = new AuraDetailFragment();
+            if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
+                mFragment = new AuraDetailFragment();
+            } else if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_LYRA) {
+                mFragment = new LyraDetailFragment();
+            } else {
+                return;
+            }
+
             Bundle arguments = new Bundle();
             arguments.putString("deviceAddress", mDeviceAddress);
 
