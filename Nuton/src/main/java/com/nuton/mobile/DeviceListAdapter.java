@@ -144,22 +144,24 @@ public class DeviceListAdapter extends BaseAdapter {
         return mDeviceList.indexOf(getItem(position));
     }
 
-    private void loadApplianceImage(View rootView, String applianceTypeName) {
+    private void transformImage(View rootView, int imgId) {
         Context context = ApplicationGlobals.getAppContext();
-        DatabaseHelper.ApplianceType applianceType = DatabaseHelper.getApplianceTypeByName(applianceTypeName);
 
         RoundedImageView riv = (RoundedImageView) rootView.findViewById(R.id.dl_image);
         riv.setBackgroundColor(Color.GRAY);
         riv.setBorderColor(Color.DKGRAY);
-        if (applianceType == null) {
-            return;
-        }
 
-        int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
         Drawable imgDrawable = context.getResources().getDrawable(imgId);
         imgDrawable.mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
 
         riv.setImageDrawable(imgDrawable);
+
+    }
+
+    private void loadApplianceImage(View rootView, String imageName) {
+        Context context = ApplicationGlobals.getAppContext();
+        int imgId =  context.getResources().getIdentifier(imageName, "drawable", context.getPackageName());
+        transformImage(rootView, imgId);
     }
 
     public View loadNewDeviceView(Device device) {
@@ -189,18 +191,23 @@ public class DeviceListAdapter extends BaseAdapter {
 
         LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         view = mInflater.inflate(R.layout.lyra_list_item, null);
+        transformImage(view, R.drawable.ic_three_button);
 
         return  view;
     }
 
     public View loadAuraView(Device device) {
+        DatabaseHelper.ApplianceType applianceType  = DatabaseHelper.getApplianceTypeByName(device.getDeviceInfo().applianceType);
         SwitchCompat btnOn;
         View view;
 
         LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         view = mInflater.inflate(R.layout.aura_list_item, null);
 
-        loadApplianceImage(view, device.getDeviceInfo().applianceType);
+
+        if (applianceType != null) {
+            loadApplianceImage(view, applianceType.imageName);
+        }
 
         btnOn = (SwitchCompat)view.findViewById(R.id.dl_btn_on_off);
 

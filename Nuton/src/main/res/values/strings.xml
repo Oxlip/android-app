@@ -9,6 +9,9 @@
     <string name="text_kw_used">KILOWATTS USED</string>
     <string name="text_na">NA</string>
 
+    <string name="text_aura">Aura</string>
+    <string name="text_lyra">Lyra</string>
+
     <string name="actionbar_device_name_hint">Appliance Name</string>
 
     <string name="ble_not_supported">BLE is not supported by this Android version.</string>
