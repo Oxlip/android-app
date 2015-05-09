@@ -66,23 +66,7 @@ public class DeviceDetailActivity extends ActionBarActivity {
         }
     }
 
-    /**
-     * Fill the action bar with Text box for appliance name and spinner for appliance type.
-     */
-    private void populateActionBar() {
-        /*Inflate the custom view*/
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setCustomView(R.layout.actionbar_device_detail);
-        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
-        actionBar.setDisplayHomeAsUpEnabled(true);
-
-        View view = actionBar.getCustomView();
-        final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(mDeviceAddress);
-
-        /* Fill appliance name */
-        final EditText txtName = (EditText) view.findViewById(R.id.action_bar_device_name);
-        txtName.setText(deviceInfo.name);
-
+    private void populateApplianceType(View view, DatabaseHelper.DeviceInfo deviceInfo) {
         /* Fill appliance type */
         List<DatabaseHelper.ApplianceType> applianceTypeList = DatabaseHelper.getApplianceTypeList();
         DeviceTypeAdapter adapter = new DeviceTypeAdapter(applianceTypeList);
@@ -103,9 +87,33 @@ public class DeviceDetailActivity extends ActionBarActivity {
         sprApplianceType.setSelection(position);
     }
 
+    /**
+     * Fill the action bar with Text box for appliance name and spinner for appliance type.
+     */
+    private void populateActionBar() {
+        /*Inflate the custom view*/
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setCustomView(R.layout.actionbar_device_detail);
+        actionBar.setDisplayOptions(ActionBar.DISPLAY_SHOW_CUSTOM);
+        actionBar.setDisplayHomeAsUpEnabled(true);
+
+        View view = actionBar.getCustomView();
+        final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(mDeviceAddress);
+
+        final EditText txtName = (EditText) view.findViewById(R.id.action_bar_device_name);
+        txtName.setText(deviceInfo.name);
+
+        // populate spinner with home appliances(tv, lamp etc) for Aura
+        if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
+            populateApplianceType(view, deviceInfo);
+        }
+    }
+
+    // when back is pressed update the information in database
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+
 
         ActionBar actionBar = getSupportActionBar();
         if (actionBar == null) {
@@ -113,11 +121,14 @@ public class DeviceDetailActivity extends ActionBarActivity {
         }
         View view = actionBar.getCustomView();
         final EditText txtName = (EditText) view.findViewById(R.id.action_bar_device_name);
-        final Spinner sprApplianceType = (Spinner) view.findViewById(R.id.action_bar_device_type);
 
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(mDeviceAddress);
         deviceInfo.name = txtName.getText().toString();
-        deviceInfo.applianceType = sprApplianceType.getSelectedItem().toString();
+        if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
+            final Spinner sprApplianceType = (Spinner) view.findViewById(R.id.action_bar_device_type);
+            deviceInfo.applianceType = sprApplianceType.getSelectedItem().toString();
+        }
+
         DatabaseHelper.saveDeviceInfo(deviceInfo);
         DeviceListAdapter.getInstance().notifyDataSetChanged();
     }
