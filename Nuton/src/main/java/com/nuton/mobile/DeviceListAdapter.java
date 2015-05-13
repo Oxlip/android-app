@@ -144,26 +144,6 @@ public class DeviceListAdapter extends BaseAdapter {
         return mDeviceList.indexOf(getItem(position));
     }
 
-    private void transformImage(View rootView, int imgId) {
-        Context context = ApplicationGlobals.getAppContext();
-
-        RoundedImageView riv = (RoundedImageView) rootView.findViewById(R.id.dl_image);
-        riv.setBackgroundColor(Color.GRAY);
-        riv.setBorderColor(Color.DKGRAY);
-
-        Drawable imgDrawable = context.getResources().getDrawable(imgId);
-        imgDrawable.mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
-
-        riv.setImageDrawable(imgDrawable);
-
-    }
-
-    private void loadApplianceImage(View rootView, String imageName) {
-        Context context = ApplicationGlobals.getAppContext();
-        int imgId =  context.getResources().getIdentifier(imageName, "drawable", context.getPackageName());
-        transformImage(rootView, imgId);
-    }
-
     public View loadNewDeviceView(Device device) {
         View view;
         Button btnConnect;
@@ -191,7 +171,7 @@ public class DeviceListAdapter extends BaseAdapter {
 
         LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         view = mInflater.inflate(R.layout.lyra_list_item, null);
-        transformImage(view, R.drawable.ic_three_button);
+        ApplianceImage.transformImage(view, R.drawable.ic_three_button, R.id.dl_image);
 
         return  view;
     }
@@ -206,7 +186,7 @@ public class DeviceListAdapter extends BaseAdapter {
 
 
         if (applianceType != null) {
-            loadApplianceImage(view, applianceType.imageName);
+            ApplianceImage.loadApplianceImage(view, applianceType.imageName, R.id.dl_image);
         }
 
         btnOn = (SwitchCompat)view.findViewById(R.id.dl_btn_on_off);
