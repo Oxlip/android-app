@@ -27,6 +27,7 @@
         <activity
             android:name=".DeviceDetailActivity"
             android:label="@string/title_device_detail"
+            android:windowSoftInputMode="stateHidden"
             android:parentActivityName=".DeviceListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
