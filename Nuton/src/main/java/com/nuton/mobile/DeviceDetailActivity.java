@@ -109,12 +109,10 @@ public class DeviceDetailActivity extends ActionBarActivity {
         }
     }
 
-    // when back is pressed update the information in database
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-
-
+    /*
+     * Update Device information(name and appliance type) from action bar.
+     */
+    private void updateDeviceInfo() {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar == null) {
             return;
@@ -133,6 +131,13 @@ public class DeviceDetailActivity extends ActionBarActivity {
         DeviceListAdapter.getInstance().notifyDataSetChanged();
     }
 
+    // when back is pressed update the information in database
+    @Override
+    public void onBackPressed() {
+        updateDeviceInfo();
+        super.onBackPressed();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -143,6 +148,7 @@ public class DeviceDetailActivity extends ActionBarActivity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
+            updateDeviceInfo();
             navigateUpTo(new Intent(this, DeviceListActivity.class));
             return true;
         }
