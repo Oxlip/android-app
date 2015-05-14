@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -146,21 +147,28 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
             @Override
             public boolean onDrag(View v, DragEvent event) {
                 int action = event.getAction();
+                int startColor, enterColor, endColor;
+                final Resources res = ApplicationGlobals.getAppContext().getResources();
+
+                startColor = res.getColor(R.color.blue);
+                enterColor = res.getColor(R.color.green_blue);
+                endColor = res.getColor(R.color.background_material_dark);
                 switch (action) {
                     case DragEvent.ACTION_DRAG_STARTED:
+                        v.setBackgroundColor(startColor);
                         // do nothing
                         break;
                     case DragEvent.ACTION_DRAG_ENTERED:
-                        v.setBackgroundColor(Color.GREEN);
+                        v.setBackgroundColor(enterColor);
                         break;
                     case DragEvent.ACTION_DRAG_EXITED:
-                        v.setBackgroundColor(Color.DKGRAY);
+                        v.setBackgroundColor(startColor);
                         break;
                     case DragEvent.ACTION_DROP:
                         assignApplianceToButton((Device)event.getLocalState(), (int)vh.mTextView.getTag());
                         break;
                     case DragEvent.ACTION_DRAG_ENDED:
-                        v.setBackgroundColor(Color.DKGRAY);
+                        v.setBackgroundColor(endColor);
                     default:
                         break;
                 }
