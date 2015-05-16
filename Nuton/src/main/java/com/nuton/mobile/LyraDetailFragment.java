@@ -9,6 +9,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.Layout;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,13 +17,15 @@ import android.view.MenuInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.makeramen.RoundedImageView;
 
-import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -92,46 +95,82 @@ public class LyraDetailFragment extends DetailFragment {
 
 class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolder> {
     private String[] mDataset;
+    private ArrayList<ButtonActionItem>[] mButtonActionItems;
+    //private ArrayList<ArrayList<ButtonActionItem>> mButtonActionItems;
     private Context mContext;
+    private final String[] actionTypes= {"Toggle", "On", "Off", "Increase", "Decrease"};
+
+    public static class ButtonActionItem {
+        public Device device;
+        public int action;
+        public ButtonActionItem(Device device, int action){
+            this.device = device;
+            this.action = action;
+        }
+    }
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder
     public static class ViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
-        private TextView mTextView;
+        private TextView mTextViewNumber;
+        private LinearLayout mLayoutDeviceInfoList;
         public ViewHolder(View v) {
             super(v);
-            mTextView = (TextView) v.findViewById(R.id.button_number);
+            mTextViewNumber = (TextView) v.findViewById(R.id.lyra_cfg_button_number);
+            mLayoutDeviceInfoList = (LinearLayout) v.findViewById(R.id.lyra_cfg_button_device_info_list);
         }
     }
 
     public LyraButtonAdapter(Context context, String[] myDataset) {
         mContext = context;
         mDataset = myDataset;
+        //mButtonActionItems = new ArrayList<>(mDataset.length);
+        mButtonActionItems = (ArrayList<ButtonActionItem>[]) new ArrayList[mDataset.length];
     }
 
     /**
      * Assign given appliance to the given button. The action needs to be taken will be prompted to user.
      */
-    private void assignApplianceToButton(final Device device, final int button) {
+    private void assignApplianceToButton(final Device device, final ViewHolder vh) {
         AlertDialog.Builder b = new AlertDialog.Builder(this.mContext);
         b.setTitle("What you want todo?");
-        String[] types = {"Toggle On/Off", "Turn On", "Turn Off", "Increase Brightness", "Decrease Brightness"};
-        b.setItems(types, new DialogInterface.OnClickListener() {
+        b.setItems(actionTypes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                Toast.makeText(ApplicationGlobals.getAppContext(), "Button " + button + " Device  " + device.getDeviceInfo().name + " Action " + which, Toast.LENGTH_SHORT).show();
-                switch(which){
-                    case 0:
-                        break;
-                    case 1:
-                        break;
+                int button = (int) vh.mTextViewNumber.getTag();
+                if (mButtonActionItems[button] == null) {
+                    mButtonActionItems[button] = new ArrayList<ButtonActionItem>();
                 }
+                mButtonActionItems[button].add(new ButtonActionItem(device, which));
+                drawActionList(mButtonActionItems[button], vh);
+                dialog.dismiss();
             }
         });
         b.show();
+    }
+
+    private void drawActionList(ArrayList<ButtonActionItem> buttonActionList, ViewHolder vh) {
+        LinearLayout linearLayout = vh.mLayoutDeviceInfoList;
+        if(linearLayout.getChildCount() > 0) {
+            linearLayout.removeAllViews();
+        }
+        for(ButtonActionItem actionItem: buttonActionList) {
+            Device device = actionItem.device;
+            final Context context = this.mContext;
+            DatabaseHelper.DeviceInfo deviceInfo = device.getDeviceInfo();
+            DatabaseHelper.ApplianceType applianceType  = DatabaseHelper.getApplianceTypeByName(deviceInfo.applianceType);
+            int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
+
+            View v = LayoutInflater.from(context).inflate(R.layout.lyra_cfg_button_device_info_list_item, vh.mLayoutDeviceInfoList, false);
+            TextView tv = (TextView)v.findViewById(R.id.lyra_cfg_button_device_info_list_item_text);
+            RoundedImageView riv = (RoundedImageView)v.findViewById(R.id.lyra_cfg_button_device_info_list_item_image);
+
+            riv.setImageResource(imgId);
+            tv.setText(actionTypes[actionItem.action]);
+            vh.mLayoutDeviceInfoList.addView(v);
+        }
     }
 
     // Create new views (invoked by the layout manager)
@@ -165,7 +204,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
                         v.setBackgroundColor(startColor);
                         break;
                     case DragEvent.ACTION_DROP:
-                        assignApplianceToButton((Device)event.getLocalState(), (int)vh.mTextView.getTag());
+                        assignApplianceToButton((Device) event.getLocalState(), vh);
                         break;
                     case DragEvent.ACTION_DRAG_ENDED:
                         v.setBackgroundColor(endColor);
@@ -184,8 +223,11 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
     public void onBindViewHolder(final ViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        holder.mTextView.setText(mDataset[position]);
-        holder.mTextView.setTag(position);
+        holder.mTextViewNumber.setText(mDataset[position]);
+        holder.mTextViewNumber.setTag(position);
+        if (mButtonActionItems[position] != null) {
+            drawActionList(mButtonActionItems[position], holder);
+        }
     }
 
     // Return the size of your dataset (invoked by the layout manager)
