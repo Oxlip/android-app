@@ -18,6 +18,7 @@ import com.j256.ormlite.dao.Dao;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 public class Device {
@@ -295,6 +296,33 @@ public class Device {
     public void dimmerControl(byte brightness) {
         byte[] value = {1, brightness};
         writeBleCharacteristic(BLE_UUID_DIMMER_SERVICE, BLE_UUID_DIMMER_CHAR, value);
+    }
+
+    /*
+     * Returns list of device actions.
+     */
+    public List<DatabaseHelper.DeviceActions> getDeviceActions(int subAddress) {
+        return DatabaseHelper.getDeviceActions(this.getDeviceInfo().address, subAddress);
+    }
+
+    /*
+     * Add an action for the given device.
+     * For example when button 1 is press turn on light.
+     */
+    public void addAction(int subAddress, String target, int actionType, int value) {
+        DatabaseHelper.DeviceActions deviceActions = new DatabaseHelper.DeviceActions();
+        deviceActions.address = this.getDeviceInfo().address;
+        deviceActions.subAddress = subAddress;
+        deviceActions.actionType = actionType;
+        deviceActions.targetDevice = target;
+        deviceActions.value = value;
+
+        try {
+            Dao<DatabaseHelper.DeviceActions, String> deviceActionsDao = getHelper().getDeviceActionsDao();
+            deviceActionsDao.create(deviceActions);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

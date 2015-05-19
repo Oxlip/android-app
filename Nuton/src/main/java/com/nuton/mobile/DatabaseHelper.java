@@ -51,6 +51,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private RuntimeExceptionDao<DeviceInfo, String> deviceInfoRuntimeDao = null;
     private Dao<ApplianceType, String> applianceTypeDao = null;
     private Dao<ApplianceMake, String> applianceMakeDao = null;
+    private Dao<DeviceActions, String> deviceActionsDao = null;
     private Dao<DeviceData, String> deviceDataDao = null;
 
     // cached copy of appliance type and make
@@ -109,6 +110,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             TableUtils.createTable(connectionSource, ApplianceMake.class);
             TableUtils.createTable(connectionSource, ApplianceType.class);
             TableUtils.createTable(connectionSource, DeviceData.class);
+            TableUtils.createTable(connectionSource, DeviceActions.class);
             populateTables();
         } catch (SQLException e) {
             Log.e(LOG_TAG_DATABASE_HELPER, "Can't create database", e);
@@ -166,7 +168,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
-     * Returns the Database Access Object (DAO) for ApplianceMake.
+     * Returns the Database Access Object (DAO) for DeviceData.
      * It will create it or just give the cached value.
      */
     public Dao<DeviceData, String> getDeviceDataDao() throws SQLException {
@@ -174,6 +176,17 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             deviceDataDao = getDao(DeviceData.class);
         }
         return deviceDataDao;
+    }
+
+    /**
+     * Returns the Database Access Object (DAO) for DeviceActions.
+     * It will create it or just give the cached value.
+     */
+    public Dao<DeviceActions, String> getDeviceActionsDao() throws SQLException {
+        if (deviceActionsDao == null) {
+            deviceActionsDao = getDao(DeviceActions.class);
+        }
+        return deviceActionsDao;
     }
 
     /**
@@ -277,6 +290,25 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
         return applianceMakeList;
     }
+
+    /**
+     * Get device actions associated with the given device.
+     * @param address Address of the device.
+     * @param subAddress subaddress of the device(button number).
+     * @return List of DeviceData for the given range.
+     */
+    public static List<DeviceActions> getDeviceActions(String address, int subAddress) {
+        try {
+            QueryBuilder<DeviceActions, String> queryBuilder = getInstance().getDeviceActionsDao().queryBuilder();
+            Where<DeviceActions, String> whereQuery;
+            whereQuery = queryBuilder.where().eq("address", address);
+
+            return getInstance().getDeviceActionsDao().query(whereQuery.prepare());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public static void testInsertDeviceData(String deviceAddress, Date startDate, Date endDate){
         DeviceData deviceData;
@@ -586,6 +618,44 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         DeviceInfo() {
             // needed by ormlite
         }
+    }
+
+    /**
+     * Device Actions.
+     */
+    @DatabaseTable(tableName = "DeviceActions")
+    public static class DeviceActions {
+        /**
+         * Device which initiates the action. (BLE Address and Button number)
+         */
+        @DatabaseField(canBeNull = false)
+        String address;
+        @DatabaseField(canBeNull = true)
+        int subAddress;
+
+        /**
+         * Device on which the action should be applied.
+         */
+        @DatabaseField(canBeNull = false)
+        String targetDevice;
+
+        /**
+         * Action type.         *
+         */
+        public static final int ACTION_TYPE_UNKNOWN = -1;
+        public static final int ACTION_TYPE_ON = 1;
+        public static final int ACTION_TYPE_OFF = 2;
+        public static final int ACTION_TYPE_TOGGLE = 3;
+        public static final int ACTION_TYPE_INCREASE = 4;
+        public static final int ACTION_TYPE_DECREASE = 5;
+        @DatabaseField(canBeNull = false)
+        int actionType;
+
+        /**
+         * Value(if any).
+         */
+        @DatabaseField(canBeNull = true)
+        int value;
     }
 
     /**
