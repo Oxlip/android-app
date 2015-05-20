@@ -3,9 +3,6 @@ package com.nuton.mobile;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,8 +11,6 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.TextView;
-
-import com.makeramen.RoundedImageView;
 
 import java.util.List;
 
@@ -45,7 +40,7 @@ public class DeviceListAdapter extends BaseAdapter {
 
     /**
      * Creates new instance if required.
-     * @param context
+     * @param context Application context
      * @return DeviceListAdapter instance.
      */
     public static DeviceListAdapter getInstance(Context context) {

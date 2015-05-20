@@ -6,14 +6,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.content.LocalBroadcastManager;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
 
@@ -87,22 +81,10 @@ public class DetailFragment extends Fragment {
 
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.fragment_lyra_detail, container, false);
-
-        return view;
-    }
-
-    @Override
     public void onDestroyView() {
         String deviceAddress = this.getArguments().getString("deviceAddress");
         Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
         device.setBleEventCallback(null);
         super.onDestroyView();
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
     }
 }

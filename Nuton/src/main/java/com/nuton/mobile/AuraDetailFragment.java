@@ -57,7 +57,7 @@ public class AuraDetailFragment extends DetailFragment {
             @Override
             public void onBleReadCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                 final String firmwareVersion = new String(characteristic.getValue(), StandardCharsets.UTF_8);
-                if (characteristic.getUuid().compareTo(Device.BLE_UUID_DIS_FW_CHAR) == 0) {
+                if (characteristic.getUuid().compareTo(BleUuid.DIS_FW_CHAR) == 0) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -72,7 +72,7 @@ public class AuraDetailFragment extends DetailFragment {
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
 
         at.markushi.ui.CircleButton circleButton = (at.markushi.ui.CircleButton)view.findViewById(R.id.dd_btn_update_firmware);
-        circleButton.setOnClickListener( new View.OnClickListener() {
+        circleButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DfuService dfuService = new DfuService();
@@ -82,20 +82,6 @@ public class AuraDetailFragment extends DetailFragment {
 
         TextView textView = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
         textView.setText(device.getFirmwareVersion());
-
-        Button btnTest = (Button) view.findViewById(R.id.dd_btn_test_data);
-        btnTest.setTag(deviceAddress);
-        btnTest.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Calendar c = Calendar.getInstance();
-                Date start, end = c.getTime();
-                c.add(Calendar.DATE, -31);
-                start = c.getTime();
-                String deviceAddress = (String)view.getTag();
-                DatabaseHelper.testInsertDeviceData(deviceAddress, start, end);
-            }
-        });
 
         BarChart chart = (BarChart) view.findViewById(R.id.ddl_chart);
         setChart(chart);

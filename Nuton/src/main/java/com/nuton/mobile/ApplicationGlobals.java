@@ -9,6 +9,9 @@ import com.crashlytics.android.Crashlytics;
 
 import io.fabric.sdk.android.Fabric;
 
+/**
+ * Helper class to store global variables. Only once instance can be created.
+ */
 public class ApplicationGlobals extends Application {
 
     private static Context mContext;

@@ -23,7 +23,6 @@ import java.util.List;
  */
 public class DeviceDetailActivity extends ActionBarActivity {
 
-    private DetailFragment mFragment;
     private String mDeviceAddress;
     private int mDeviceType;
 
@@ -46,12 +45,13 @@ public class DeviceDetailActivity extends ActionBarActivity {
         // http://developer.android.com/guide/components/fragments.html
         //
         if (savedInstanceState == null) {
+            DetailFragment fragment;
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
             if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
-                mFragment = new AuraDetailFragment();
+                fragment = new AuraDetailFragment();
             } else if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_LYRA) {
-                mFragment = new LyraDetailFragment();
+                fragment = new LyraDetailFragment();
             } else {
                 return;
             }
@@ -59,9 +59,9 @@ public class DeviceDetailActivity extends ActionBarActivity {
             Bundle arguments = new Bundle();
             arguments.putString("deviceAddress", mDeviceAddress);
 
-            mFragment.setArguments(arguments);
+            fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
-                    .add(R.id.device_detail_container, mFragment)
+                    .add(R.id.device_detail_container, fragment)
                     .commit();
         }
     }

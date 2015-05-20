@@ -8,6 +8,9 @@ import android.view.View;
 
 import com.makeramen.RoundedImageView;
 
+/**
+ * Helper class to transform appliance image into a roundedImageView.
+ */
 public class ApplianceImage {
     public static void transformImage(View rootView, int imgId, int imgViewId) {
         Context context = ApplicationGlobals.getAppContext();
@@ -17,8 +20,11 @@ public class ApplianceImage {
         riv.setBorderColor(Color.DKGRAY);
 
         Drawable imgDrawable = context.getResources().getDrawable(imgId);
-        imgDrawable.mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+        if (imgDrawable == null) {
+            return;
+        }
 
+        imgDrawable.mutate().setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
         riv.setImageDrawable(imgDrawable);
 
     }

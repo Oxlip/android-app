@@ -42,34 +42,14 @@ public class Device {
     /* Firmware version of the device */
     private String firmwareVersion = null;
 
-    private DatabaseHelper databaseHelper = null;
-
     public interface BleEventCallback {
         void onBleReadCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristicId);
-    };
+    }
+
     private BleEventCallback bleEventCallback;
 
     private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
     private static final int BLE_GATT_WRITE_TIMEOUT = 3000;
-
-    /** The following UUIDs should in sync with firmware.
-     * check nrf51-firmware/app/include/ble_uuids.h
-     * */
-    public static final UUID BLE_ASTRAL_UUID_BASE = UUID.fromString("c0f41000-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_DIMMER_SERVICE = UUID.fromString("c0f41001-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_CS_SERVICE = UUID.fromString("c0f41002-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_HS_SERVICE = UUID.fromString("c0f41003-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_LS_SERVICE = UUID.fromString("c0f41004-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_MS_SERVICE = UUID.fromString("c0f41005-9324-4085-aba0-0902c0e8950a");
-
-    public static final UUID BLE_UUID_DIMMER_CHAR = UUID.fromString("c0f42001-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_CS_CHAR = UUID.fromString("c0f42002-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_HS_CHAR = UUID.fromString("c0f42003-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_LS_CHAR = UUID.fromString("c0f42004-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BLE_UUID_MS_CHAR = UUID.fromString("c0f42005-9324-4085-aba0-0902c0e8950a");
-
-    public static final UUID BLE_UUID_DIS_SERVICE = UUID.fromString("0000180a-0000-1000-8000-00805f9b34fb");
-    public static final UUID BLE_UUID_DIS_FW_CHAR = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
 
     private static final String LOG_TAG_DEVICE = "Device";
 
@@ -113,16 +93,6 @@ public class Device {
     }
 
     /**
-     * You'll need this in your class to get the helper from the manager once per class.
-     */
-    private DatabaseHelper getHelper() {
-        if (databaseHelper == null) {
-            databaseHelper = OpenHelperManager.getHelper(ApplicationGlobals.getAppContext(), DatabaseHelper.class);
-        }
-        return databaseHelper;
-    }
-
-    /**
      * Setter for mDeviceInfo
      * @param deviceInfo Device Info to set
      * @param isSavedInDatabase True if this information is already stored in database.
@@ -144,30 +114,16 @@ public class Device {
      * Saves the device into database.
      */
     public void save() {
-        try {
-            Dao<DatabaseHelper.DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
-            if (!this.isSaved) {
-                deviceInfoDao.create(this.mDeviceInfo);
-            } else {
-                deviceInfoDao.update(this.mDeviceInfo);
-            }
-            this.isSaved = true;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseHelper.saveDeviceInfo(this.mDeviceInfo);
+        this.isSaved = true;
     }
 
     /**
      * Deletes the given device from database.
      */
     public void delete() {
-        try {
-            Dao<DatabaseHelper.DeviceInfo, String> deviceInfoDao = getHelper().getDeviceInfoDao();
-            deviceInfoDao.delete(this.mDeviceInfo);
-            this.isSaved = false;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        DatabaseHelper.deleteDeviceInfo(this.mDeviceInfo);
+        this.isSaved = false;
     }
 
     /**
@@ -295,7 +251,7 @@ public class Device {
      */
     public void dimmerControl(byte brightness) {
         byte[] value = {1, brightness};
-        writeBleCharacteristic(BLE_UUID_DIMMER_SERVICE, BLE_UUID_DIMMER_CHAR, value);
+        writeBleCharacteristic(BleUuid.DIMMER_SERVICE, BleUuid.DIMMER_CHAR, value);
     }
 
 
@@ -330,7 +286,7 @@ public class Device {
         if (firmwareVersion != null) {
             return firmwareVersion;
         }
-        readBleCharacteristic(BLE_UUID_DIS_SERVICE, BLE_UUID_DIS_FW_CHAR);
+        readBleCharacteristic(BleUuid.DIS_SERVICE, BleUuid.DIS_FW_CHAR);
         return null;
     }
 
@@ -453,7 +409,7 @@ public class Device {
             device.setBleCharacteristicRWCompleted(true);
         }
 
-        if (characteristic.getUuid().compareTo(Device.BLE_UUID_DIS_FW_CHAR) == 0) {
+        if (characteristic.getUuid().compareTo(BleUuid.DIS_FW_CHAR) == 0) {
             byte[] bytes = characteristic.getValue();
             firmwareVersion = new String(bytes, StandardCharsets.UTF_8);
         }

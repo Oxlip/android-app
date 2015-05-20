@@ -31,7 +31,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * Database helper is used to manage the creation and upgrading of your database.
@@ -213,11 +212,22 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
-     * Returns DeviceInfo for a given deviceAddress
+     * Saves given DeviceInfo for a given deviceAddress
      */
     public static void saveDeviceInfo(DeviceInfo deviceInfo) {
         try {
             getInstance().getDeviceInfoDao().update(deviceInfo);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Delete given DeviceInfo
+     */
+    public static void deleteDeviceInfo(DeviceInfo deviceInfo) {
+        try {
+            getInstance().getDeviceInfoDao().delete(deviceInfo);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -341,7 +351,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         try {
             QueryBuilder<DeviceAction, String> queryBuilder = getInstance().getDeviceActionDao().queryBuilder();
             Where<DeviceAction, String> whereQuery;
-            whereQuery = queryBuilder.where().eq("address", address);
+            whereQuery = queryBuilder.where().eq("address", address).and().eq("subAddress", subAddress);
 
             return getInstance().getDeviceActionDao().query(whereQuery.prepare());
         } catch (SQLException e) {
@@ -363,42 +373,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             getInstance().getDeviceActionDao().delete(collection);
         } catch (SQLException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-
-    public static void testInsertDeviceData(String deviceAddress, Date startDate, Date endDate){
-        DeviceData deviceData;
-        Random r = new Random();
-        Random wattRandom = new Random();
-        float watt;
-        Calendar start = Calendar.getInstance();
-        start.setTime(startDate);
-        Calendar end = Calendar.getInstance();
-        end.setTime(endDate);
-        wattRandom.setSeed(start.getTimeInMillis());
-        watt = wattRandom.nextInt(1000);
-        boolean isOff = true;
-
-        for (; !start.after(end); ) {
-            try {
-                deviceData = new DeviceData();
-                deviceData.address = deviceAddress;
-                deviceData.startDate = start.getTime();
-                start.add(Calendar.HOUR, r.nextInt(18));
-                deviceData.endDate = start.getTime();
-                isOff = !isOff;
-                if (isOff) {
-                    continue;
-                } else {
-                    deviceData.sensorValue = watt;
-                }
-
-                deviceData.valueType = "W";
-                getInstance().getDeviceDataDao().create(deviceData);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
         }
     }
 

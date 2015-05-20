@@ -75,7 +75,7 @@ public class DeviceListFragment extends Fragment {
         /**
          * Callback for when an item has been selected.
          */
-        public void onItemSelected(Device device);
+        void onItemSelected(Device device);
     }
 
     /**
