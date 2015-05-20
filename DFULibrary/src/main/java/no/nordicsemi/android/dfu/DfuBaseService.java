@@ -532,7 +532,7 @@ public abstract class DfuBaseService extends IntentService {
 				mLock.notifyAll();
 				return;
 			}
-		};
+		}
 	};
 
 	private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -640,7 +640,7 @@ public abstract class DfuBaseService extends IntentService {
 				mLock.notifyAll();
 				return;
 			}
-		};
+		}
 
 		@Override
 		public void onCharacteristicWrite(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
@@ -726,7 +726,7 @@ public abstract class DfuBaseService extends IntentService {
 				mLock.notifyAll();
 				return;
 			}
-		};
+		}
 
 		@Override
 		public void onCharacteristicRead(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic, final int status) {
@@ -747,7 +747,7 @@ public abstract class DfuBaseService extends IntentService {
 				mLock.notifyAll();
 				return;
 			}
-		};
+		}
 
 		@Override
 		public void onCharacteristicChanged(final BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
@@ -805,7 +805,7 @@ public abstract class DfuBaseService extends IntentService {
 				mLock.notifyAll();
 				return;
 			}
-		};
+		}
 
 		public String parse(final BluetoothGattCharacteristic characteristic) {
 			final byte[] data = characteristic.getValue();
@@ -1579,7 +1579,7 @@ public abstract class DfuBaseService extends IntentService {
 	 *            the content files types in ZIP
 	 * @return the input stream with binary image content
 	 */
-	private InputStream openInputStream(final String filePath, final String mimeType, final int mbrSize, final int types) throws FileNotFoundException, IOException {
+	private InputStream openInputStream(final String filePath, final String mimeType, final int mbrSize, final int types) throws IOException {
 		final InputStream is = new FileInputStream(filePath);
 		if (MIME_TYPE_ZIP.equals(mimeType))
 			return new ZipHexInputStream(is, mbrSize, types);
@@ -1601,7 +1601,7 @@ public abstract class DfuBaseService extends IntentService {
 	 *            the content files types in ZIP
 	 * @return the input stream with binary image content
 	 */
-	private InputStream openInputStream(final Uri stream, final String mimeType, final int mbrSize, final int types) throws FileNotFoundException, IOException {
+	private InputStream openInputStream(final Uri stream, final String mimeType, final int mbrSize, final int types) throws IOException {
 		final InputStream is = getContentResolver().openInputStream(stream);
 		if (MIME_TYPE_ZIP.equals(mimeType))
 			return new ZipHexInputStream(is, mbrSize, types);

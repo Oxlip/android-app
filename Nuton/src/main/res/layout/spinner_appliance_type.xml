@@ -4,6 +4,7 @@
     android:layout_height="wrap_content">
 
     <ImageView
+        android:contentDescription="@string/text_na"
         android:id="@+id/spinner_appliance_image"
         android:layout_width="40dp"
         android:layout_height="40dp"/>

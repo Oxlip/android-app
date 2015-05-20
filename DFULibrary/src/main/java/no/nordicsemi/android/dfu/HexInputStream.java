@@ -48,7 +48,7 @@ public class HexInputStream extends FilterInputStream {
 	 * @throws IOException
 	 *             if the stream is closed or another IOException occurs.
 	 */
-	protected HexInputStream(final InputStream in, final int mbrSize) throws HexFileValidationException, IOException {
+	protected HexInputStream(final InputStream in, final int mbrSize) throws IOException {
 		super(new BufferedInputStream(in));
 		this.localBuf = new byte[LINE_LENGTH];
 		this.localPos = LINE_LENGTH; // we are at the end of the local buffer, new one must be obtained
@@ -59,7 +59,7 @@ public class HexInputStream extends FilterInputStream {
 		this.available = calculateBinSize(mbrSize);
 	}
 
-	protected HexInputStream(final byte[] data, final int mbrSize) throws HexFileValidationException, IOException {
+	protected HexInputStream(final byte[] data, final int mbrSize) throws IOException {
 		super(new ByteArrayInputStream(data));
 		this.localBuf = new byte[LINE_LENGTH];
 		this.localPos = LINE_LENGTH; // we are at the end of the local buffer, new one must be obtained
@@ -147,7 +147,7 @@ public class HexInputStream extends FilterInputStream {
 	 * @return the size of the buffer
 	 * @throws IOException
 	 */
-	public int readPacket(byte[] buffer) throws HexFileValidationException, IOException {
+	public int readPacket(byte[] buffer) throws IOException {
 		int i = 0;
 		while (i < buffer.length) {
 			if (localPos < size) {
