@@ -24,6 +24,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -51,7 +52,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private RuntimeExceptionDao<DeviceInfo, String> deviceInfoRuntimeDao = null;
     private Dao<ApplianceType, String> applianceTypeDao = null;
     private Dao<ApplianceMake, String> applianceMakeDao = null;
-    private Dao<DeviceActions, String> deviceActionsDao = null;
+    private Dao<DeviceAction, String> deviceActionDao = null;
     private Dao<DeviceData, String> deviceDataDao = null;
 
     // cached copy of appliance type and make
@@ -110,7 +111,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             TableUtils.createTable(connectionSource, ApplianceMake.class);
             TableUtils.createTable(connectionSource, ApplianceType.class);
             TableUtils.createTable(connectionSource, DeviceData.class);
-            TableUtils.createTable(connectionSource, DeviceActions.class);
+            TableUtils.createTable(connectionSource, DeviceAction.class);
             populateTables();
         } catch (SQLException e) {
             Log.e(LOG_TAG_DATABASE_HELPER, "Can't create database", e);
@@ -179,14 +180,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
-     * Returns the Database Access Object (DAO) for DeviceActions.
+     * Returns the Database Access Object (DAO) for DeviceAction.
      * It will create it or just give the cached value.
      */
-    public Dao<DeviceActions, String> getDeviceActionsDao() throws SQLException {
-        if (deviceActionsDao == null) {
-            deviceActionsDao = getDao(DeviceActions.class);
+    public Dao<DeviceAction, String> getDeviceActionDao() throws SQLException {
+        if (deviceActionDao == null) {
+            deviceActionDao = getDao(DeviceAction.class);
         }
-        return deviceActionsDao;
+        return deviceActionDao;
     }
 
     /**
@@ -291,19 +292,75 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return applianceMakeList;
     }
 
+    /*
+     * Add an action for the given device.
+     * For example when button 1 is press turn on light.
+     */
+    public static void addAction(String address, int subAddress, String target, int actionType, int value) {
+        DatabaseHelper.DeviceAction deviceAction = new DatabaseHelper.DeviceAction();
+        deviceAction.address = address;
+        deviceAction.subAddress = subAddress;
+        deviceAction.actionType = actionType;
+        deviceAction.targetDevice = target;
+        deviceAction.value = value;
+        deviceAction.synced = 0;
+
+        try {
+            Dao<DatabaseHelper.DeviceAction, String> deviceActionsDao = getInstance().getDeviceActionDao();
+            deviceActionsDao.create(deviceAction);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Set syncd field to True once all the action item for a given subaddress is transferred to device.
+     * @param address  Address of the device(lyra).
+     * @param subAddress Subaddress(button number) of the device.
+     */
+    public static void setActionSynced(String address, int subAddress) {
+        try {
+            List<DeviceAction> list = getDeviceAction(address, subAddress);
+            for(DeviceAction deviceAction:list) {
+                deviceAction.synced = 1;
+                Dao<DatabaseHelper.DeviceAction, String> deviceActionsDao = getInstance().getDeviceActionDao();
+                deviceActionsDao.update(deviceAction);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Get device actions associated with the given device.
      * @param address Address of the device.
      * @param subAddress subaddress of the device(button number).
      * @return List of DeviceData for the given range.
      */
-    public static List<DeviceActions> getDeviceActions(String address, int subAddress) {
+    public static List<DeviceAction> getDeviceAction(String address, int subAddress) {
         try {
-            QueryBuilder<DeviceActions, String> queryBuilder = getInstance().getDeviceActionsDao().queryBuilder();
-            Where<DeviceActions, String> whereQuery;
+            QueryBuilder<DeviceAction, String> queryBuilder = getInstance().getDeviceActionDao().queryBuilder();
+            Where<DeviceAction, String> whereQuery;
             whereQuery = queryBuilder.where().eq("address", address);
 
-            return getInstance().getDeviceActionsDao().query(whereQuery.prepare());
+            return getInstance().getDeviceActionDao().query(whereQuery.prepare());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /*
+     * Delete all action associated with the device for given subTarget.
+     * For example when button 1 is press turn on light.
+     */
+    public static void deleteDeviceAction(String address, int subAddress) {
+        try {
+            QueryBuilder<DeviceAction, String> queryBuilder = getInstance().getDeviceActionDao().queryBuilder();
+            Where<DeviceAction, String> whereQuery;
+            whereQuery = queryBuilder.where().eq("address", address).and().eq("subAddress", subAddress);
+            Collection<DeviceAction> collection;
+            collection = getInstance().getDeviceActionDao().query(whereQuery.prepare());
+            getInstance().getDeviceActionDao().delete(collection);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -623,8 +680,8 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     /**
      * Device Actions.
      */
-    @DatabaseTable(tableName = "DeviceActions")
-    public static class DeviceActions {
+    @DatabaseTable(tableName = "DeviceAction")
+    public static class DeviceAction {
         /**
          * Device which initiates the action. (BLE Address and Button number)
          */
@@ -656,6 +713,12 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
          */
         @DatabaseField(canBeNull = true)
         int value;
+
+        /**
+         * Is this action synced with device.
+         */
+        @DatabaseField(canBeNull = false)
+        int synced;
     }
 
     /**

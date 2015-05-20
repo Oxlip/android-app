@@ -298,31 +298,28 @@ public class Device {
         writeBleCharacteristic(BLE_UUID_DIMMER_SERVICE, BLE_UUID_DIMMER_CHAR, value);
     }
 
-    /*
-     * Returns list of device actions.
-     */
-    public List<DatabaseHelper.DeviceActions> getDeviceActions(int subAddress) {
-        return DatabaseHelper.getDeviceActions(this.getDeviceInfo().address, subAddress);
-    }
 
     /*
      * Add an action for the given device.
      * For example when button 1 is press turn on light.
      */
     public void addAction(int subAddress, String target, int actionType, int value) {
-        DatabaseHelper.DeviceActions deviceActions = new DatabaseHelper.DeviceActions();
-        deviceActions.address = this.getDeviceInfo().address;
-        deviceActions.subAddress = subAddress;
-        deviceActions.actionType = actionType;
-        deviceActions.targetDevice = target;
-        deviceActions.value = value;
+        DatabaseHelper.addAction(this.getDeviceInfo().address, subAddress, target, actionType, value);
+    }
 
-        try {
-            Dao<DatabaseHelper.DeviceActions, String> deviceActionsDao = getHelper().getDeviceActionsDao();
-            deviceActionsDao.create(deviceActions);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    /*
+     * Returns list of device actions.
+     */
+    public List<DatabaseHelper.DeviceAction> getDeviceActions(int subAddress) {
+        return DatabaseHelper.getDeviceAction(this.getDeviceInfo().address, subAddress);
+    }
+
+    /*
+     * Delete all action associated with the device for given subTarget.
+     * For example when button 1 is press turn on light.
+     */
+    public void deleteActions(int subAddress) {
+        DatabaseHelper.deleteDeviceAction(getDeviceInfo().address, subAddress);
     }
 
     /**

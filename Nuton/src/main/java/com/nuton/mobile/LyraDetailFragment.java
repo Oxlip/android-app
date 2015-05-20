@@ -43,6 +43,8 @@ public class LyraDetailFragment extends DetailFragment {
     private RecyclerView mDevicesRecyclerView;
     private RecyclerView.Adapter mDevicesAdapter;
     private LinearLayoutManager mDevicesLayoutManager;
+
+    private Device mDevice;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -52,6 +54,9 @@ public class LyraDetailFragment extends DetailFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        String deviceAddress = this.getArguments().getString("deviceAddress");
+        mDevice = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+
         final View view = inflater.inflate(R.layout.fragment_lyra_detail, container, false);
 
         mButtonRecyclerView = (RecyclerView) view.findViewById(R.id.rcv_buttons);
@@ -66,7 +71,7 @@ public class LyraDetailFragment extends DetailFragment {
         mButtonRecyclerView.setLayoutManager(mButtonLayoutManager);
 
         String[] button_number = {"I", "II", "III"};
-        mButtonAdapter = new LyraButtonAdapter(this.getActivity(), button_number);
+        mButtonAdapter = new LyraButtonAdapter(mDevice, this.getActivity(), button_number);
         mButtonRecyclerView.setAdapter(mButtonAdapter);
 
         mDevicesRecyclerView = (RecyclerView) view.findViewById(R.id.rcv_devices);
@@ -95,19 +100,10 @@ public class LyraDetailFragment extends DetailFragment {
 
 class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolder> {
     private String[] mDataset;
-    private ArrayList<ButtonActionItem>[] mButtonActionItems;
-    //private ArrayList<ArrayList<ButtonActionItem>> mButtonActionItems;
     private Context mContext;
+    private Device mDevice;
     private final String[] actionTypes= {"Toggle", "On", "Off", "Increase", "Decrease"};
 
-    public static class ButtonActionItem {
-        public Device device;
-        public int action;
-        public ButtonActionItem(Device device, int action){
-            this.device = device;
-            this.action = action;
-        }
-    }
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
@@ -123,11 +119,10 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
         }
     }
 
-    public LyraButtonAdapter(Context context, String[] myDataset) {
+    public LyraButtonAdapter(Device device, Context context, String[] myDataset) {
         mContext = context;
         mDataset = myDataset;
-        //mButtonActionItems = new ArrayList<>(mDataset.length);
-        mButtonActionItems = (ArrayList<ButtonActionItem>[]) new ArrayList[mDataset.length];
+        mDevice = device;
     }
 
     /**
@@ -140,35 +135,34 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 int button = (int) vh.mTextViewNumber.getTag();
-                if (mButtonActionItems[button] == null) {
-                    mButtonActionItems[button] = new ArrayList<ButtonActionItem>();
-                }
-                mButtonActionItems[button].add(new ButtonActionItem(device, which));
-                drawActionList(mButtonActionItems[button], vh);
+                mDevice.addAction(button, device.getDeviceInfo().address, which, 0);
+                drawActionList(button, vh);
                 dialog.dismiss();
             }
         });
         b.show();
     }
 
-    private void drawActionList(ArrayList<ButtonActionItem> buttonActionList, ViewHolder vh) {
+    private void drawActionList(int button, ViewHolder vh) {
         LinearLayout linearLayout = vh.mLayoutDeviceInfoList;
         if(linearLayout.getChildCount() > 0) {
             linearLayout.removeAllViews();
         }
-        for(ButtonActionItem actionItem: buttonActionList) {
-            Device device = actionItem.device;
+        List<DatabaseHelper.DeviceAction> actionList = mDevice.getDeviceActions(button);
+        for(DatabaseHelper.DeviceAction actionItem: actionList) {
             final Context context = this.mContext;
-            DatabaseHelper.DeviceInfo deviceInfo = device.getDeviceInfo();
+            DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(actionItem.targetDevice);
             DatabaseHelper.ApplianceType applianceType  = DatabaseHelper.getApplianceTypeByName(deviceInfo.applianceType);
-            int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
-
             View v = LayoutInflater.from(context).inflate(R.layout.lyra_cfg_button_device_info_list_item, vh.mLayoutDeviceInfoList, false);
             TextView tv = (TextView)v.findViewById(R.id.lyra_cfg_button_device_info_list_item_text);
             RoundedImageView riv = (RoundedImageView)v.findViewById(R.id.lyra_cfg_button_device_info_list_item_image);
 
-            riv.setImageResource(imgId);
-            tv.setText(actionTypes[actionItem.action]);
+            if (applianceType != null) {
+                int imgId =  context.getResources().getIdentifier(applianceType.imageName, "drawable", context.getPackageName());
+                riv.setImageResource(imgId);
+            }
+
+            tv.setText(actionTypes[actionItem.actionType]);
             vh.mLayoutDeviceInfoList.addView(v);
         }
     }
@@ -225,9 +219,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
         // - replace the contents of the view with that element
         holder.mTextViewNumber.setText(mDataset[position]);
         holder.mTextViewNumber.setTag(position);
-        if (mButtonActionItems[position] != null) {
-            drawActionList(mButtonActionItems[position], holder);
-        }
+        drawActionList(position, holder);
     }
 
     // Return the size of your dataset (invoked by the layout manager)
@@ -292,10 +284,9 @@ class AuraListAdapter extends RecyclerView.Adapter<AuraListAdapter.ViewHolder> {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
         DatabaseHelper.DeviceInfo deviceInfo = mDataset.get(position).getDeviceInfo();
-        DatabaseHelper.ApplianceType applianceType  = DatabaseHelper.getApplianceTypeByName(deviceInfo.applianceType);
         holder.mTextView.setText(deviceInfo.name);
         holder.mTextView.setTag(mDataset.get(position)); //this tag is used by drag and drop
-        ApplianceImage.loadApplianceImage(holder.mImageView, applianceType.imageName, R.id.lyra_cfg_dl_image);
+        ApplianceImage.transformImage(holder.mImageView, R.drawable.ic_three_button, R.id.lyra_cfg_dl_image);
     }
 
     // Return the size of your dataset (invoked by the layout manager)
