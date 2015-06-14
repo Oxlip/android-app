@@ -215,16 +215,14 @@ public class DeviceListAdapter extends BaseAdapter {
         device = mDeviceList.get(position);
 
         /* Load different view based on device type. */
-        if (convertView == null) {
-            if (device.isRegistered()) {
-                if (device.getDeviceInfo().deviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
-                    convertView = loadAuraView(device);
-                } else {
-                    convertView = loadLyraView(device);
-                }
+        if (device.isRegistered()) {
+            if (device.getDeviceInfo().deviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
+                convertView = loadAuraView(device);
             } else {
-                convertView = loadNewDeviceView(device);
+                convertView = loadLyraView(device);
             }
+        } else {
+            convertView = loadNewDeviceView(device);
         }
 
         txtTitle = (TextView) convertView.findViewById(R.id.dl_name);
