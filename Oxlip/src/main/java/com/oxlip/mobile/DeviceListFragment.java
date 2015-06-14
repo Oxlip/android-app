@@ -47,7 +47,7 @@ public class DeviceListFragment extends Fragment {
 
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 5 seconds.
-    private static final long SCAN_PERIOD = 5000;
+    private static final long BLE_SCAN_PERIOD = 1000;
 
     /**
      * The serialization (saved instance state) Bundle key representing the
@@ -162,6 +162,8 @@ public class DeviceListFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
+        scanLeDevice();
+
         View view = getView();
         if (view == null) {
             return;
@@ -213,7 +215,7 @@ public class DeviceListFragment extends Fragment {
             public void run() {
                 stopLeScan();
             }
-        }, SCAN_PERIOD);
+        }, BLE_SCAN_PERIOD);
 
         mScanning = true;
 
