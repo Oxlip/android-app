@@ -231,7 +231,7 @@ public class DeviceListFragment extends Fragment {
                 public void run() {
                     DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
                     boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
-                    if (!result) {
+                    if (!result && bleDevice.getName() != null) {
                         Device device = new Device(bleDevice, rssi);
                         listAdapter.addDevice(device);
                     }
