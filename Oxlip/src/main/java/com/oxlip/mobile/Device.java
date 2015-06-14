@@ -56,9 +56,20 @@ public class Device {
      * Construct a new device.
      */
     public Device() {
-        mDeviceInfo = new DatabaseHelper.DeviceInfo();
-        mBleServicesDiscovered = new ConditionVariable();
-        mBleCharacteristicRwOperation = new ConditionVariable();
+        this.mDeviceInfo = new DatabaseHelper.DeviceInfo();
+        this.mBleServicesDiscovered = new ConditionVariable();
+        this.mBleCharacteristicRwOperation = new ConditionVariable();
+        this.isSaved = false;
+    }
+
+    /**
+     * Construct a new device based on given DeviceInfo.
+     * @param deviceInfo Device Info to use.
+     */
+    public Device(DatabaseHelper.DeviceInfo deviceInfo) {
+        this();
+        this.mDeviceInfo = deviceInfo;
+        this.isSaved = true;
     }
 
     /**
@@ -75,6 +86,7 @@ public class Device {
         } else {
             this.mDeviceInfo.deviceType = DatabaseHelper.DeviceInfo.DEVICE_TYPE_UNKNOWN;
         }
+
         this.mDeviceInfo.address = bleDevice.getAddress();
         this.setRssi(rssi);
     }
@@ -91,15 +103,6 @@ public class Device {
         this.mRssi = _rssi;
     }
 
-    /**
-     * Setter for mDeviceInfo
-     * @param deviceInfo Device Info to set
-     * @param isSavedInDatabase True if this information is already stored in database.
-     */
-    public void setDeviceInfo(DatabaseHelper.DeviceInfo deviceInfo, boolean isSavedInDatabase) {
-        this.mDeviceInfo = deviceInfo;
-        this.isSaved = isSavedInDatabase;
-    }
 
     /**
      * Getter for mDeviceInfo
