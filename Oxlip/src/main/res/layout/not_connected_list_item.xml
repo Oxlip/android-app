@@ -8,11 +8,12 @@
         android:id="@+id/dl_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
         android:text="@string/text_na"
         android:textColor="@android:color/primary_text_dark"
         android:textAlignment="center"
-        android:textSize="20sp"/>
+        android:layout_centerVertical="true"
+        android:layout_marginStart="10dp"
+        android:textSize="18sp"/>
 
     <Button
         android:id="@+id/dl_btn_connect"
@@ -20,9 +21,8 @@
         android:layout_gravity="end"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
         android:text="@string/dl_btn_connect"
-        android:textColor="@android:color/white"
+        android:textColor="@android:color/holo_blue_dark"
         android:focusable="false"/>
 
 </RelativeLayout>
