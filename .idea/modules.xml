@@ -3,9 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/DFULibrary/DFULibrary.iml" filepath="$PROJECT_DIR$/DFULibrary/DFULibrary.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Nuton/Nuton.iml" filepath="$PROJECT_DIR$/Nuton/Nuton.iml" />
-      <module fileurl="file://$PROJECT_DIR$/Nuton-App.iml" filepath="$PROJECT_DIR$/Nuton-App.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Oxlip/Oxlip.iml" filepath="$PROJECT_DIR$/Oxlip/Oxlip.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Oxlip-App.iml" filepath="$PROJECT_DIR$/Oxlip-App.iml" />
     </modules>
   </component>
 </project>
-
