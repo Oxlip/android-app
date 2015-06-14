@@ -216,7 +216,11 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      */
     public static void saveDeviceInfo(DeviceInfo deviceInfo) {
         try {
-            getInstance().getDeviceInfoDao().update(deviceInfo);
+            if (getInstance().getDeviceInfoDao().queryForId(deviceInfo.address) != null) {
+                getInstance().getDeviceInfoDao().update(deviceInfo);
+            } else {
+                getInstance().getDeviceInfoDao().create(deviceInfo);
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -243,8 +247,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         try {
             List<DeviceInfo> deviceInfoList = getInstance().getDeviceInfoDao().queryForAll();
             for(DeviceInfo deviceInfo : deviceInfoList) {
-                Device device = new Device();
-                device.setDeviceInfo(deviceInfo, true);
+                Device device = new Device(deviceInfo);
                 deviceList.add(device);
             }
         } catch (SQLException e) {
