@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/action_bar_device_detail"
     android:orientation="horizontal"
+    android:layout_gravity="fill_horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <Spinner
         android:id="@+id/action_bar_device_type"
+        android:layout_alignParentStart="true"
         android:drawSelectorOnTop="true"
+        android:layout_gravity="center_horizontal"
+        android:layout_width="32dp"
         android:layout_height="match_parent"
-        android:background="@color/background"
-        android:layout_width="wrap_content"/>
+        android:background="@color/background"/>
 
     <EditText
         android:id="@+id/action_bar_device_name"
         android:inputType="textCapWords"
+        android:layout_toEndOf="@+id/action_bar_device_type"
+        android:layout_gravity="center_vertical"
         android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:hint="@string/actionbar_device_name_hint"
@@ -22,4 +27,14 @@
         android:textColor="@android:color/white"
         android:background="@android:color/transparent"/>
 
-</LinearLayout>
+    <ImageButton
+        android:id="@+id/action_bar_delete_button"
+        android:src="@android:drawable/ic_delete"
+        android:contentDescription="Delete device"
+        android:layout_alignParentEnd="true"
+        android:layout_gravity="end|center_vertical"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:background="@android:color/transparent"/>
+
+</RelativeLayout>

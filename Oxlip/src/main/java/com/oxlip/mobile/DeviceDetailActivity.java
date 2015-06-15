@@ -1,12 +1,16 @@
 package com.oxlip.mobile;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 
 import java.util.List;
@@ -102,6 +106,32 @@ public class DeviceDetailActivity extends ActionBarActivity {
 
         final EditText txtName = (EditText) view.findViewById(R.id.action_bar_device_name);
         txtName.setText(deviceInfo.name);
+
+        final ImageButton btnDelete = (ImageButton) view.findViewById(R.id.action_bar_delete_button);
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(v.getContext())
+                        .setTitle("Delete device")
+                        .setMessage("Are you sure to delete " + deviceInfo.name + " ?")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                //delete from database
+                                DatabaseHelper.deleteDeviceInfo(deviceInfo);
+                                //refresh the main device list
+                                DeviceListAdapter.getInstance().notifyDataSetChanged();
+                                //close this activity
+                                finish();
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+            }
+        });
 
         // populate spinner with home appliances(tv, lamp etc) for Aura
         if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
