@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,7 +35,7 @@ import java.util.TimerTask;
  * on handsets.
  */
 public class AuraDetailFragment extends DetailFragment {
-
+    private Device device;
     private CircularCounter counter;
 
     /*Cache of power usage information of the connected device. The stored value is reflected in the UI*/
@@ -45,6 +46,8 @@ public class AuraDetailFragment extends DetailFragment {
     private Timer timer = new Timer();
     /* Handler to update the UI*/
     final Handler myHandler = new Handler();
+
+    private int BLE_CS_READ_DELAY = 3000;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -66,7 +69,7 @@ public class AuraDetailFragment extends DetailFragment {
         final View view = inflater.inflate(R.layout.fragment_aura_detail, container, false);
 
         String deviceAddress = this.getArguments().getString("deviceAddress");
-        Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+        device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
         device.setBleEventCallback(new Device.BleEventCallback() {
             @Override
             public void onBleReadCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
@@ -79,6 +82,30 @@ public class AuraDetailFragment extends DetailFragment {
                             textView.setText(firmwareVersion);
                         }
                     });
+                } else if (characteristic.getUuid().compareTo(BleUuid.CS_CHAR) == 0) {
+                    byte[] bytes = characteristic.getValue();
+                    /*
+                        typedef struct {
+                            uint16_t current;
+                            uint16_t watts;
+                            uint8_t volt;
+                            uint8_t freq;
+                        } ble_cs_info;
+                    */
+                    if (false) {
+                        Log.e("test", "got current sensor values ");
+                        for (byte b : bytes) {
+                            Log.e("test", " B = " + b);
+                        }
+                    }
+                    int current = (bytes[1] << 8) | bytes[0];
+                    int watts = (bytes[3] << 8) | bytes[2];
+                    int volt = bytes[4];
+                    int freq = bytes[5];
+                    powerUsage.now.current = current;
+                    powerUsage.now.wattage = watts;
+                    powerUsage.now.volt = volt;
+                    myHandler.post(myRunnable);
                 }
             }
         });
@@ -112,6 +139,7 @@ public class AuraDetailFragment extends DetailFragment {
             public void onClick(View v) {
                 // select next display mode.
                 powerUsageDisplayMode = (powerUsageDisplayMode + 1) % 3;
+                myHandler.post(myRunnable);
             }
         });
 
@@ -126,13 +154,16 @@ public class AuraDetailFragment extends DetailFragment {
     public void onResume() {
         super.onResume();
 
+        this.timer = new Timer();
         /*Create new Timer to update the GUI regularly*/
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                UpdateGUI();
+                //powerUsage.now.current ++;
+                //myHandler.post(myRunnable);
+                device.asyncReadCurrentSensorInformation();
             }
-        }, 0, 2000);
+        }, 0, BLE_CS_READ_DELAY);
     }
 
     @Override
@@ -141,9 +172,12 @@ public class AuraDetailFragment extends DetailFragment {
         this.timer.cancel();
     }
 
-    private void UpdateGUI() {
-        powerUsage.now.current ++;
-        myHandler.post(myRunnable);
+    @Override
+    public void onDestroyView() {
+        if (device != null) {
+            device.setBleEventCallback(null);
+        }
+        super.onDestroyView();
     }
 
     /* Runnable to update UI */

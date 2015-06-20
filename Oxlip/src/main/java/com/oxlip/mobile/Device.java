@@ -256,6 +256,13 @@ public class Device {
         writeBleCharacteristic(BleUuid.DIMMER_SERVICE, BleUuid.DIMMER_CHAR, value);
     }
 
+    /**
+     * Get CS information asynchronously.
+     * When the BLE read completes it will trigger bleEventCallback().
+     */
+    public void asyncReadCurrentSensorInformation() {
+        readBleCharacteristic(BleUuid.CS_SERVICE, BleUuid.CS_CHAR);
+    }
 
     /*
      * Add an action for the given device.
@@ -355,6 +362,8 @@ public class Device {
             if (service == null) {
                 Log.e(LOG_TAG_DEVICE, "BLE service not found " + param.serviceId );
                 return 0L;
+            } else {
+                Log.e(LOG_TAG_DEVICE, "BLE service found " + param.serviceId );
             }
 
             characteristic = service.getCharacteristic(param.characteristicId);
