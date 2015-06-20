@@ -55,9 +55,24 @@
                 android:layout_column="0"
                 android:text="@string/aura_detail_enable_remote"/>
 
+            <com.db.circularcounter.CircularCounter
+                xmlns:counter="http://schemas.android.com/apk/res-auto"
+                android:layout_row="5"
+                android:layout_column="0"
+                android:layout_columnSpan="2"
+                android:id="@+id/dd_counter"
+                android:layout_width="300dp"
+                android:layout_height="300dp"
+                counter:range="100"
+                counter:textSize="80sp"
+                counter:textColor="#ffffff"
+                counter:metricSize="20sp"
+                counter:metricText="mA"
+                />
+
             <com.github.mikephil.charting.charts.BarChart
                 android:id="@+id/ddl_chart"
-                android:layout_row="5"
+                android:layout_row="6"
                 android:layout_column="0"
                 android:layout_columnSpan="2"
                 android:minHeight="400dp"

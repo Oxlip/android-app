@@ -3,4 +3,8 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="list_margin">8dp</dimen>
+
+    <dimen name="dd_counter_first">10dp</dimen>
+    <dimen name="dd_counter_second">15dp</dimen>
+    <dimen name="dd_counter_third">20dp</dimen>
 </resources>

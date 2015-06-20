@@ -16,6 +16,9 @@
     <color name="dark_red">#800000</color>
     <color name="orange">#FF9900</color>
     <color name="blue">#6599FF</color>
+    <color name="blue1">#6588FF</color>
+    <color name="blue2">#6450FF</color>
+    <color name="blue3">#4051EE</color>
     <color name="dark_slate_blue">#403880</color>
     <color name="light_slate_blue">#0000E0</color>
     <color name="green_blue">#097054</color>
@@ -30,5 +33,11 @@
         <item>@color/orange</item>
         <item>@color/dark_red</item>
         <item>@color/red</item>
+    </array>
+
+    <array name="dd_counter_colors">
+        <item>@color/blue1</item>
+        <item>@color/blue2</item>
+        <item>@color/blue3</item>
     </array>
 </resources>

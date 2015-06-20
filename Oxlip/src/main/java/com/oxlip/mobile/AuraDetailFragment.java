@@ -1,9 +1,13 @@
 package com.oxlip.mobile;
 
+import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -11,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.db.circularcounter.CircularCounter;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
@@ -19,6 +24,8 @@ import com.github.mikephil.charting.data.BarEntry;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * A fragment representing a single Device detail screen.
@@ -27,6 +34,17 @@ import java.util.List;
  * on handsets.
  */
 public class AuraDetailFragment extends DetailFragment {
+
+    private CircularCounter counter;
+
+    /*Cache of power usage information of the connected device. The stored value is reflected in the UI*/
+    private PowerUsage powerUsage = new PowerUsage();
+    /* What measurement to show in the UI - 0-Amps 1-Volts 2-Watts*/
+    private int powerUsageDisplayMode = 0;
+    /* Timer to gather BLE info and update the UI */
+    private Timer timer = new Timer();
+    /* Handler to update the UI*/
+    final Handler myHandler = new Handler();
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -42,7 +60,6 @@ public class AuraDetailFragment extends DetailFragment {
         intentFilter.addAction(DfuService.BROADCAST_LOG);
         return intentFilter;
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -80,12 +97,78 @@ public class AuraDetailFragment extends DetailFragment {
         TextView textView = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
         textView.setText(device.getFirmwareVersion());
 
+        int[] colors;
+        colors = getResources().getIntArray(R.array.dd_counter_colors);
+        counter = (CircularCounter)view.findViewById(R.id.dd_counter);
+        counter.setFirstWidth(getResources().getDimension(R.dimen.dd_counter_first))
+        .setFirstColor(colors[0])
+        .setSecondWidth(getResources().getDimension(R.dimen.dd_counter_second))
+        .setSecondColor(colors[1])
+        .setThirdWidth(getResources().getDimension(R.dimen.dd_counter_third))
+                .setThirdColor(colors[2]);
+
+        counter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // select next display mode.
+                powerUsageDisplayMode = (powerUsageDisplayMode + 1) % 3;
+            }
+        });
+
         BarChart chart = (BarChart) view.findViewById(R.id.ddl_chart);
         setChart(chart);
         chart.animateX(2500);
 
         return view;
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        /*Create new Timer to update the GUI regularly*/
+        this.timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                UpdateGUI();
+            }
+        }, 0, 2000);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        this.timer.cancel();
+    }
+
+    private void UpdateGUI() {
+        powerUsage.now.current ++;
+        myHandler.post(myRunnable);
+    }
+
+    /* Runnable to update UI */
+    final Runnable myRunnable = new Runnable() {
+        public void run() {
+            int v1, v2, v3;
+            String unitText[] = {"mA", "Volts", "mW"};
+
+            if (powerUsageDisplayMode == 0) {
+                v1 = powerUsage.now.current;
+                v2 = powerUsage.now.volt;
+                v3 = powerUsage.now.wattage;
+            } else if (powerUsageDisplayMode == 1) {
+                v3 = powerUsage.now.current;
+                v1 = powerUsage.now.volt;
+                v2 = powerUsage.now.wattage;
+            } else {
+                v2 = powerUsage.now.current;
+                v3 = powerUsage.now.volt;
+                v1 = powerUsage.now.wattage;
+            }
+            counter.setValues(v1, v2, v3);
+            counter.setMetricText(unitText[powerUsageDisplayMode]);
+        }
+    };
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -124,4 +207,19 @@ public class AuraDetailFragment extends DetailFragment {
         chart.setDrawYValues(false);
         chart.setData(data);
     }
+
+    /* Simple classes to hold power usage information */
+    private class PowerInfo{
+        int current; //in mA
+        int volt;    //in Volts
+        int wattage; //in mW
+    }
+    private class PowerUsage{
+        PowerInfo now = new PowerInfo();
+        PowerInfo past5min = new PowerInfo();
+        PowerInfo past15min = new PowerInfo();
+        PowerInfo past24Hours = new PowerInfo();
+        PowerInfo average = new PowerInfo();
+    }
 }
+
