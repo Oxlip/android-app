@@ -84,7 +84,9 @@ public class DetailFragment extends Fragment {
     public void onDestroyView() {
         String deviceAddress = this.getArguments().getString("deviceAddress");
         Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
-        device.setBleEventCallback(null);
+        if (device != null) {
+            device.setBleEventCallback(null);
+        }
         super.onDestroyView();
     }
 }
