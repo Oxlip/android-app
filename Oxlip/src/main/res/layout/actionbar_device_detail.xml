@@ -29,10 +29,11 @@
 
     <ImageButton
         android:id="@+id/action_bar_delete_button"
-        android:src="@android:drawable/ic_delete"
-        android:contentDescription="Delete device"
+        android:src="@drawable/ic_dustbin"
+        android:contentDescription="@string/actionbar_device_delete"
         android:layout_alignParentEnd="true"
         android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="16dp"
         android:layout_height="match_parent"
         android:layout_width="wrap_content"
         android:background="@android:color/transparent"/>
