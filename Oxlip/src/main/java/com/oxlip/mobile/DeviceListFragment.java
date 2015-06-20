@@ -228,6 +228,10 @@ public class DeviceListFragment extends Fragment {
     private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
+            Activity activity = getActivity();
+            if (activity == null) {
+                return;
+            }
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
