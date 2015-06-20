@@ -182,6 +182,8 @@ public class DeviceListAdapter extends BaseAdapter {
 
         if (applianceType != null) {
             ApplianceImage.loadApplianceImage(view, applianceType.imageName, R.id.dl_image);
+        } else {
+            ApplianceImage.transformImage(view, R.drawable.ic_icon_socket, R.id.dl_image);
         }
 
         btnOn = (SwitchCompat)view.findViewById(R.id.dl_btn_on_off);
