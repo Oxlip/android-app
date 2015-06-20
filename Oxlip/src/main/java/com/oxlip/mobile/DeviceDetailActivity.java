@@ -112,8 +112,8 @@ public class DeviceDetailActivity extends ActionBarActivity {
             @Override
             public void onClick(View v) {
                 new AlertDialog.Builder(v.getContext())
-                        .setTitle("Delete device")
-                        .setMessage("Are you sure to delete " + deviceInfo.name + " ?")
+                        .setTitle("Remove")
+                        .setMessage("Are you sure to remove " + deviceInfo.name + " ?")
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 //delete from database
