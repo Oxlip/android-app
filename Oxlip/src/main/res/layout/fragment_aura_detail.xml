@@ -9,72 +9,118 @@
         android:layout_height="fill_parent">
 
         <GridLayout
-            android:rowCount="7"
-            android:columnCount="2"
+            android:rowCount="9"
+            android:columnCount="1"
             android:layout_margin="15dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:descendantFocusability="beforeDescendants"
             android:focusableInTouchMode="true">
 
-            <at.markushi.ui.CircleButton
-                android:id="@+id/dd_btn_update_firmware"
-                android:src="@drawable/ic_chip"
+            <LinearLayout
                 android:layout_row="0"
-                android:layout_column="1"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                app:cb_color="@android:color/transparent"
-                app:cb_pressedRingWidth="8dip"
-                android:layout_gravity="end"/>
+                android:layout_column="0"
+                android:layout_width="fill_parent"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/dd_txt_firmware_version"
+                    android:text="@string/text_na"
+                    android:layout_gravity="end"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
 
-            <TextView
-                android:id="@+id/dd_txt_firmware_version"
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aura_detail_auto_off"/>
+                <CheckBox
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/aura_detail_enable_remote"/>
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_row="1"
-                android:layout_column="1"
-                android:text="@string/text_na"
-                android:textSize="12sp"
-                android:layout_width="wrap_content"
+                android:layout_column="0"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end"/>
+                android:layout_gravity="center"
+                android:padding="16dp"
+                android:orientation="horizontal">
 
-            <View
+                <LinearLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/dd_aura_cs_mw"
+                        style="@style/dd_cs_value_text"/>
+                    <TextView
+                        style="@style/dd_cs_desc_text"
+                        android:text="@string/text_mw"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/dd_aura_cs_ma"
+                        style="@style/dd_cs_value_text"/>
+                    <TextView
+                        style="@style/dd_cs_desc_text"
+                        android:text="@string/text_ma"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/dd_aura_cs_volt"
+                        style="@style/dd_cs_value_text"/>
+                    <TextView
+                        style="@style/dd_cs_desc_text"
+                        android:text="@string/text_volt"/>
+                </LinearLayout>
+
+            </LinearLayout>
+
+
+            <LinearLayout
                 android:layout_row="2"
                 android:layout_column="0"
-                android:layout_columnSpan="2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="horizontal">
+
+                <at.markushi.ui.CircleButton
+                    android:id="@+id/dd_btn_update_firmware"
+                    android:src="@drawable/ic_chip"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="end"
+                    app:cb_color="@android:color/transparent"
+                    app:cb_pressedRingWidth="8dip"/>
+
+            </LinearLayout>
+
+            <View
+                android:layout_row="3"
+                android:layout_column="0"
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
                 android:background="@android:color/darker_gray"/>
 
-            <CheckBox
-                android:layout_row="3"
-                android:layout_column="0"
-                android:text="@string/aura_detail_auto_off"/>
-            <CheckBox
-                android:layout_row="4"
-                android:layout_column="0"
-                android:text="@string/aura_detail_enable_remote"/>
-
-            <com.db.circularcounter.CircularCounter
-                xmlns:counter="http://schemas.android.com/apk/res-auto"
-                android:layout_row="5"
-                android:layout_column="0"
-                android:layout_columnSpan="2"
-                android:id="@+id/dd_counter"
-                android:layout_width="300dp"
-                android:layout_height="300dp"
-                counter:range="100"
-                counter:textSize="80sp"
-                counter:textColor="#ffffff"
-                counter:metricSize="20sp"
-                counter:metricText="mA"
-                />
 
             <com.github.mikephil.charting.charts.BarChart
                 android:id="@+id/ddl_chart"
-                android:layout_row="6"
+                android:layout_row="4"
                 android:layout_column="0"
-                android:layout_columnSpan="2"
                 android:minHeight="400dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>

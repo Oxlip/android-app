@@ -34,10 +34,4 @@
         <item>@color/dark_red</item>
         <item>@color/red</item>
     </array>
-
-    <array name="dd_counter_colors">
-        <item>@color/blue1</item>
-        <item>@color/blue2</item>
-        <item>@color/blue3</item>
-    </array>
 </resources>

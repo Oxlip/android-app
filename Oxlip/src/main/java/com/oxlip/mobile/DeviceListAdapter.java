@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.support.v7.widget.SwitchCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -73,8 +74,10 @@ public class DeviceListAdapter extends BaseAdapter {
         device.setBleDevice(bleDevice);
         if (device.getRssi() != rssi) {
             device.setRssi(rssi);
-            this.notifyDataSetInvalidated();
         }
+        Log.d(LOG_TAG_DEVICE_LIST_ADAPTER, "New device " + device.getDeviceInfo().name + " RSSI " + rssi);
+        this.notifyDataSetInvalidated();
+
         return true;
     }
 

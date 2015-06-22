@@ -1,13 +1,10 @@
 package com.oxlip.mobile;
 
-import android.app.Activity;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,7 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.db.circularcounter.CircularCounter;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
@@ -36,7 +32,7 @@ import java.util.TimerTask;
  */
 public class AuraDetailFragment extends DetailFragment {
     private Device device;
-    private CircularCounter counter;
+    private TextView txt_ma, txt_mw, txt_volt;
 
     /*Cache of power usage information of the connected device. The stored value is reflected in the UI*/
     private PowerUsage powerUsage = new PowerUsage();
@@ -124,24 +120,9 @@ public class AuraDetailFragment extends DetailFragment {
         TextView textView = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
         textView.setText(device.getFirmwareVersion());
 
-        int[] colors;
-        colors = getResources().getIntArray(R.array.dd_counter_colors);
-        counter = (CircularCounter)view.findViewById(R.id.dd_counter);
-        counter.setFirstWidth(getResources().getDimension(R.dimen.dd_counter_first))
-        .setFirstColor(colors[0])
-        .setSecondWidth(getResources().getDimension(R.dimen.dd_counter_second))
-        .setSecondColor(colors[1])
-        .setThirdWidth(getResources().getDimension(R.dimen.dd_counter_third))
-                .setThirdColor(colors[2]);
-
-        counter.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // select next display mode.
-                powerUsageDisplayMode = (powerUsageDisplayMode + 1) % 3;
-                myHandler.post(myRunnable);
-            }
-        });
+        txt_ma = (TextView)view.findViewById(R.id.dd_aura_cs_ma);
+        txt_mw = (TextView)view.findViewById(R.id.dd_aura_cs_mw);
+        txt_volt = (TextView)view.findViewById(R.id.dd_aura_cs_volt);
 
         BarChart chart = (BarChart) view.findViewById(R.id.ddl_chart);
         setChart(chart);
@@ -183,24 +164,9 @@ public class AuraDetailFragment extends DetailFragment {
     /* Runnable to update UI */
     final Runnable myRunnable = new Runnable() {
         public void run() {
-            int v1, v2, v3;
-            String unitText[] = {"mA", "Volts", "mW"};
-
-            if (powerUsageDisplayMode == 0) {
-                v1 = powerUsage.now.current;
-                v2 = powerUsage.now.volt;
-                v3 = powerUsage.now.wattage;
-            } else if (powerUsageDisplayMode == 1) {
-                v3 = powerUsage.now.current;
-                v1 = powerUsage.now.volt;
-                v2 = powerUsage.now.wattage;
-            } else {
-                v2 = powerUsage.now.current;
-                v3 = powerUsage.now.volt;
-                v1 = powerUsage.now.wattage;
-            }
-            counter.setValues(v1, v2, v3);
-            counter.setMetricText(unitText[powerUsageDisplayMode]);
+            txt_ma.setText("" + powerUsage.now.current);
+            txt_mw.setText("" + powerUsage.now.wattage);
+            txt_volt.setText("" + powerUsage.now.volt);
         }
     };
 
