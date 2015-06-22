@@ -5,12 +5,15 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -32,12 +35,13 @@ import java.util.TimerTask;
  */
 public class AuraDetailFragment extends DetailFragment {
     private Device device;
-    private TextView txt_ma, txt_mw, txt_volt;
+    private TextView txt_ma, txt_mw, txt_volt, txt_firmware, txt_rssi;
 
     /*Cache of power usage information of the connected device. The stored value is reflected in the UI*/
     private PowerUsage powerUsage = new PowerUsage();
     /* What measurement to show in the UI - 0-Amps 1-Volts 2-Watts*/
     private int powerUsageDisplayMode = 0;
+
     /* Timer to gather BLE info and update the UI */
     private Timer timer = new Timer();
     /* Handler to update the UI*/
@@ -61,16 +65,7 @@ public class AuraDetailFragment extends DetailFragment {
         device.setBleEventCallback(new Device.BleEventCallback() {
             @Override
             public void onBleReadCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                final String firmwareVersion = new String(characteristic.getValue(), StandardCharsets.UTF_8);
-                if (characteristic.getUuid().compareTo(BleUuid.DIS_FW_CHAR) == 0) {
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            TextView textView = (TextView) view.findViewById(R.id.dd_txt_firmware_version);
-                            textView.setText(firmwareVersion);
-                        }
-                    });
-                } else if (characteristic.getUuid().compareTo(BleUuid.CS_CHAR) == 0) {
+                if (characteristic.getUuid().compareTo(BleUuid.CS_CHAR) == 0) {
                     byte[] bytes = characteristic.getValue();
                     /*
                         typedef struct {
@@ -93,19 +88,56 @@ public class AuraDetailFragment extends DetailFragment {
                     powerUsage.now.current = current;
                     powerUsage.now.wattage = watts;
                     powerUsage.now.volt = volt;
-                    myHandler.post(myRunnable);
                 }
+
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txt_ma.setText("" + powerUsage.now.current);
+                        txt_mw.setText("" + powerUsage.now.wattage);
+                        txt_volt.setText("" + powerUsage.now.volt);
+
+                        txt_rssi.setText("" + device.getRssi());
+                        if (device.getFirmwareVersion() != null) {
+                            txt_firmware.setText("" + device.getFirmwareVersion());
+                        }
+                    }
+                });
             }
         });
 
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
 
-        TextView textView = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
-        textView.setText(device.getFirmwareVersion());
-
+        txt_firmware = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
+        txt_rssi = (TextView)view.findViewById(R.id.dd_txt_rssi);
         txt_ma = (TextView)view.findViewById(R.id.dd_aura_cs_ma);
         txt_mw = (TextView)view.findViewById(R.id.dd_aura_cs_mw);
         txt_volt = (TextView)view.findViewById(R.id.dd_aura_cs_volt);
+
+        SwitchCompat btnOn = (SwitchCompat)view.findViewById(R.id.dd_aura_btn_on_off);
+        btnOn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                device.dimmerControl((byte) (isChecked ? 100 : 0));
+            }
+        });
+        SeekBar seekBar = (SeekBar) view.findViewById(R.id.dd_aura_seekbar);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                device.dimmerControl((byte)seekBar.getProgress());
+            }
+        });
 
         BarChart chart = (BarChart) view.findViewById(R.id.ddl_chart);
         setChart(chart);
@@ -123,8 +155,6 @@ public class AuraDetailFragment extends DetailFragment {
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                //powerUsage.now.current ++;
-                //myHandler.post(myRunnable);
                 device.asyncReadCurrentSensorInformation();
             }
         }, 0, BLE_CS_READ_DELAY);
@@ -143,15 +173,6 @@ public class AuraDetailFragment extends DetailFragment {
         }
         super.onDestroyView();
     }
-
-    /* Runnable to update UI */
-    final Runnable myRunnable = new Runnable() {
-        public void run() {
-            txt_ma.setText("" + powerUsage.now.current);
-            txt_mw.setText("" + powerUsage.now.wattage);
-            txt_volt.setText("" + powerUsage.now.volt);
-        }
-    };
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
