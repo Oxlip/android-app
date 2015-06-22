@@ -133,6 +133,28 @@ public class DeviceDetailActivity extends ActionBarActivity {
             }
         });
 
+        final ImageButton btnFirmwareUpdate = (ImageButton) view.findViewById(R.id.action_bar_firmware_update);
+        btnFirmwareUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new AlertDialog.Builder(v.getContext())
+                        .setTitle("Firmware update")
+                        .setMessage("Are you ready to update the firmware of " + deviceInfo.name + " ?\nThis operation will take few minutes to complete.")
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                DfuService dfuService = new DfuService();
+                                dfuService.updateFirmware(deviceInfo);
+                            }
+                        })
+                        .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+            }
+        });
+
         // populate spinner with home appliances(tv, lamp etc) for Aura
         if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
             populateApplianceType(view, deviceInfo);

@@ -27,15 +27,30 @@
         android:textColor="@android:color/white"
         android:background="@android:color/transparent"/>
 
-    <ImageButton
-        android:id="@+id/action_bar_delete_button"
-        android:src="@drawable/ic_dustbin"
-        android:contentDescription="@string/actionbar_device_delete"
+    <LinearLayout
         android:layout_alignParentEnd="true"
         android:layout_gravity="end|center_vertical"
         android:layout_marginEnd="16dp"
-        android:layout_height="match_parent"
         android:layout_width="wrap_content"
-        android:background="@android:color/transparent"/>
+        android:layout_height="match_parent">
+        <ImageButton
+            android:id="@+id/action_bar_firmware_update"
+            android:src="@drawable/ic_chip"
+            android:contentDescription="@string/actionbar_firmware_update"
+            android:layout_marginEnd="16dp"
+            android:layout_gravity="center"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:background="@android:color/transparent"/>
+
+        <ImageButton
+            android:id="@+id/action_bar_delete_button"
+            android:src="@drawable/ic_dustbin"
+            android:contentDescription="@string/actionbar_device_delete"
+            android:layout_gravity="center"
+            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:background="@android:color/transparent"/>
+    </LinearLayout>
 
 </RelativeLayout>

@@ -52,14 +52,6 @@ public class AuraDetailFragment extends DetailFragment {
     public AuraDetailFragment() {
     }
 
-    private static IntentFilter makeDfuUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(DfuService.BROADCAST_PROGRESS);
-        intentFilter.addAction(DfuService.BROADCAST_ERROR);
-        intentFilter.addAction(DfuService.BROADCAST_LOG);
-        return intentFilter;
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_aura_detail, container, false);
@@ -107,15 +99,6 @@ public class AuraDetailFragment extends DetailFragment {
         });
 
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
-
-        at.markushi.ui.CircleButton circleButton = (at.markushi.ui.CircleButton)view.findViewById(R.id.dd_btn_update_firmware);
-        circleButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DfuService dfuService = new DfuService();
-                dfuService.updateFirmware(deviceInfo);
-            }
-        });
 
         TextView textView = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
         textView.setText(device.getFirmwareVersion());

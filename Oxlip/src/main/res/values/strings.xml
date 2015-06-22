@@ -18,6 +18,7 @@
 
     <string name="actionbar_device_name_hint">Appliance Name</string>
     <string name="actionbar_device_delete">Remove</string>
+    <string name="actionbar_firmware_update">Update firmware</string>
 
     <string name="ble_not_supported">BLE is not supported by this Android version.</string>
     <string name="error_bluetooth_not_supported">This phone does not have support for BLE hardware.</string>
