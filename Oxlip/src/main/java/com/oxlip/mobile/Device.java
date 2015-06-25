@@ -361,6 +361,7 @@ public class Device {
             service = gatt.getService(param.serviceId);
             if (service == null) {
                 Log.e(LOG_TAG_DEVICE, "BLE service not found " + param.serviceId );
+                device.bleDisconnect();
                 return 0L;
             } else {
                 Log.e(LOG_TAG_DEVICE, "BLE service found " + param.serviceId );
@@ -369,6 +370,7 @@ public class Device {
             characteristic = service.getCharacteristic(param.characteristicId);
             if (characteristic == null) {
                 Log.e(LOG_TAG_DEVICE, "BLE characteristic not found " + param.characteristicId);
+                device.bleDisconnect();
                 return 0L;
             }
             device.setBleCharacteristicRWCompleted(false);
@@ -462,7 +464,7 @@ public class Device {
                     // Automatically discover service once BLE connection is established
                     gatt.discoverServices();
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    //gatt.close();
+                    gatt.close();
                 }
             }
         }
