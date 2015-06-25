@@ -32,7 +32,7 @@
         <item name="android:layout_gravity">center</item>
         <item name="android:layout_margin">0dp</item>
         <item name="android:padding">0dp</item>
-        <item name="android:textSize">50sp</item>
+        <item name="android:textSize">35sp</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:text">@string/text_na</item>
     </style>
@@ -42,7 +42,7 @@
         <item name="android:layout_gravity">center</item>
         <item name="android:layout_margin">0dp</item>
         <item name="android:padding">0dp</item>
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">18sp</item>
         <item name="android:textColor">@android:color/white</item>
         <item name="android:text">@string/text_na</item>
     </style>

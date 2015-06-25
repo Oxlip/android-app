@@ -21,53 +21,7 @@
                 android:layout_row="0"
                 android:layout_column="0"
                 android:layout_width="match_parent"
-                android:paddingBottom="20dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:text="@string/text_firmware_version"
-                        android:paddingEnd="20dp"
-                        android:layout_gravity="end"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                    <TextView
-                            android:id="@+id/dd_txt_firmware_version"
-                            android:text="@string/text_na"
-                            android:layout_gravity="end"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_height="wrap_content"
-                    android:layout_width="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_weight="1"
-                    android:orientation="horizontal">
-                    <TextView
-                        android:text="@string/text_signal_strength"
-                        android:paddingEnd="20dp"
-                        android:layout_gravity="end"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                    <TextView
-                        android:id="@+id/dd_txt_rssi"
-                        android:text="@string/text_na"
-                        android:layout_gravity="end"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_row="1"
-                android:layout_column="0"
-                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <SeekBar
@@ -79,14 +33,13 @@
 
                 <android.support.v7.widget.SwitchCompat
                     android:id="@+id/dd_aura_btn_on_off"
-                    android:layout_gravity="end"
+                    android:layout_gravity="center|end"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="16dp"/>
+                    android:layout_height="wrap_content"/>
             </LinearLayout>
 
             <LinearLayout
-                android:layout_row="2"
+                android:layout_row="1"
                 android:layout_column="0"
                 android:layout_width="match_parent"
                 android:orientation="vertical">
@@ -100,6 +53,14 @@
                     android:layout_height="wrap_content"
                     android:text="@string/aura_detail_enable_remote"/>
             </LinearLayout>
+
+            <View
+                android:layout_row="2"
+                android:layout_column="0"
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="10dp"
+                android:background="@android:color/darker_gray"/>
 
             <LinearLayout
                 android:layout_row="3"
@@ -151,9 +112,36 @@
 
             </LinearLayout>
 
+            <View
+                android:layout_row="4"
+                android:layout_column="0"
+                android:layout_width="fill_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="10dp"
+                android:background="@android:color/darker_gray"/>
+
+            <LinearLayout
+                android:layout_row="5"
+                android:layout_column="0"
+                android:layout_gravity="end"
+                android:layout_width="wrap_content"
+                android:paddingBottom="20dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:text="@string/text_signal_strength"
+                    android:paddingEnd="20dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <TextView
+                    android:id="@+id/dd_txt_rssi"
+                    android:text="@string/text_na"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+
             <com.github.mikephil.charting.charts.BarChart
                 android:id="@+id/ddl_chart"
-                android:layout_row="4"
+                android:layout_row="6"
                 android:layout_column="0"
                 android:minHeight="400dp"
                 android:layout_width="wrap_content"
