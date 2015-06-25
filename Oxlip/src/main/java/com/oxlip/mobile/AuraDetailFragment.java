@@ -35,7 +35,7 @@ import java.util.TimerTask;
  */
 public class AuraDetailFragment extends DetailFragment {
     private Device device;
-    private TextView txt_ma, txt_mw, txt_volt, txt_firmware, txt_rssi;
+    private TextView txt_ma, txt_mw, txt_volt, txt_rssi;
 
     /*Cache of power usage information of the connected device. The stored value is reflected in the UI*/
     private PowerUsage powerUsage = new PowerUsage();
@@ -54,6 +54,10 @@ public class AuraDetailFragment extends DetailFragment {
      * fragment (e.g. upon screen orientation changes).
      */
     public AuraDetailFragment() {
+    }
+
+    private int byteToint(byte upper, byte lower) {
+        return ((upper & 0xff) << 8) | (lower & 0xFF);
     }
 
     @Override
@@ -78,13 +82,13 @@ public class AuraDetailFragment extends DetailFragment {
                     if (false) {
                         Log.e("test", "got current sensor values ");
                         for (byte b : bytes) {
-                            Log.e("test", " B = " + b);
+                            Log.e("test", " B = " + (short)(b & 0xff));
                         }
                     }
-                    int current = (bytes[1] << 8) | bytes[0];
-                    int watts = (bytes[3] << 8) | bytes[2];
-                    int volt = bytes[4];
-                    int freq = bytes[5];
+                    int current = byteToint(bytes[1], bytes[0]);
+                    int watts = byteToint(bytes[3], bytes[2]);
+                    int volt = byteToint((byte)0, bytes[4]);
+                    int freq = byteToint((byte)0, bytes[5]);
                     powerUsage.now.current = current;
                     powerUsage.now.wattage = watts;
                     powerUsage.now.volt = volt;
@@ -98,9 +102,6 @@ public class AuraDetailFragment extends DetailFragment {
                         txt_volt.setText("" + powerUsage.now.volt);
 
                         txt_rssi.setText("" + device.getRssi());
-                        if (device.getFirmwareVersion() != null) {
-                            txt_firmware.setText("" + device.getFirmwareVersion());
-                        }
                     }
                 });
             }
@@ -108,7 +109,6 @@ public class AuraDetailFragment extends DetailFragment {
 
         final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
 
-        txt_firmware = (TextView)view.findViewById(R.id.dd_txt_firmware_version);
         txt_rssi = (TextView)view.findViewById(R.id.dd_txt_rssi);
         txt_ma = (TextView)view.findViewById(R.id.dd_aura_cs_ma);
         txt_mw = (TextView)view.findViewById(R.id.dd_aura_cs_mw);
