@@ -137,9 +137,18 @@ public class DeviceDetailActivity extends ActionBarActivity {
         btnFirmwareUpdate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Device device = DeviceListAdapter.getInstance().getDevice(mDeviceAddress);
+                String firmwareInfo;
+                if (device.getFirmwareVersion() != null) {
+                    firmwareInfo = device.getFirmwareVersion();
+                } else {
+                    firmwareInfo = "NA";
+                }
+                String msg = "Current Firmware : " + firmwareInfo + "\n\n" +
+                             "A new firmware is available.\nDo you want to upgrade?";
                 new AlertDialog.Builder(v.getContext())
                         .setTitle("Firmware update")
-                        .setMessage("Are you ready to update the firmware of " + deviceInfo.name + " ?\nThis operation will take few minutes to complete.")
+                        .setMessage(msg)
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 DfuService dfuService = new DfuService();
