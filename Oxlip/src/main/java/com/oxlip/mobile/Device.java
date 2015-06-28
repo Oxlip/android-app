@@ -257,6 +257,13 @@ public class Device {
     }
 
     /**
+     * Starts reading of dimmer characteristics.
+     */
+    public void asyncReadDimmerStatus() {
+        readBleCharacteristic(BleUuid.DIMMER_SERVICE, BleUuid.DIMMER_CHAR);
+    }
+
+    /**
      * Get CS information asynchronously.
      * When the BLE read completes it will trigger bleEventCallback().
      */

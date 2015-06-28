@@ -36,6 +36,8 @@ import java.util.TimerTask;
 public class AuraDetailFragment extends DetailFragment {
     private Device device;
     private TextView txt_ma, txt_mw, txt_volt, txt_rssi;
+    private SwitchCompat btn_on;
+    private SeekBar seekBar;
 
     /*Cache of power usage information of the connected device. The stored value is reflected in the UI*/
     private PowerUsage powerUsage = new PowerUsage();
@@ -92,6 +94,17 @@ public class AuraDetailFragment extends DetailFragment {
                     powerUsage.now.current = current;
                     powerUsage.now.wattage = watts;
                     powerUsage.now.volt = volt;
+                } else if (characteristic.getUuid().compareTo(BleUuid.DIMMER_CHAR) == 0) {
+                    final byte[] bytes = characteristic.getValue();
+                    final byte percentage = bytes[1];
+
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            seekBar.setProgress(percentage);
+                            btn_on.setChecked(percentage > 0);
+                        }
+                    });
                 }
 
                 getActivity().runOnUiThread(new Runnable() {
@@ -113,15 +126,17 @@ public class AuraDetailFragment extends DetailFragment {
         txt_ma = (TextView)view.findViewById(R.id.dd_aura_cs_ma);
         txt_mw = (TextView)view.findViewById(R.id.dd_aura_cs_mw);
         txt_volt = (TextView)view.findViewById(R.id.dd_aura_cs_volt);
+        btn_on = (SwitchCompat)view.findViewById(R.id.dd_aura_btn_on_off);
+        seekBar = (SeekBar) view.findViewById(R.id.dd_aura_seekbar);
 
-        SwitchCompat btnOn = (SwitchCompat)view.findViewById(R.id.dd_aura_btn_on_off);
-        btnOn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+
+        btn_on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 device.dimmerControl((byte) (isChecked ? 100 : 0));
             }
         });
-        SeekBar seekBar = (SeekBar) view.findViewById(R.id.dd_aura_seekbar);
+
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -149,6 +164,8 @@ public class AuraDetailFragment extends DetailFragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        device.asyncReadDimmerStatus();
 
         this.timer = new Timer();
         /*Create new Timer to update the GUI regularly*/
