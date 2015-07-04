@@ -37,17 +37,16 @@ public class AuraDetailFragment extends DetailFragment {
     private Device device;
     private TextView txt_ma, txt_mw, txt_volt, txt_rssi;
     private SwitchCompat btn_on;
-    private SeekBar seekBar;
 
-    /*Cache of power usage information of the connected device. The stored value is reflected in the UI*/
+    /* Current power state */
+    private boolean poweredOn = false;
+    /* Cache of power usage information of the connected device. The stored value is reflected in the UI*/
     private PowerUsage powerUsage = new PowerUsage();
     /* What measurement to show in the UI - 0-Amps 1-Volts 2-Watts*/
     private int powerUsageDisplayMode = 0;
 
     /* Timer to gather BLE info and update the UI */
     private Timer timer = new Timer();
-    /* Handler to update the UI*/
-    final Handler myHandler = new Handler();
 
     private int BLE_CS_READ_DELAY = 5000;
 
@@ -74,30 +73,11 @@ public class AuraDetailFragment extends DetailFragment {
         txt_mw = (TextView)view.findViewById(R.id.dd_aura_cs_mw);
         txt_volt = (TextView)view.findViewById(R.id.dd_aura_cs_volt);
         btn_on = (SwitchCompat)view.findViewById(R.id.dd_aura_btn_on_off);
-        seekBar = (SeekBar) view.findViewById(R.id.dd_aura_seekbar);
-
 
         btn_on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 device.dimmerControl((byte) (isChecked ? 100 : 0));
-            }
-        });
-
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                device.dimmerControl((byte)seekBar.getProgress());
             }
         });
 
@@ -140,15 +120,7 @@ public class AuraDetailFragment extends DetailFragment {
                     powerUsage.now.volt = volt;
                 } else if (charid.compareTo(BleUuid.DIMMER_CHAR) == 0) {
                     byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
-                    final byte percentage = bytes[1];
-
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            seekBar.setProgress(percentage);
-                            btn_on.setChecked(percentage > 0);
-                        }
-                    });
+                    poweredOn = bytes[1] != 0;
                 }
 
                 getActivity().runOnUiThread(new Runnable() {
@@ -159,6 +131,8 @@ public class AuraDetailFragment extends DetailFragment {
                         txt_volt.setText("" + powerUsage.now.volt);
 
                         txt_rssi.setText("" + device.getRssi());
+
+                        btn_on.setChecked(poweredOn);
                     }
                 });
             }
