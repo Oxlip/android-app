@@ -68,7 +68,7 @@
                         style="@style/dd_cs_value_text"/>
                     <TextView
                         style="@style/dd_cs_desc_text"
-                        android:text="@string/text_mw"/>
+                        android:text="@string/text_watts"/>
                 </LinearLayout>
 
                 <LinearLayout

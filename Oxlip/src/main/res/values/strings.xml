@@ -8,11 +8,12 @@
     <string name="text_peak_use_hour">PEAK USE HOUR</string>
     <string name="text_kw_used">KILOWATTS USED</string>
     <string name="text_na">NA</string>
+    <string name="text_0">0</string>
 
     <string name="text_signal_strength">Signal</string>
 
     <string name="text_ma">mA</string>
-    <string name="text_mw">mW</string>
+    <string name="text_watts">Watt</string>
     <string name="text_volt">Volt</string>
 
     <string name="text_aura">Aura</string>
