@@ -1,12 +1,12 @@
 package com.oxlip.mobile;
 
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCharacteristic;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.SwitchCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -21,11 +21,11 @@ import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 /**
  * A fragment representing a single Device detail screen.
@@ -49,7 +49,7 @@ public class AuraDetailFragment extends DetailFragment {
     /* Handler to update the UI*/
     final Handler myHandler = new Handler();
 
-    private int BLE_CS_READ_DELAY = 3000;
+    private int BLE_CS_READ_DELAY = 5000;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -68,59 +68,6 @@ public class AuraDetailFragment extends DetailFragment {
 
         String deviceAddress = this.getArguments().getString("deviceAddress");
         device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
-        device.setBleEventCallback(new Device.BleEventCallback() {
-            @Override
-            public void onBleReadCharacteristic(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-                if (characteristic.getUuid().compareTo(BleUuid.CS_CHAR) == 0) {
-                    byte[] bytes = characteristic.getValue();
-                    /*
-                        typedef struct {
-                            uint16_t current;
-                            uint16_t watts;
-                            uint8_t volt;
-                            uint8_t freq;
-                        } ble_cs_info;
-                    */
-                    if (false) {
-                        Log.e("test", "got current sensor values ");
-                        for (byte b : bytes) {
-                            Log.e("test", " B = " + (short)(b & 0xff));
-                        }
-                    }
-                    int current = byteToint(bytes[1], bytes[0]);
-                    int watts = byteToint(bytes[3], bytes[2]);
-                    int volt = byteToint((byte)0, bytes[4]);
-                    int freq = byteToint((byte)0, bytes[5]);
-                    powerUsage.now.current = current;
-                    powerUsage.now.wattage = watts;
-                    powerUsage.now.volt = volt;
-                } else if (characteristic.getUuid().compareTo(BleUuid.DIMMER_CHAR) == 0) {
-                    final byte[] bytes = characteristic.getValue();
-                    final byte percentage = bytes[1];
-
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            seekBar.setProgress(percentage);
-                            btn_on.setChecked(percentage > 0);
-                        }
-                    });
-                }
-
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        txt_ma.setText("" + powerUsage.now.current);
-                        txt_mw.setText("" + powerUsage.now.wattage);
-                        txt_volt.setText("" + powerUsage.now.volt);
-
-                        txt_rssi.setText("" + device.getRssi());
-                    }
-                });
-            }
-        });
-
-        final DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceAddress);
 
         txt_rssi = (TextView)view.findViewById(R.id.dd_txt_rssi);
         txt_ma = (TextView)view.findViewById(R.id.dd_aura_cs_ma);
@@ -161,9 +108,73 @@ public class AuraDetailFragment extends DetailFragment {
         return view;
     }
 
+    /**
+     * Receives async BLE char RW results.
+     */
+    private final BroadcastReceiver bleMsgReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE)) {
+                BleCharRWTask.ExecutionResult result = (BleCharRWTask.ExecutionResult)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
+                if (result != BleCharRWTask.ExecutionResult.SUCCESS) {
+                    return;
+                }
+                UUID charid = (UUID)intent.getSerializableExtra(BleService.BLE_SERVICE_IO_CHAR);
+                if (charid.compareTo(BleUuid.CS_CHAR) == 0) {
+                    byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
+                    /*
+                        typedef struct {
+                            uint16_t current;
+                            uint16_t watts;
+                            uint8_t volt;
+                            uint8_t freq;
+                        } ble_cs_info;
+                    */
+                    int current = byteToint(bytes[1], bytes[0]);
+                    int watts = byteToint(bytes[3], bytes[2]);
+                    int volt = byteToint((byte)0, bytes[4]);
+                    int freq = byteToint((byte)0, bytes[5]);
+                    powerUsage.now.current = current;
+                    powerUsage.now.wattage = watts;
+                    powerUsage.now.volt = volt;
+                } else if (charid.compareTo(BleUuid.DIMMER_CHAR) == 0) {
+                    byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
+                    final byte percentage = bytes[1];
+
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            seekBar.setProgress(percentage);
+                            btn_on.setChecked(percentage > 0);
+                        }
+                    });
+                }
+
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        txt_ma.setText("" + powerUsage.now.current);
+                        txt_mw.setText("" + powerUsage.now.wattage);
+                        txt_volt.setText("" + powerUsage.now.volt);
+
+                        txt_rssi.setText("" + device.getRssi());
+                    }
+                });
+            }
+        }
+    };
+
     @Override
     public void onResume() {
         super.onResume();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_FOUND);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_GONE);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_HAS_DATA);
+        intentFilter.addAction(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE);
+
+        getActivity().registerReceiver(bleMsgReceiver, intentFilter);
 
         device.asyncReadDimmerStatus();
 
@@ -180,14 +191,12 @@ public class AuraDetailFragment extends DetailFragment {
     @Override
     public void onPause() {
         super.onPause();
+        getActivity().unregisterReceiver(bleMsgReceiver);
         this.timer.cancel();
     }
 
     @Override
     public void onDestroyView() {
-        if (device != null) {
-            device.setBleEventCallback(null);
-        }
         super.onDestroyView();
     }
 

@@ -62,19 +62,18 @@ public class DeviceListAdapter extends BaseAdapter {
     /**
      * Associate the given ble device with matching device uuid.
      *
-     * @param bleDevice Bluetooth device to be associated.
+     * @param address Bluetooth device to be associated.
      * @param rssi Received signal strength
      * @return true if a device with given uuid is found and bleDevice is associated.
      */
-    protected boolean associateBleDevice(BluetoothDevice bleDevice, int rssi) {
-        Device device = getDevice(bleDevice);
+    protected boolean associateBleDevice(String address, int rssi) {
+        Device device = getDevice(address);
         if (device == null) {
             return false;
         }
-        device.setBleDevice(bleDevice);
-        if (device.getRssi() != rssi) {
-            device.setRssi(rssi);
-        }
+        device.setBleDeviceAddress(address);
+        device.setRssi(rssi);
+
         Log.d(LOG_TAG_DEVICE_LIST_ADAPTER, "New device " + device.getDeviceInfo().name + " RSSI " + rssi);
         this.notifyDataSetInvalidated();
 

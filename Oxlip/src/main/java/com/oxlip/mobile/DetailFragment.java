@@ -78,15 +78,4 @@ public class DetailFragment extends Fragment {
         final LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(getActivity());
         broadcastManager.unregisterReceiver(mDfuUpdateReceiver);
     }
-
-
-    @Override
-    public void onDestroyView() {
-        String deviceAddress = this.getArguments().getString("deviceAddress");
-        Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
-        if (device != null) {
-            device.setBleEventCallback(null);
-        }
-        super.onDestroyView();
-    }
 }

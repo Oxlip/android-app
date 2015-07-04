@@ -3,12 +3,12 @@ package com.oxlip.mobile;
 import android.app.Activity;
 import android.app.Fragment;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.view.MenuItemCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -41,13 +41,10 @@ import java.util.List;
  */
 public class DeviceListFragment extends Fragment {
 
-    private BluetoothAdapter mBluetoothAdapter;
-    private boolean mScanning;
-    private Handler mHandler;
+    private boolean mScanning = false;
+    private BleServiceUpdateReceiver bleServiceUpdateReceiver;
 
     private static final int REQUEST_ENABLE_BT = 1;
-    // Stops scanning after 5 seconds.
-    private static final long BLE_SCAN_PERIOD = 1000;
 
     /**
      * The serialization (saved instance state) Bundle key representing the
@@ -101,7 +98,6 @@ public class DeviceListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         Activity activity = getActivity();
         super.onCreate(savedInstanceState);
-        mHandler = new Handler();
 
         setHasOptionsMenu(true);
 
@@ -111,9 +107,10 @@ public class DeviceListFragment extends Fragment {
             Toast.makeText(activity, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
             getActivity().finish();
         }
-        mBluetoothAdapter = ApplicationGlobals.getBluetoothAdapter();
+
+        BluetoothAdapter  bluetoothAdapter = ApplicationGlobals.getBluetoothAdapter();
         // Checks if Bluetooth is supported on the device.
-        if (mBluetoothAdapter == null) {
+        if (bluetoothAdapter == null) {
             Toast.makeText(activity, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
             getActivity().finish();
         }
@@ -131,7 +128,6 @@ public class DeviceListFragment extends Fragment {
             menu.findItem(R.id.main_action_bar_sync).setIcon(R.drawable.ic_action_sync);
         } else {
             MenuItemCompat.setActionView(menuSync, R.layout.progress_ble_scan);
-            //menu.findItem(menuSync).setActionView(R.layout.progress_ble_scan);
         }
         super.onCreateOptionsMenu(menu, inflater);
     }
@@ -148,21 +144,26 @@ public class DeviceListFragment extends Fragment {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.main_action_bar_sync:
-                scanLeDevice();
-                break;
-        }
-        return true;
-    }
-
-
-    @Override
     public void onResume() {
         super.onResume();
 
-        scanLeDevice();
+        if (bleServiceUpdateReceiver== null)  {
+            bleServiceUpdateReceiver = new BleServiceUpdateReceiver();
+        }
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_SCAN_STARTED);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_SCAN_FINISHED);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_FOUND);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_FOUND);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_GONE);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_HAS_DATA);
+        intentFilter.addAction(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE);
+        getActivity().registerReceiver(bleServiceUpdateReceiver, intentFilter);
+
+        Context context = ApplicationGlobals.getAppContext();
+        Intent intent = new Intent(context, BleService.class);
+        intent.setAction(BleService.BLE_SERVICE_REQUEST_SCAN);
+        context.startService(intent);
 
         View view = getView();
         if (view == null) {
@@ -170,6 +171,14 @@ public class DeviceListFragment extends Fragment {
         }
         PieChart chart = (PieChart) view.findViewById(R.id.fdl_header_chart);
         setChartData(chart);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (bleServiceUpdateReceiver != null) {
+            getActivity().unregisterReceiver(bleServiceUpdateReceiver);
+        }
     }
 
     @Override
@@ -181,71 +190,6 @@ public class DeviceListFragment extends Fragment {
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        stopLeScan();
-    }
-
-
-    private void stopLeScan() {
-        mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        mScanning = false;
-
-        Activity activity = getActivity();
-        if (activity != null) {
-            getActivity().invalidateOptionsMenu();
-        }
-    }
-
-    private void scanLeDevice() {
-        // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
-        // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
-        }
-
-        DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
-        listAdapter.invalidateConnectionState();
-        // Stops scanning after a pre-defined scan period.
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                stopLeScan();
-            }
-        }, BLE_SCAN_PERIOD);
-
-        mScanning = true;
-
-        mBluetoothAdapter.startLeScan(mLeScanCallback);
-
-        getActivity().invalidateOptionsMenu();
-    }
-
-    // Device scan callback.
-    private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
-        @Override
-        public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
-            Activity activity = getActivity();
-            if (activity == null) {
-                return;
-            }
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
-                    boolean result = listAdapter.associateBleDevice(bleDevice, rssi);
-                    if (!result && bleDevice.getName() != null) {
-                        Device device = new Device(bleDevice, rssi);
-                        listAdapter.addDevice(device);
-                    }
-                }
-            });
-        }
-    };
-
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -282,8 +226,8 @@ public class DeviceListFragment extends Fragment {
         }
 
         int foregroundColor = getResources().getColor(R.color.foreground);
-        ArrayList<Entry> yVals = new ArrayList<Entry>();
-        ArrayList<String> xVals = new ArrayList<String>();
+        ArrayList<Entry> yVals = new ArrayList<>();
+        ArrayList<String> xVals = new ArrayList<>();
         List<DatabaseHelper.DeviceDataSummary> summaryList;
         boolean noData;
 
@@ -416,5 +360,37 @@ public class DeviceListFragment extends Fragment {
         }
 
         mActivatedPosition = position;
+    }
+
+    private void addDevice(String bleAddress, String name, int rssi) {
+        DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
+        boolean result = listAdapter.associateBleDevice(bleAddress, rssi);
+        if (!result && name != null) {
+            Device device = new Device(bleAddress, name, rssi);
+            listAdapter.addDevice(device);
+        }
+    }
+
+    private class BleServiceUpdateReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(BleService.BLE_SERVICE_MSG_BLE_NOT_ENABLED)) {
+                // BLE is not enabled on the phone - start system service to enable.
+                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+            } else if (intent.getAction().equals(BleService.BLE_SERVICE_MSG_SCAN_STARTED)) {
+                mScanning = true;
+                getActivity().invalidateOptionsMenu();
+            } else if (intent.getAction().equals(BleService.BLE_SERVICE_MSG_SCAN_FINISHED)) {
+                mScanning = false;
+                getActivity().invalidateOptionsMenu();
+            } else if (intent.getAction().equals(BleService.BLE_SERVICE_MSG_DEVICE_FOUND)) {
+                int rssi = intent.getIntExtra(BleService.BLE_SERVICE_OUT_RSSI, 0);
+                String name = intent.getStringExtra(BleService.BLE_SERVICE_OUT_DEVICE_NAME);
+                String address  = intent.getStringExtra(BleService.BLE_SERVICE_OUT_DEVICE_ADDRESS);
+
+                addDevice(address, name, rssi);
+            }
+        }
     }
 }

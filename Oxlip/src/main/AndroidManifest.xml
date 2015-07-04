@@ -12,31 +12,40 @@
         android:required="false" />
 
     <application
-        android:name="com.oxlip.mobile.ApplicationGlobals"
+        android:name=".ApplicationGlobals"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-        <activity
-            android:name=".DeviceListActivity">
+        <activity android:name=".DeviceListActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".DeviceDetailActivity"
             android:label="@string/title_device_detail"
-            android:windowSoftInputMode="stateHidden"
-            android:parentActivityName=".DeviceListActivity" >
+            android:parentActivityName=".DeviceListActivity"
+            android:windowSoftInputMode="stateHidden" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.oxlip.mobile.DeviceListActivity" />
         </activity>
-        <activity android:name=".NotificationActivity"/>
-        <service android:name="com.oxlip.mobile.DfuService"/>
+        <activity android:name=".NotificationActivity" />
+
+        <service android:name=".DfuService" />
+
         <meta-data
             android:name="com.crashlytics.ApiKey"
             android:value="15e8e89afd5f332d76446cabb30bbb50674a6175" />
+
+        <service
+            android:name=".BleService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
     </application>
+
 </manifest>
