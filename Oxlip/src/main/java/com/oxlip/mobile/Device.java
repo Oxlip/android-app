@@ -96,6 +96,44 @@ public class Device {
         return this.isSaved;
     }
 
+
+    /**
+     * Gets current firmware version using BLE Device Information Service.
+     * @return firmware version.
+     */
+    public String getFirmwareVersion() {
+        if (firmwareVersion != null) {
+            return firmwareVersion;
+        }
+
+        BleService.startReadBleCharacteristic(mDeviceInfo.address, BleUuid.DIS_SERVICE, BleUuid.DIS_FW_CHAR);
+        return null;
+    }
+
+    /**
+     * Sets the brightness of the device if applicable.
+     * @param brightness Percentage of brightness. (0-Off, 100-Fully on)
+     */
+    public void dimmerControl(byte brightness) {
+        byte[] value = {1, brightness};
+        BleService.startWriteBleCharacteristic(this.getDeviceInfo().address, BleUuid.DIMMER_SERVICE, BleUuid.DIMMER_CHAR, value);
+    }
+
+    /**
+     * Starts reading of dimmer characteristics.
+     */
+    public void asyncReadDimmerStatus() {
+        BleService.startReadBleCharacteristic(this.getDeviceInfo().address, BleUuid.DIMMER_SERVICE, BleUuid.DIMMER_CHAR);
+    }
+
+    /**
+     * Get CS information asynchronously.
+     * When the BLE read completes it will trigger bleEventCallback().
+     */
+    public void asyncReadCurrentSensorInformation() {
+        BleService.startReadBleCharacteristic(this.getDeviceInfo().address, BleUuid.CS_SERVICE, BleUuid.CS_CHAR);
+    }
+
     /*
      * Add an action for the given device.
      * For example when button 1 is press turn on light.
@@ -115,7 +153,7 @@ public class Device {
          */
         byte[] addr = target.getBytes();
         byte[] charValue = {1, (byte)subAddress, 1, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], (byte)actionType, (byte)value};
-        startWriteBleCharacteristic(BleUuid.BUTTON_SERVICE, BleUuid.BUTTON_CHAR, charValue);
+        BleService.startWriteBleCharacteristic(this.getDeviceInfo().address, BleUuid.BUTTON_SERVICE, BleUuid.BUTTON_CHAR, charValue);
 
         //add to the local database
         DatabaseHelper.addAction(this.getDeviceInfo().address, subAddress, target, actionType, value);
@@ -135,66 +173,4 @@ public class Device {
     public void deleteActions(int subAddress) {
         DatabaseHelper.deleteDeviceAction(getDeviceInfo().address, subAddress);
     }
-
-    private void startRWBleCharacteristic(UUID serviceId, UUID charId, byte[] writeValue) {
-        Context context = ApplicationGlobals.getAppContext();
-        Intent intent = new Intent(context, BleService.class);
-        if (writeValue == null) {
-            intent.setAction(BleService.BLE_SERVICE_REQUEST_CHAR_READ);
-        } else {
-            intent.setAction(BleService.BLE_SERVICE_REQUEST_CHAR_WRITE);
-        }
-        intent.putExtra(BleService.BLE_SERVICE_IO_DEVICE, this.mDeviceInfo.address);
-        intent.putExtra(BleService.BLE_SERVICE_IO_SERVICE, serviceId.toString());
-        intent.putExtra(BleService.BLE_SERVICE_IO_CHAR, charId.toString());
-        intent.putExtra(BleService.BLE_SERVICE_IO_VALUE, writeValue);
-
-        context.startService(intent);
-    }
-
-    private void startReadBleCharacteristic(UUID serviceId, UUID charId) {
-        startRWBleCharacteristic(serviceId, charId, null);
-    }
-
-    private void startWriteBleCharacteristic(UUID serviceId, UUID charId, byte[] value) {
-        startRWBleCharacteristic(serviceId, charId, value);
-    }
-
-    /**
-     * Sets the brightness of the device if applicable.
-     * @param brightness Percentage of brightness. (0-Off, 100-Fully on)
-     */
-    public void dimmerControl(byte brightness) {
-        byte[] value = {1, brightness};
-        startWriteBleCharacteristic(BleUuid.DIMMER_SERVICE, BleUuid.DIMMER_CHAR, value);
-    }
-
-    /**
-     * Starts reading of dimmer characteristics.
-     */
-    public void asyncReadDimmerStatus() {
-        startReadBleCharacteristic(BleUuid.DIMMER_SERVICE, BleUuid.DIMMER_CHAR);
-    }
-
-    /**
-     * Get CS information asynchronously.
-     * When the BLE read completes it will trigger bleEventCallback().
-     */
-    public void asyncReadCurrentSensorInformation() {
-        startReadBleCharacteristic(BleUuid.CS_SERVICE, BleUuid.CS_CHAR);
-    }
-
-    /**
-     * Gets current firmware version using BLE Device Information Service.
-     * @return firmware version.
-     */
-    public String getFirmwareVersion() {
-        if (firmwareVersion != null) {
-            return firmwareVersion;
-        }
-
-        startReadBleCharacteristic(BleUuid.DIS_SERVICE, BleUuid.DIS_FW_CHAR);
-        return null;
-    }
 }
-

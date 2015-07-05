@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -181,4 +182,28 @@ public class BleService extends Service {
             sendBroadcast(intent);
         }
     };
+
+    private static void startRWBleCharacteristic(String bleAddress, UUID serviceId, UUID charId, byte[] writeValue) {
+        Context context = ApplicationGlobals.getAppContext();
+        Intent intent = new Intent(context, BleService.class);
+        if (writeValue == null) {
+            intent.setAction(BleService.BLE_SERVICE_REQUEST_CHAR_READ);
+        } else {
+            intent.setAction(BleService.BLE_SERVICE_REQUEST_CHAR_WRITE);
+        }
+        intent.putExtra(BleService.BLE_SERVICE_IO_DEVICE, bleAddress);
+        intent.putExtra(BleService.BLE_SERVICE_IO_SERVICE, serviceId.toString());
+        intent.putExtra(BleService.BLE_SERVICE_IO_CHAR, charId.toString());
+        intent.putExtra(BleService.BLE_SERVICE_IO_VALUE, writeValue);
+
+        context.startService(intent);
+    }
+
+    public static void startReadBleCharacteristic(String bleAddress, UUID serviceId, UUID charId) {
+        startRWBleCharacteristic(bleAddress, serviceId, charId, null);
+    }
+
+    public static void startWriteBleCharacteristic(String bleAddress, UUID serviceId, UUID charId, byte[] value) {
+        startRWBleCharacteristic(bleAddress, serviceId, charId, value);
+    }
 }
