@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,15 +31,7 @@ import java.util.List;
  * on handsets.
  */
 public class LyraDetailFragment extends DetailFragment {
-    private RecyclerView mButtonRecyclerView;
-    private RecyclerView.Adapter mButtonAdapter;
-    private LinearLayoutManager mButtonLayoutManager;
 
-    private RecyclerView mDevicesRecyclerView;
-    private RecyclerView.Adapter mDevicesAdapter;
-    private LinearLayoutManager mDevicesLayoutManager;
-
-    private Device mDevice;
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
@@ -48,40 +41,36 @@ public class LyraDetailFragment extends DetailFragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        String deviceAddress = this.getArguments().getString("deviceAddress");
-        mDevice = DeviceListAdapter.getInstance().getDevice(deviceAddress);
-
         final View view = inflater.inflate(R.layout.fragment_lyra_detail, container, false);
-
-        mButtonRecyclerView = (RecyclerView) view.findViewById(R.id.rcv_buttons);
-
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
-        mButtonRecyclerView.setHasFixedSize(true);
-
-        // use a linear layout manager
-        mButtonLayoutManager = new LinearLayoutManager(getActivity());
-        mButtonLayoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-        mButtonRecyclerView.setLayoutManager(mButtonLayoutManager);
-
         String[] button_number = {"I", "II", "III"};
-        mButtonAdapter = new LyraButtonAdapter(mDevice, this.getActivity(), button_number);
-        mButtonRecyclerView.setAdapter(mButtonAdapter);
+        String deviceAddress = this.getArguments().getString("deviceAddress");
+        Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
 
-        mDevicesRecyclerView = (RecyclerView) view.findViewById(R.id.rcv_devices);
+        RecyclerView recyclerView;
+        LinearLayoutManager layoutManager;
+        RecyclerView.Adapter adapter;
 
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
-        mDevicesRecyclerView.setHasFixedSize(true);
+        // ------------- Button Recycler view
+        recyclerView = (RecyclerView) view.findViewById(R.id.rcv_buttons);
+        recyclerView.setHasFixedSize(true);
 
-        // use a linear layout manager
-        mDevicesLayoutManager = new LinearLayoutManager(getActivity());
-        mDevicesLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        mDevicesRecyclerView.setLayoutManager(mDevicesLayoutManager);
+        layoutManager = new LinearLayoutManager(getActivity());
+        layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
+        recyclerView.setLayoutManager(layoutManager);
 
-        // specify an adapter (see also next example)
-        mDevicesAdapter = new AuraListAdapter(DatabaseHelper.getDevices());
-        mDevicesRecyclerView.setAdapter(mDevicesAdapter);
+        adapter = new LyraButtonAdapter(device, this.getActivity(), button_number);
+        recyclerView.setAdapter(adapter);
+
+        // ------------- Device Recycler view
+        recyclerView = (RecyclerView) view.findViewById(R.id.rcv_devices);
+        recyclerView.setHasFixedSize(true);
+
+        layoutManager = new LinearLayoutManager(getActivity());
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        recyclerView.setLayoutManager(layoutManager);
+
+        adapter = new AuraListAdapter(DatabaseHelper.getDevices());
+        recyclerView.setAdapter(adapter);
 
         return view;
     }
@@ -92,24 +81,53 @@ public class LyraDetailFragment extends DetailFragment {
     }
 }
 
-class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolder> {
+class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonViewHolder> {
     private String[] mDataset;
     private Context mContext;
     private Device mDevice;
-    private final String[] actionTypes= {"Toggle", "On", "Off", "Increase", "Decrease"};
+    private final String[] actionTypes= {"On", "Off", "Toggle"};
 
 
     // Provide a reference to the views for each data item
     // Complex data items may need more than one view per item, and
     // you provide access to all the views for a data item in a view holder
-    public static class ViewHolder extends RecyclerView.ViewHolder {
+    public class ButtonViewHolder extends RecyclerView.ViewHolder {
         // each data item is just a string in this case
         private TextView mTextViewNumber;
         private LinearLayout mLayoutDeviceInfoList;
-        public ViewHolder(View v) {
+        public ButtonViewHolder(View v) {
             super(v);
             mTextViewNumber = (TextView) v.findViewById(R.id.lyra_cfg_button_number);
             mLayoutDeviceInfoList = (LinearLayout) v.findViewById(R.id.lyra_cfg_button_device_info_list);
+
+            mLayoutDeviceInfoList.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    final int button = (int) mTextViewNumber.getTag();
+
+                    DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            switch (which){
+                                case DialogInterface.BUTTON_POSITIVE:
+                                    mDevice.deleteActions(button);
+                                    //Yes button clicked
+                                    drawActionList(button, ButtonViewHolder.this);
+                                    break;
+
+                                case DialogInterface.BUTTON_NEGATIVE:
+                                    //No button clicked
+                                    break;
+                            }
+                        }
+                    };
+                    AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                    builder.setMessage("Are you sure to reset button " + button + "?").setPositiveButton("Yes", dialogClickListener)
+                            .setNegativeButton("No", dialogClickListener).show();
+
+                    return false;
+                }
+            });
         }
     }
 
@@ -122,7 +140,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
     /**
      * Assign given appliance to the given button. The action needs to be taken will be prompted to user.
      */
-    private void assignApplianceToButton(final Device device, final ViewHolder vh) {
+    private void assignApplianceToButton(final Device device, final ButtonViewHolder vh) {
         AlertDialog.Builder b = new AlertDialog.Builder(this.mContext);
         b.setTitle("What you want todo?");
         b.setItems(actionTypes, new DialogInterface.OnClickListener() {
@@ -137,7 +155,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
         b.show();
     }
 
-    private void drawActionList(int button, ViewHolder vh) {
+    private void drawActionList(int button, ButtonViewHolder vh) {
         LinearLayout linearLayout = vh.mLayoutDeviceInfoList;
         if(linearLayout.getChildCount() > 0) {
             linearLayout.removeAllViews();
@@ -163,11 +181,11 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
 
     // Create new views (invoked by the layout manager)
     @Override
-    public LyraButtonAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ButtonViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
         View v = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.lyra_cfg_button_list_item, parent, false);
-        final ViewHolder vh = new ViewHolder(v);
+        final ButtonViewHolder vh = new ButtonViewHolder(v);
 
         // catch drop events
         v.setOnDragListener(new View.OnDragListener() {
@@ -208,7 +226,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ViewHolde
 
     // Replace the contents of a view (invoked by the layout manager)
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(final ButtonViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
         holder.mTextViewNumber.setText(mDataset[position]);

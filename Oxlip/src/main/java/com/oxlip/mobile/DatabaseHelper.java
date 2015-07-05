@@ -662,10 +662,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         /**
          * Device which initiates the action. (BLE Address and Button number)
          */
-        @DatabaseField(canBeNull = false)
+        @DatabaseField (canBeNull = false)
         String address;
-        @DatabaseField(canBeNull = true)
+        @DatabaseField (canBeNull = false)
         int subAddress;
+
+        @DatabaseField(generatedId = true)
+        private int dummyId;
 
         /**
          * Device on which the action should be applied.
@@ -677,11 +680,9 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
          * Action type.         *
          */
         public static final int ACTION_TYPE_UNKNOWN = -1;
-        public static final int ACTION_TYPE_ON = 1;
-        public static final int ACTION_TYPE_OFF = 2;
-        public static final int ACTION_TYPE_TOGGLE = 3;
-        public static final int ACTION_TYPE_INCREASE = 4;
-        public static final int ACTION_TYPE_DECREASE = 5;
+        public static final int ACTION_TYPE_ON = 0;
+        public static final int ACTION_TYPE_OFF = 1;
+        public static final int ACTION_TYPE_TOGGLE = 2;
         @DatabaseField(canBeNull = false)
         int actionType;
 
