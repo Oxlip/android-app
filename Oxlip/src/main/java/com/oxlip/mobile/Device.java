@@ -96,10 +96,6 @@ public class Device {
         return this.isSaved;
     }
 
-    public void setBleDeviceAddress(String address) {
-        this.mDeviceInfo.address = address;
-    }
-
     /*
      * Add an action for the given device.
      * For example when button 1 is press turn on light.

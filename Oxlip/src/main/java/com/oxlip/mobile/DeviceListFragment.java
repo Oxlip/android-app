@@ -153,6 +153,7 @@ public class DeviceListFragment extends Fragment {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_SCAN_STARTED);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_SCAN_FINISHED);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_RSSI);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_FOUND);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_FOUND);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_GONE);
@@ -362,13 +363,27 @@ public class DeviceListFragment extends Fragment {
         mActivatedPosition = position;
     }
 
-    private void addDevice(String bleAddress, String name, int rssi) {
+    private boolean updateDeviceRssi(String bleAddress, int rssi) {
         DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
-        boolean result = listAdapter.associateBleDevice(bleAddress, rssi);
-        if (!result && name != null) {
-            Device device = new Device(bleAddress, name, rssi);
-            listAdapter.addDevice(device);
+        Device device = listAdapter.getDevice(bleAddress);
+        if (device == null) {
+            return false;
         }
+        device.setRssi(rssi);
+        listAdapter.notifyDataSetInvalidated();
+        return true;
+    }
+
+    private void addDevice(String bleAddress, String name, int rssi) {
+        // if device already exists just update the RSSI
+        boolean exists = updateDeviceRssi(bleAddress, rssi);
+        if (exists || name == null) {
+            return;
+        }
+
+        DeviceListAdapter listAdapter = DeviceListAdapter.getInstance();
+        Device device = new Device(bleAddress, name, rssi);
+        listAdapter.addDevice(device);
     }
 
     private class BleServiceUpdateReceiver extends BroadcastReceiver {
@@ -390,6 +405,10 @@ public class DeviceListFragment extends Fragment {
                 String address  = intent.getStringExtra(BleService.BLE_SERVICE_OUT_DEVICE_ADDRESS);
 
                 addDevice(address, name, rssi);
+            } else if (intent.getAction().equals(BleService.BLE_SERVICE_MSG_RSSI)) {
+                String address  = intent.getStringExtra(BleService.BLE_SERVICE_OUT_DEVICE_ADDRESS);
+                int rssi = intent.getIntExtra(BleService.BLE_SERVICE_OUT_RSSI, 0);
+                updateDeviceRssi(address, rssi);
             }
         }
     }

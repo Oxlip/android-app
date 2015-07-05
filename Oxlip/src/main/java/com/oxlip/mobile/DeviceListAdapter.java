@@ -1,10 +1,8 @@
 package com.oxlip.mobile;
 
 import android.app.Activity;
-import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.support.v7.widget.SwitchCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,37 +55,6 @@ public class DeviceListAdapter extends BaseAdapter {
     public void notifyDataSetChanged() {
         mInstance.mDeviceList = DatabaseHelper.getDevices();
         super.notifyDataSetChanged();
-    }
-
-    /**
-     * Associate the given ble device with matching device uuid.
-     *
-     * @param address Bluetooth device to be associated.
-     * @param rssi Received signal strength
-     * @return true if a device with given uuid is found and bleDevice is associated.
-     */
-    protected boolean associateBleDevice(String address, int rssi) {
-        Device device = getDevice(address);
-        if (device == null) {
-            return false;
-        }
-        device.setBleDeviceAddress(address);
-        device.setRssi(rssi);
-
-        Log.d(LOG_TAG_DEVICE_LIST_ADAPTER, "New device " + device.getDeviceInfo().name + " RSSI " + rssi);
-        this.notifyDataSetInvalidated();
-
-        return true;
-    }
-
-    /**
-     * Finds the Device from a given bluetooth Device.
-     *
-     * @param bleDevice Bluetooth device to search
-     * @return Device associated with the given BLE device.
-     */
-    protected Device getDevice(BluetoothDevice bleDevice) {
-        return getDevice(bleDevice.getAddress());
     }
 
     /**
