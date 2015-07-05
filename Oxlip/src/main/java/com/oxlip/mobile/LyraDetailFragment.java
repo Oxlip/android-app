@@ -8,7 +8,6 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -44,7 +43,7 @@ public class LyraDetailFragment extends DetailFragment {
         final View view = inflater.inflate(R.layout.fragment_lyra_detail, container, false);
         String[] button_number = {"I", "II", "III"};
         String deviceAddress = this.getArguments().getString("deviceAddress");
-        Device device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+        Device lyra = DeviceListAdapter.getInstance().getDevice(deviceAddress);
 
         RecyclerView recyclerView;
         LinearLayoutManager layoutManager;
@@ -58,7 +57,7 @@ public class LyraDetailFragment extends DetailFragment {
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
         recyclerView.setLayoutManager(layoutManager);
 
-        adapter = new LyraButtonAdapter(device, this.getActivity(), button_number);
+        adapter = new LyraButtonAdapter(lyra, this.getActivity(), button_number);
         recyclerView.setAdapter(adapter);
 
         // ------------- Device Recycler view
@@ -82,9 +81,9 @@ public class LyraDetailFragment extends DetailFragment {
 }
 
 class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonViewHolder> {
-    private String[] mDataset;
+    private String[] mButtonNumbers;
     private Context mContext;
-    private Device mDevice;
+    private Device mLyra;
     private final String[] actionTypes= {"On", "Off", "Toggle"};
 
 
@@ -110,7 +109,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
                         public void onClick(DialogInterface dialog, int which) {
                             switch (which){
                                 case DialogInterface.BUTTON_POSITIVE:
-                                    mDevice.deleteActions(button);
+                                    mLyra.deleteActions(button);
                                     //Yes button clicked
                                     drawActionList(button, ButtonViewHolder.this);
                                     break;
@@ -131,10 +130,10 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
         }
     }
 
-    public LyraButtonAdapter(Device device, Context context, String[] myDataset) {
+    public LyraButtonAdapter(Device lyra, Context context, String[] buttonNumbers) {
         mContext = context;
-        mDataset = myDataset;
-        mDevice = device;
+        mButtonNumbers = buttonNumbers;
+        mLyra = lyra;
     }
 
     /**
@@ -147,7 +146,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 int button = (int) vh.mTextViewNumber.getTag();
-                mDevice.addAction(button, device.getDeviceInfo().address, which, 0);
+                mLyra.addAction(button, device.getDeviceInfo().address, which, 0);
                 drawActionList(button, vh);
                 dialog.dismiss();
             }
@@ -160,7 +159,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
         if(linearLayout.getChildCount() > 0) {
             linearLayout.removeAllViews();
         }
-        List<DatabaseHelper.DeviceAction> actionList = mDevice.getDeviceActions(button);
+        List<DatabaseHelper.DeviceAction> actionList = mLyra.getDeviceActions(button);
         for(DatabaseHelper.DeviceAction actionItem: actionList) {
             final Context context = this.mContext;
             DatabaseHelper.DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(actionItem.targetDevice);
@@ -229,7 +228,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
     public void onBindViewHolder(final ButtonViewHolder holder, int position) {
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
-        holder.mTextViewNumber.setText(mDataset[position]);
+        holder.mTextViewNumber.setText(mButtonNumbers[position]);
         holder.mTextViewNumber.setTag(position);
         drawActionList(position, holder);
     }
@@ -237,7 +236,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
     // Return the size of your dataset (invoked by the layout manager)
     @Override
     public int getItemCount() {
-        return mDataset.length;
+        return mButtonNumbers.length;
     }
 }
 

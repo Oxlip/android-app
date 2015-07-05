@@ -35,7 +35,7 @@ import java.util.UUID;
  * on handsets.
  */
 public class AuraDetailFragment extends DetailFragment {
-    private Device device;
+    private Device aura;
     private String deviceAddress;
     private TextView txt_ma, txt_mw, txt_volt, txt_rssi;
     private SwitchCompat btn_on;
@@ -72,7 +72,7 @@ public class AuraDetailFragment extends DetailFragment {
         final View view = inflater.inflate(R.layout.fragment_aura_detail, container, false);
 
         deviceAddress = this.getArguments().getString("deviceAddress");
-        device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+        aura = DeviceListAdapter.getInstance().getDevice(deviceAddress);
 
         txt_rssi = (TextView)view.findViewById(R.id.dd_txt_rssi);
         txt_ma = (TextView)view.findViewById(R.id.dd_aura_cs_ma);
@@ -83,7 +83,7 @@ public class AuraDetailFragment extends DetailFragment {
         btn_on.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                device.dimmerControl((byte) (isChecked ? 100 : 0));
+                aura.dimmerControl((byte) (isChecked ? 100 : 0));
             }
         });
 
@@ -190,14 +190,14 @@ public class AuraDetailFragment extends DetailFragment {
 
         getActivity().registerReceiver(bleMsgReceiver, intentFilter);
 
-        device.asyncReadDimmerStatus();
+        aura.asyncReadDimmerStatus();
 
         this.timer = new Timer();
         /*Create new Timer to update the GUI regularly*/
         this.timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                device.asyncReadCurrentSensorInformation();
+                aura.asyncReadCurrentSensorInformation();
             }
         }, 0, BLE_CS_READ_DELAY);
     }

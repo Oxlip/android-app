@@ -164,8 +164,8 @@ public class DeviceListAdapter extends BaseAdapter {
         btnOn.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                Device device = (Device) buttonView.getTag();
-                device.dimmerControl((byte) (isChecked ? 100 : 0));
+                Device aura = (Device) buttonView.getTag();
+                aura.dimmerControl((byte) (isChecked ? 100 : 0));
             }
         });
 
