@@ -101,6 +101,23 @@ public class Device {
      * For example when button 1 is press turn on light.
      */
     public void addAction(int subAddress, String target, int actionType, int value) {
+        // send it to the ble device
+        /*
+        typedef struct lyra_button_char_event_ {
+            uint8_t action;
+            uint8_t button_number;
+            uint8_t action_index;
+            uint8_t address[6];
+            uint8_t device_type;
+            uint8_t value;
+            uint8_t padding;
+        } lyra_button_char_event_t;
+         */
+        byte[] addr = target.getBytes();
+        byte[] charValue = {1, (byte)subAddress, 1, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], (byte)actionType, (byte)value};
+        startWriteBleCharacteristic(BleUuid.BUTTON_SERVICE, BleUuid.BUTTON_CHAR, charValue);
+
+        //add to the local database
         DatabaseHelper.addAction(this.getDeviceInfo().address, subAddress, target, actionType, value);
     }
 
@@ -180,3 +197,4 @@ public class Device {
         return null;
     }
 }
+
