@@ -36,6 +36,7 @@ public class BleService extends Service {
     public static final String BLE_SERVICE_MSG_BLE_NOT_ENABLED = "BLE_SERVICE_MSG_BLE_NOT_ENABLED";
     public static final String BLE_SERVICE_MSG_SCAN_STARTED = "BLE_SERVICE_MSG_SCAN_STARTED";
     public static final String BLE_SERVICE_MSG_SCAN_FINISHED = "BLE_SERVICE_MSG_SCAN_FINISHED";
+    public static final String BLE_SERVICE_MSG_RSSI = "BLE_SERVICE_MSG_RSSI";
     public static final String BLE_SERVICE_MSG_DEVICE_FOUND = "BLE_SERVICE_MSG_DEVICE_FOUND";
     public static final String BLE_SERVICE_MSG_DEVICE_GONE = "BLE_SERVICE_MSG_DEVICE_GONE";
     public static final String BLE_SERVICE_MSG_DEVICE_HAS_DATA = "BLE_SERVICE_MSG_DEVICE_HAS_DATA";
@@ -172,7 +173,7 @@ public class BleService extends Service {
     private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
-            Log.i(LOG_TAG, "Found new BLE device " + bleDevice);
+            Log.i(LOG_TAG, "Found new BLE device " + bleDevice + " with RSSI " + rssi + " Scan record: " + scanRecord);
             Intent intent = new Intent(BLE_SERVICE_MSG_DEVICE_FOUND);
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_NAME, bleDevice.getName());
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_ADDRESS, bleDevice.getAddress());

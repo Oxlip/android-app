@@ -130,7 +130,7 @@ public class BleCharRWTask {
         boolean result;
 
         mBleDevice = mBluetoothAdapter.getRemoteDevice(this.mDeviceAddress);
-        this.mBleGatt = mBleDevice.connectGatt(mContext , true, mGattCallback);
+        this.mBleGatt = mBleDevice.connectGatt(mContext, true, mGattCallback);
         // connect will trigger service discovery - wait for it to complete.
         result = mBleServicesDiscovered.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
         if (!result) {
@@ -189,6 +189,7 @@ public class BleCharRWTask {
         } else {
             intent = new Intent(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE);
         }
+        intent.putExtra(BleService.BLE_SERVICE_IO_DEVICE, this.mBleDevice.getAddress());
         intent.putExtra(BleService.BLE_SERVICE_IO_SERVICE, mServiceId);
         intent.putExtra(BleService.BLE_SERVICE_IO_CHAR, mCharacteristicId);
         intent.putExtra(BleService.BLE_SERVICE_OUT_STATUS, result);
@@ -248,6 +249,7 @@ public class BleCharRWTask {
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    gatt.readRemoteRssi();
                     // Automatically discover service once BLE connection is established
                     gatt.discoverServices();
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -275,9 +277,13 @@ public class BleCharRWTask {
         }
 
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-            BluetoothDevice device = gatt.getDevice();
-
-            Log.v(LOG_TAG_BLE_CHAR_RW, "onReadRemoteRssi (device : " + device + " , rssi :  " + rssi + " , status :  " + status + ")");
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Intent intent = new Intent();
+                intent.setAction(BleService.BLE_SERVICE_MSG_RSSI);
+                intent.putExtra(BleService.BLE_SERVICE_IO_DEVICE, gatt.getDevice().getAddress());
+                intent.putExtra(BleService.BLE_SERVICE_OUT_RSSI, rssi);
+                mContext.sendBroadcast(intent);
+            }
         }
 
         @Override

@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.widget.SwitchCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,6 +36,7 @@ import java.util.UUID;
  */
 public class AuraDetailFragment extends DetailFragment {
     private Device device;
+    private String deviceAddress;
     private TextView txt_ma, txt_mw, txt_volt, txt_rssi;
     private SwitchCompat btn_on;
 
@@ -44,11 +46,15 @@ public class AuraDetailFragment extends DetailFragment {
     private PowerUsage powerUsage = new PowerUsage();
     /* What measurement to show in the UI - 0-Amps 1-Volts 2-Watts*/
     private int powerUsageDisplayMode = 0;
+    /* Current RSSI of the device*/
+    private int rssi = 0;
 
     /* Timer to gather BLE info and update the UI */
     private Timer timer = new Timer();
 
     private int BLE_CS_READ_DELAY = 5000;
+
+    private static final String LOG_TAG_AURA_UI = "AURA_UI";
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -65,7 +71,7 @@ public class AuraDetailFragment extends DetailFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final View view = inflater.inflate(R.layout.fragment_aura_detail, container, false);
 
-        String deviceAddress = this.getArguments().getString("deviceAddress");
+        deviceAddress = this.getArguments().getString("deviceAddress");
         device = DeviceListAdapter.getInstance().getDevice(deviceAddress);
 
         txt_rssi = (TextView)view.findViewById(R.id.dd_txt_rssi);
@@ -89,6 +95,61 @@ public class AuraDetailFragment extends DetailFragment {
     }
 
     /**
+     * Helper function to extract CS inforamtion from the given intent.
+     * @param intent - Intent that was received.
+     */
+    private void extractCSInfoFromIntent(Intent intent) {
+        String address = intent.getStringExtra(BleService.BLE_SERVICE_IO_DEVICE);
+        if (address == null || !address.equals(deviceAddress)) {
+            Log.e(LOG_TAG_AURA_UI, "Got address " + address + " for " + deviceAddress);
+            return;
+        }
+        byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
+        /*
+            typedef struct {
+                uint16_t current;
+                uint16_t watts;
+                uint8_t volt;
+                uint8_t freq;
+            } ble_cs_info;
+        */
+        int current = byteToint(bytes[1], bytes[0]);
+        int watts = byteToint(bytes[3], bytes[2]);
+        int volt = byteToint((byte)0, bytes[4]);
+        int freq = byteToint((byte)0, bytes[5]);
+        powerUsage.now.current = current;
+        powerUsage.now.wattage = watts;
+        powerUsage.now.volt = volt;
+    }
+
+    private void extractRSSIFromIntent(Intent intent) {
+        String address = intent.getStringExtra(BleService.BLE_SERVICE_IO_DEVICE);
+        if (address == null || !address.equals(deviceAddress)) {
+            Log.e(LOG_TAG_AURA_UI, "Got address " + address + " for " + deviceAddress);
+            return;
+        }
+        rssi = intent.getIntExtra(BleService.BLE_SERVICE_OUT_RSSI, 0);
+    }
+
+    /**
+     * Update the UI with values from cache.
+     */
+    private void updateUI() {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                txt_ma.setText("" + powerUsage.now.current);
+                txt_mw.setText("" + powerUsage.now.wattage);
+                txt_volt.setText("" + powerUsage.now.volt);
+
+                txt_rssi.setText("" + rssi);
+
+                btn_on.setChecked(poweredOn);
+            }
+        });
+    }
+
+    /**
      * Receives async BLE char RW results.
      */
     private final BroadcastReceiver bleMsgReceiver = new BroadcastReceiver() {
@@ -96,45 +157,23 @@ public class AuraDetailFragment extends DetailFragment {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE)) {
-                BleCharRWTask.ExecutionResult result = (BleCharRWTask.ExecutionResult)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
+                BleCharRWTask.ExecutionResult result;
+                result = (BleCharRWTask.ExecutionResult)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
                 if (result != BleCharRWTask.ExecutionResult.SUCCESS) {
                     return;
                 }
                 UUID charid = (UUID)intent.getSerializableExtra(BleService.BLE_SERVICE_IO_CHAR);
                 if (charid.compareTo(BleUuid.CS_CHAR) == 0) {
-                    byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
-                    /*
-                        typedef struct {
-                            uint16_t current;
-                            uint16_t watts;
-                            uint8_t volt;
-                            uint8_t freq;
-                        } ble_cs_info;
-                    */
-                    int current = byteToint(bytes[1], bytes[0]);
-                    int watts = byteToint(bytes[3], bytes[2]);
-                    int volt = byteToint((byte)0, bytes[4]);
-                    int freq = byteToint((byte)0, bytes[5]);
-                    powerUsage.now.current = current;
-                    powerUsage.now.wattage = watts;
-                    powerUsage.now.volt = volt;
+                    extractCSInfoFromIntent(intent);
                 } else if (charid.compareTo(BleUuid.DIMMER_CHAR) == 0) {
                     byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
                     poweredOn = bytes[1] != 0;
                 }
 
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        txt_ma.setText("" + powerUsage.now.current);
-                        txt_mw.setText("" + powerUsage.now.wattage);
-                        txt_volt.setText("" + powerUsage.now.volt);
-
-                        txt_rssi.setText("" + device.getRssi());
-
-                        btn_on.setChecked(poweredOn);
-                    }
-                });
+                updateUI();
+            } else if (action.equals(BleService.BLE_SERVICE_MSG_RSSI)) {
+                extractRSSIFromIntent(intent);
+                updateUI();
             }
         }
     };
@@ -143,6 +182,7 @@ public class AuraDetailFragment extends DetailFragment {
     public void onResume() {
         super.onResume();
         IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_RSSI);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_FOUND);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_GONE);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_HAS_DATA);
