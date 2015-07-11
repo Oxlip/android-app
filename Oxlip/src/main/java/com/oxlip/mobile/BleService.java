@@ -11,6 +11,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -170,11 +173,65 @@ public class BleService extends Service {
         sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_STARTED));
     }
 
+    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    public static String bytesToHex(byte[] bytes) {
+        char[] hexChars = new char[bytes.length * 2];
+        for ( int j = 0; j < bytes.length; j++ ) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
+    private void parseAdvertisementPacket(final byte[] scanRecord) {
+
+        byte[] advertisedData = Arrays.copyOf(scanRecord, scanRecord.length);
+        Log.d(LOG_TAG, "Adv : " + bytesToHex(scanRecord));
+
+        int offset = 0;
+        while (offset < (advertisedData.length - 2)) {
+            int len = advertisedData[offset++];
+            if (len == 0)
+                break;
+
+            int type = advertisedData[offset++];
+            switch (type) {
+                case 0x02: // Partial list of 16-bit UUIDs
+                case 0x03: // Complete list of 16-bit UUIDs
+                    offset += (len - 1);
+                    Log.d(LOG_TAG, "Advertisement has 16 bit UUIDs");
+                    break;
+                case 0x06:// Partial list of 128-bit UUIDs
+                case 0x07:// Complete list of 128-bit UUIDs
+                    offset += (len - 1);
+                    Log.d(LOG_TAG, "Advertisement has 32 bit UUIDs");
+                    break;
+                case 0xFF:  // Manufacturer Specific Data
+                    Log.d(LOG_TAG, "Manufacturer Specific Data size:" + len + " bytes");
+                    int i=0;
+                    byte[] mfgData = new byte[32];
+                    while (len > 1) {
+                        if (i < 32) {
+                            mfgData[i++] = advertisedData[offset++];
+                        }
+                        len -= 1;
+                    }
+                    Log.d(LOG_TAG, "Manufacturer Specific Data saved." + mfgData.toString());
+                    break;
+                default:
+                    Log.d(LOG_TAG, "Unknown Advertisement type - " + type);
+                    offset += (len - 1);
+                    break;
+            }
+        }
+    }
     // Device scan callback.
     private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
-            Log.i(LOG_TAG, "Found new BLE device " + bleDevice + " with RSSI " + rssi + " Scan record: " + scanRecord);
+            Log.i(LOG_TAG, "Found new BLE device " + bleDevice + " with RSSI " + rssi);
+            parseAdvertisementPacket(scanRecord);
             Intent intent = new Intent(BLE_SERVICE_MSG_DEVICE_FOUND);
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_NAME, bleDevice.getName());
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_ADDRESS, bleDevice.getAddress());
