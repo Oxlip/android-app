@@ -171,6 +171,9 @@ public class Device {
      * For example when button 1 is press turn on light.
      */
     public void deleteActions(int subAddress) {
+        byte[] charValue = {1, (byte)subAddress, 2};
+        BleService.startWriteBleCharacteristic(this.getDeviceInfo().address, BleUuid.BUTTON_SERVICE, BleUuid.BUTTON_CHAR, charValue);
+
         DatabaseHelper.deleteDeviceAction(getDeviceInfo().address, subAddress);
     }
 }
