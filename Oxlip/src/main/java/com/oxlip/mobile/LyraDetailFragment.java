@@ -1,13 +1,17 @@
 package com.oxlip.mobile;
 
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -16,11 +20,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.makeramen.RoundedImageView;
 
 import java.util.List;
+import java.util.UUID;
 
 
 /**
@@ -30,6 +36,13 @@ import java.util.List;
  * on handsets.
  */
 public class LyraDetailFragment extends DetailFragment {
+    Device lyra;
+    ProgressBar progressBarBattery;
+    TextView textViewBatteryLevel;
+    TextView textViewRssi;
+
+    int rssi;
+    int batteryLevel;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -43,11 +56,16 @@ public class LyraDetailFragment extends DetailFragment {
         final View view = inflater.inflate(R.layout.fragment_lyra_detail, container, false);
         String[] button_number = {"I", "II", "III"};
         String deviceAddress = this.getArguments().getString("deviceAddress");
-        Device lyra = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+        lyra = DeviceListAdapter.getInstance().getDevice(deviceAddress);
+
 
         RecyclerView recyclerView;
         LinearLayoutManager layoutManager;
         RecyclerView.Adapter adapter;
+
+        progressBarBattery = (ProgressBar) view.findViewById(R.id.dv_battery_level);
+        textViewBatteryLevel = (TextView) view.findViewById(R.id.dv_battery_level_text);
+        textViewRssi = (TextView) view.findViewById(R.id.dv_rssi);
 
         // ------------- Button Recycler view
         recyclerView = (RecyclerView) view.findViewById(R.id.rcv_buttons);
@@ -78,6 +96,88 @@ public class LyraDetailFragment extends DetailFragment {
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
     }
+
+    /**
+     * Helper function to extract battery level from the given intent.
+     * @param intent - Intent that was received.
+     */
+    private void extractBatteryLevelFromIntent(Intent intent) {
+        String address = intent.getStringExtra(BleService.BLE_SERVICE_IO_DEVICE);
+        if (address == null || !address.equals(lyra.getDeviceInfo().address)) {
+            return;
+        }
+        byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
+        batteryLevel = bytes[0];
+    }
+    private void extractRSSIFromIntent(Intent intent) {
+        String address = intent.getStringExtra(BleService.BLE_SERVICE_IO_DEVICE);
+        if (address == null || !address.equals(lyra.getDeviceInfo().address)) {
+            return;
+        }
+        rssi = intent.getIntExtra(BleService.BLE_SERVICE_OUT_RSSI, 0);
+    }
+
+    /**
+     * Receives async BLE char RW results.
+     */
+    private final BroadcastReceiver bleMsgReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action.equals(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE)) {
+                BleCharRWTask.ExecutionResult result;
+                result = (BleCharRWTask.ExecutionResult)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
+                if (result != BleCharRWTask.ExecutionResult.SUCCESS) {
+                    return;
+                }
+                UUID charid = (UUID)intent.getSerializableExtra(BleService.BLE_SERVICE_IO_CHAR);
+                if (charid.compareTo(BleUuid.BATTERY_CHAR) == 0) {
+                    extractBatteryLevelFromIntent(intent);
+                }
+
+                updateUI();
+            } else if (action.equals(BleService.BLE_SERVICE_MSG_RSSI)) {
+                extractRSSIFromIntent(intent);
+                updateUI();
+            }
+        }
+    };
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_RSSI);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_FOUND);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_GONE);
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_DEVICE_HAS_DATA);
+        intentFilter.addAction(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE);
+
+        getActivity().registerReceiver(bleMsgReceiver, intentFilter);
+
+        lyra.asyncReadBatteryLevel();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        getActivity().unregisterReceiver(bleMsgReceiver);
+    }
+
+    /**
+     * Update the UI with values from cache.
+     */
+    private void updateUI() {
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                textViewBatteryLevel.setText("" + batteryLevel);
+                textViewRssi.setText("" + rssi);
+                progressBarBattery.setProgress(batteryLevel);
+            }
+        });
+    }
+
 }
 
 class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonViewHolder> {

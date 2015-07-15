@@ -134,6 +134,13 @@ public class Device {
         BleService.startReadBleCharacteristic(this.getDeviceInfo().address, BleUuid.CS_SERVICE, BleUuid.CS_CHAR);
     }
 
+    /**
+     * Read battery level.
+     */
+    public void asyncReadBatteryLevel() {
+        BleService.startReadBleCharacteristic(this.getDeviceInfo().address, BleUuid.BATTERY_SERVICE , BleUuid.BATTERY_CHAR);
+    }
+
     /*
      * Add an action for the given device.
      * For example when button 1 is press turn on light.

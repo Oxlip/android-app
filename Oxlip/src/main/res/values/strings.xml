@@ -11,6 +11,7 @@
     <string name="text_0">0</string>
 
     <string name="text_signal_strength">Signal</string>
+    <string name="text_battery_level">Battery</string>
 
     <string name="text_ma">mA</string>
     <string name="text_watts">Watt</string>
