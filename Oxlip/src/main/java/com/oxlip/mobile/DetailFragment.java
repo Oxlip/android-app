@@ -23,11 +23,13 @@ public class DetailFragment extends Fragment {
         public void onReceive(final Context context, final Intent intent) {
             // DFU is in progress or an error occurred
             final String action = intent.getAction();
-
             if (DfuService.BROADCAST_PROGRESS.equals(action)) {
                 final int progress = intent.getIntExtra(DfuService.EXTRA_DATA, 0);
                 final int currentPart = intent.getIntExtra(DfuService.EXTRA_PART_CURRENT, 1);
                 final int totalParts = intent.getIntExtra(DfuService.EXTRA_PARTS_TOTAL, 1);
+                if (progress == DfuService.PROGRESS_COMPLETED) {
+                    BleService.resumeService();
+                }
                 //updateProgressBar(progress, currentPart, totalParts, false);
             } else if (DfuService.BROADCAST_ERROR.equals(action)) {
                 final int error = intent.getIntExtra(DfuService.EXTRA_DATA, 0);

@@ -33,6 +33,7 @@ public class DfuService extends DfuBaseService{
         /* TODO - Add check here whether this device needs update or not. */
         FirmwareDownloadHelper downloadHelper = new FirmwareDownloadHelper();
         String firmwareUri = downloadHelper.download(getFirmwareUrl(deviceInfo), deviceInfo.name);
+        BleService.pauseService();
         DfuIntent.start(deviceInfo, Uri.parse(firmwareUri));
     }
 

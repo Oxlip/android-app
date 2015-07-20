@@ -11,8 +11,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,6 +21,8 @@ public class BleService extends Service {
 
     /* Intent actions to request ble service for certain actions */
     public static final String BLE_SERVICE_REQUEST_SCAN = "BLE_SERVICE_REQUEST_SCAN";
+    public static final String BLE_SERVICE_REQUEST_SERVICE_PAUSE = "BLE_SERVICE_REQUEST_SERVICE_PAUSE";
+    public static final String BLE_SERVICE_REQUEST_SERVICE_RESUME = "BLE_SERVICE_REQUEST_SERVICE_RESUME";
     public static final String BLE_SERVICE_REQUEST_CHAR_WRITE = "BLE_SERVICE_REQUEST_CHAR_WRITE";
     public static final String BLE_SERVICE_REQUEST_CHAR_READ = "BLE_SERVICE_REQUEST_CHAR_READ";
 
@@ -51,23 +51,26 @@ public class BleService extends Service {
 
 
     private BluetoothAdapter mBluetoothAdapter;
-    private Handler mBleStopHandler;
-    private ConditionVariable mBleScanRunning;
+    private Handler mHandler;
+    private ConditionVariable mBleScan;
+    private boolean mBleScanRunning = false;
+    private boolean mServicePaused = false;
 
     private static final long BLE_SCAN_PERIOD = 1000; // how long to scan for BLE devices.
     private static final long BLE_SCAN_FREQ = 6000; // time interval between scan stop and next scan
+    private static final long BLE_SCAN_PAUSE_TIMEOUT = 30 * 1000;
 
     private LinkedBlockingQueue<BleCharRWTask> bleTaskInfoQueue = null;
 
     public BleService() {
         bleTaskInfoQueue = new LinkedBlockingQueue<>();
-        mBleScanRunning = new ConditionVariable();
-        mBleScanRunning.open();
+        mBleScan = new ConditionVariable();
+        mBleScan.open();
     }
 
     @Override
     public void onCreate() {
-        mBleStopHandler = new Handler();
+        mHandler = new Handler();
         BluetoothManager bluetoothManager = (BluetoothManager)this.getSystemService(Context.BLUETOOTH_SERVICE);
         mBluetoothAdapter = bluetoothManager.getAdapter();
 
@@ -78,9 +81,15 @@ public class BleService extends Service {
                 while (true) {
                     BleCharRWTask bleTask;
 
-                    startBleScan();
-                    mBleScanRunning.block(BLE_SCAN_PERIOD);
+                    if (!mServicePaused) {
+                        startBleScan();
+                        mBleScan.block(BLE_SCAN_PERIOD);
+                    }
+
                     do {
+                        if (mServicePaused) {
+                            break;
+                        }
                         try {
                             bleTask = bleTaskInfoQueue.poll(BLE_SCAN_FREQ, TimeUnit.MILLISECONDS);
                             if (bleTask != null) {
@@ -99,15 +108,23 @@ public class BleService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d(LOG_TAG, "Starting BLE Service");
+        String action = intent.getAction();
+        Log.d(LOG_TAG, "Starting BLE Service - " + action);
 
-        BleCharRWTask bleCharRWTask = buildBleTask(intent);
-        if (bleCharRWTask != null) {
-            try {
-                bleTaskInfoQueue.put(bleCharRWTask);
-            }catch(InterruptedException e){
-                Log.e(LOG_TAG, "Failed to add to BLE task.");
+        if (action.equals(BLE_SERVICE_REQUEST_CHAR_READ) || action.equals(BLE_SERVICE_REQUEST_CHAR_WRITE))
+        {
+            BleCharRWTask bleCharRWTask = buildBleTask(intent);
+            if (bleCharRWTask != null) {
+                try {
+                    bleTaskInfoQueue.put(bleCharRWTask);
+                }catch(InterruptedException e){
+                    Log.e(LOG_TAG, "Failed to add to BLE task.");
+                }
             }
+        } else if (action.equals(BLE_SERVICE_REQUEST_SERVICE_PAUSE)) {
+            pause();
+        } else if (action.equals(BLE_SERVICE_REQUEST_SERVICE_RESUME)) {
+            resume();
         }
 
         // If we get killed, after returning from here, restart
@@ -157,20 +174,47 @@ public class BleService extends Service {
         }
 
         // Stop scanning after a pre-defined scan period.
-        mBleStopHandler.postDelayed(new Runnable() {
+        mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                mBleScanRunning.open();
-                Log.i(LOG_TAG, "Stopping BLE scan");
-                sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_FINISHED));
+                stopBleScan();
             }
         }, BLE_SCAN_PERIOD);
 
         Log.i(LOG_TAG, "Starting BLE scan");
-        mBleScanRunning.close();
+        mBleScan.close();
         mBluetoothAdapter.startLeScan(mLeScanCallback);
+        mBleScanRunning = true;
         sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_STARTED));
+    }
+
+    private void stopBleScan() {
+        if (!mBleScanRunning) {
+            return;
+        }
+        mBluetoothAdapter.stopLeScan(mLeScanCallback);
+        mBleScanRunning = false;
+        mBleScan.open();
+        Log.i(LOG_TAG, "Stopping BLE scan");
+        sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_FINISHED));
+    }
+
+    private void pause() {
+        Log.i(LOG_TAG, "Pausing BLE service");
+        mServicePaused = true;
+        stopBleScan();
+        // resume scanning after a pre-defined scan period.
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                resume();
+            }
+        }, BLE_SCAN_PAUSE_TIMEOUT);
+    }
+
+    private void resume() {
+        Log.i(LOG_TAG, "Resuming BLE service");
+        mServicePaused = false;
     }
 
     final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
@@ -262,5 +306,26 @@ public class BleService extends Service {
 
     public static void startWriteBleCharacteristic(String bleAddress, UUID serviceId, UUID charId, byte[] value) {
         startRWBleCharacteristic(bleAddress, serviceId, charId, value);
+    }
+
+    /**
+     * Pause BLE Services (Scan, Char RW).
+     * This is needed only for DFU.
+     */
+    public static void pauseService() {
+        Context context = ApplicationGlobals.getAppContext();
+        Intent intent = new Intent(context, BleService.class);
+        intent.setAction(BLE_SERVICE_REQUEST_SERVICE_PAUSE);
+        context.startService(intent);
+    }
+
+    /**
+     * Resume BLE Services (Scan, Char RW).
+     */
+    public static void resumeService() {
+        Context context = ApplicationGlobals.getAppContext();
+        Intent intent = new Intent(context, BleService.class);
+        intent.setAction(BLE_SERVICE_REQUEST_SERVICE_RESUME);
+        context.startService(intent);
     }
 }
