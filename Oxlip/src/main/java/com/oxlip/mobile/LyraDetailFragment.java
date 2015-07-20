@@ -43,6 +43,7 @@ public class LyraDetailFragment extends DetailFragment {
 
     int rssi;
     int batteryLevel;
+    int batteryMv;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -106,8 +107,10 @@ public class LyraDetailFragment extends DetailFragment {
         if (address == null || !address.equals(lyra.getDeviceInfo().address)) {
             return;
         }
+
         byte[] bytes = intent.getByteArrayExtra(BleService.BLE_SERVICE_IO_VALUE);
         batteryLevel = bytes[0];
+        batteryMv = (bytes[2] << 8) | bytes[3];
     }
     private void extractRSSIFromIntent(Intent intent) {
         String address = intent.getStringExtra(BleService.BLE_SERVICE_IO_DEVICE);
@@ -171,13 +174,12 @@ public class LyraDetailFragment extends DetailFragment {
         getActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                textViewBatteryLevel.setText("" + batteryLevel);
+                textViewBatteryLevel.setText("" + batteryLevel + "% " + (batteryMv % 4000) + " mv");
                 textViewRssi.setText("" + rssi);
                 progressBarBattery.setProgress(batteryLevel);
             }
         });
     }
-
 }
 
 class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonViewHolder> {
@@ -246,7 +248,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 int button = (int) vh.mTextViewNumber.getTag();
-                mLyra.addAction(button, device.getDeviceInfo().address, which, 0);
+                mLyra.addAction((byte)button, device.getDeviceInfo().address, (byte)vh.getAdapterPosition(), (byte)which, (byte)0);
                 drawActionList(button, vh);
                 dialog.dismiss();
             }

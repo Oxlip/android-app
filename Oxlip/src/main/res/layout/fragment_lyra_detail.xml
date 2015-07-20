@@ -42,11 +42,11 @@
                 android:layout_alignTop="@id/dv_battery_level"
                 android:layout_alignEnd="@id/dv_battery_level"
                 android:layout_alignBottom="@id/dv_battery_level"
+                android:textSize="10sp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
         </RelativeLayout>
     </LinearLayout>
-
 
 
     <android.support.v7.widget.RecyclerView
