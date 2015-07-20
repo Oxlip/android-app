@@ -31,9 +31,11 @@ public class FirmwareDownloadHelper {
     private String downloadedPackageUriString = null;
     // for download complete notification.
     private final Object downloadSync = new Object();
+    private final String LOG_TAG = "FWDM";
 
     private void notifyDownloadComplete(Context context, boolean success, String errorStr) {
         if (!success) {
+            Log.e(LOG_TAG, "Firmware download failed - " + errorStr);
             Toast.makeText(context, "Firmware download failed - " + errorStr, Toast.LENGTH_SHORT).show();
         }
         synchronized(downloadSync) {
@@ -57,6 +59,7 @@ public class FirmwareDownloadHelper {
             Cursor cursor = dm.query(query);
             // it shouldn't be empty, but just in case
             if (!cursor.moveToFirst()) {
+
                 notifyDownloadComplete(context, false, "unknown reason");
                 return;
             }
@@ -109,15 +112,16 @@ public class FirmwareDownloadHelper {
         downloadId = dm.enqueue(request);
         synchronized (downloadSync) {
             try {
-                Log.d("DOWNLOAD", "waiting");
+                Log.i(LOG_TAG, "waiting");
                 // wait for 20 second - our firmware is less than 100K so download should finish before this timeout.
                 downloadSync.wait(20 * 1000);
             } catch (InterruptedException e) {
                 Toast.makeText(ApplicationGlobals.getAppContext(), "Firmware download timed out", Toast.LENGTH_SHORT).show();
+                Log.e(LOG_TAG, "Firmware download timed out.");
                 e.printStackTrace();
             }
         }
-        Log.d("DOWNLOAD", "finished - " + downloadedPackageUriString);
+        Log.i(LOG_TAG, "finished - " + downloadedPackageUriString);
 
         return downloadedPackageUriString;
     }

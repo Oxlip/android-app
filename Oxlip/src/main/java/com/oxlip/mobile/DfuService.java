@@ -57,6 +57,7 @@ class DfuIntent {
         service.putExtra(DfuService.EXTRA_FILE_MIME_TYPE, DfuService.MIME_TYPE_OCTET_STREAM);
         service.putExtra(DfuService.EXTRA_FILE_TYPE, DfuService.TYPE_APPLICATION);
         service.putExtra(DfuService.EXTRA_FILE_URI, firmwareUri);
+        service.putExtra(DfuService.EXTRA_KEEP_BOND, true);
 
         /*
         service.putExtra(DfuService.EXTRA_INIT_FILE_PATH, mInitFilePath);
