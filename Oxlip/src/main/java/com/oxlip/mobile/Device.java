@@ -2,6 +2,7 @@ package com.oxlip.mobile;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 
 import java.util.List;
 import java.util.UUID;
@@ -141,11 +142,22 @@ public class Device {
         BleService.startReadBleCharacteristic(this.getDeviceInfo().address, BleUuid.BATTERY_SERVICE , BleUuid.BATTERY_CHAR);
     }
 
+    public static byte[] hexStringToByteArray(String macAddress) {
+        String[] numbers = macAddress.split(":");
+
+        // convert hex string to byte values
+        byte[] result = new byte[numbers.length];
+        for(int i=0; i < result.length; i++){
+            Integer hex = Integer.parseInt(numbers[i], 16);
+            result[i] = hex.byteValue();
+        }
+        return result;
+    }
     /*
      * Add an action for the given device.
      * For example when button 1 is press turn on light.
      */
-    public void addAction(int subAddress, String target, int actionType, int value) {
+    public void addAction(byte subAddress, String target, byte actionIndex, byte actionType, byte value) {
         // send it to the ble device
         /*
         typedef struct lyra_button_char_event_ {
@@ -158,8 +170,16 @@ public class Device {
             uint8_t padding;
         } lyra_button_char_event_t;
          */
-        byte[] addr = target.getBytes();
-        byte[] charValue = {1, (byte)subAddress, 1, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5], (byte)actionType, (byte)value};
+
+        byte[] addr = hexStringToByteArray(target);
+        byte[] charValue = {1, subAddress, actionIndex, addr[5], addr[4], addr[3], addr[2], addr[1], addr[0], actionType, value};
+        StringBuilder sb = new StringBuilder((6*2)+6);
+        for (byte b : addr) {
+            if (sb.length() > 0)
+                sb.append(':');
+            sb.append(String.format("%02x", b));
+        }
+        Log.d("Lyra", "addAction target " + target + "==>" + sb);
         BleService.startWriteBleCharacteristic(this.getDeviceInfo().address, BleUuid.BUTTON_SERVICE, BleUuid.BUTTON_CHAR, charValue);
 
         //add to the local database
