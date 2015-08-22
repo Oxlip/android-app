@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 22
+    compileSdkVersion 21
     buildToolsVersion "21.1.2"
 
     defaultConfig {
@@ -22,6 +22,5 @@ dependencies {
     compile 'com.android.support:support-v4:+'
     compile 'com.android.support:cardview-v7:+'
     compile 'com.google.code.gson:gson:2.3.1'
-
     compile files('libs/nrf-logger-v2.0.jar')
 }
