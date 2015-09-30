@@ -14,8 +14,8 @@ public class BleUuid {
     public static final UUID HS_SERVICE = UUID.fromString("c0f41004-9324-4085-aba0-0902c0e8950a");
     public static final UUID LS_SERVICE = UUID.fromString("c0f41005-9324-4085-aba0-0902c0e8950a");
     public static final UUID MS_SERVICE = UUID.fromString("c0f41006-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BUTTON_SERVICE = UUID.fromString("c0f41007-9324-4085-aba0-0902c0e8950a");
-
+    public static final UUID BUTTON_CONFIG_SERVICE = UUID.fromString("c0f41007-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BUTTON_SERVICE = UUID.fromString("c0f41008-9324-4085-aba0-0902c0e8950a");
 
     public static final UUID DIMMER_CHAR = UUID.fromString("c0f42001-9324-4085-aba0-0902c0e8950a");
     public static final UUID CS_CHAR = UUID.fromString("c0f42002-9324-4085-aba0-0902c0e8950a");
@@ -23,7 +23,8 @@ public class BleUuid {
     public static final UUID HS_CHAR = UUID.fromString("c0f42004-9324-4085-aba0-0902c0e8950a");
     public static final UUID LS_CHAR = UUID.fromString("c0f42005-9324-4085-aba0-0902c0e8950a");
     public static final UUID MS_CHAR = UUID.fromString("c0f42006-9324-4085-aba0-0902c0e8950a");
-    public static final UUID BUTTON_CHAR = UUID.fromString("c0f42007-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BUTTON_CONFIG_CHAR = UUID.fromString("c0f42007-9324-4085-aba0-0902c0e8950a");
+    public static final UUID BUTTON_CHAR = UUID.fromString("c0f42008-9324-4085-aba0-0902c0e8950a");
 
     public static final UUID DIS_SERVICE = UUID.fromString("0000180a-0000-1000-8000-00805f9b34fb");
     public static final UUID DIS_FW_CHAR = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
