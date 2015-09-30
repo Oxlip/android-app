@@ -1,7 +1,5 @@
 package com.oxlip.mobile;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,8 +32,6 @@ public class BleAdvertisementRecord {
         this.length = length;
         this.type = type;
         this.data = data;
-
-        Log.d(LOG_TAG, "Length: " + length + " Type : " + type + " Data : " + ByteArrayToString(data));
     }
 
     public int getLength()
