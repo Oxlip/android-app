@@ -11,7 +11,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -56,14 +58,15 @@ public class BleService extends Service {
     private boolean mBleScanRunning = false;
     private boolean mServicePaused = false;
 
+    private Map<String, byte[]> mBleScanFoundDevices = new HashMap<>();
+
     private static final long BLE_SCAN_PERIOD = 1000; // how long to scan for BLE devices.
     private static final long BLE_SCAN_FREQ = 6000; // time interval between scan stop and next scan
     private static final long BLE_SCAN_PAUSE_TIMEOUT = 30 * 1000;
 
-    private LinkedBlockingQueue<BleCharRWTask> bleTaskInfoQueue = null;
+    private static LinkedBlockingQueue<BleCharRWTask> bleTaskInfoQueue = new LinkedBlockingQueue<>();
 
     public BleService() {
-        bleTaskInfoQueue = new LinkedBlockingQueue<>();
         mBleScan = new ConditionVariable();
         mBleScan.open();
     }
@@ -142,7 +145,7 @@ public class BleService extends Service {
      * @param intent
      * @return
      */
-    private BleCharRWTask buildBleTask(Intent intent) {
+    private static BleCharRWTask buildBleTask(Intent intent) {
         String action = intent.getAction();
         if (action.equals(BLE_SERVICE_REQUEST_CHAR_READ) ||
             action.equals(BLE_SERVICE_REQUEST_CHAR_WRITE)) {
@@ -182,6 +185,7 @@ public class BleService extends Service {
         }, BLE_SCAN_PERIOD);
 
         Log.i(LOG_TAG, "Starting BLE scan");
+        mBleScanFoundDevices = new HashMap<>();
         mBleScan.close();
         mBluetoothAdapter.startLeScan(mLeScanCallback);
         mBleScanRunning = true;
@@ -221,8 +225,16 @@ public class BleService extends Service {
     private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
-            Log.i(LOG_TAG, "Found new BLE device " + bleDevice + " with RSSI " + rssi);
-            List<BleAdvertisementRecord> advRecords = BleAdvertisementRecord.parseScanRecord(scanRecord);
+            if (mBleScanFoundDevices.get(bleDevice.getAddress()) != null) {
+                Log.v(LOG_TAG, "Ignoring device since it is already found" + bleDevice);
+                return;
+            }
+
+            mBleScanFoundDevices.put(bleDevice.getAddress(), scanRecord);
+
+            Log.v(LOG_TAG, "Found new BLE device " + bleDevice + " with RSSI " + rssi);
+            BleTrigger.analyzeScanRecord(bleDevice.getAddress(), scanRecord);
+
             Intent intent = new Intent(BLE_SERVICE_MSG_DEVICE_FOUND);
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_NAME, bleDevice.getName());
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_ADDRESS, bleDevice.getAddress());
@@ -244,7 +256,14 @@ public class BleService extends Service {
         intent.putExtra(BleService.BLE_SERVICE_IO_CHAR, charId.toString());
         intent.putExtra(BleService.BLE_SERVICE_IO_VALUE, writeValue);
 
-        context.startService(intent);
+        BleCharRWTask bleCharRWTask = buildBleTask(intent);
+        if (bleCharRWTask != null) {
+            try {
+                bleTaskInfoQueue.put(bleCharRWTask);
+            }catch(InterruptedException e){
+                Log.e(LOG_TAG, "Failed to add to BLE task.");
+            }
+        }
     }
 
     public static void startReadBleCharacteristic(String bleAddress, UUID serviceId, UUID charId) {
