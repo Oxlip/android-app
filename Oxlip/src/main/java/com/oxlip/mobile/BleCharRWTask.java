@@ -130,11 +130,12 @@ public class BleCharRWTask {
         boolean result;
 
         mBleDevice = mBluetoothAdapter.getRemoteDevice(this.mDeviceAddress);
-        this.mBleGatt = mBleDevice.connectGatt(mContext, true, mGattCallback);
+        this.mBleGatt = mBleDevice.connectGatt(mContext, false, mGattCallback);
         // connect will trigger service discovery - wait for it to complete.
         result = mBleServicesDiscovered.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
         if (!result) {
             Log.e(LOG_TAG_BLE_CHAR_RW, "Connection timed out while discovering BLE services.");
+            bleDisconnect();
             return ExecutionResult.CONNECTION_TIMEOUT;
         }
         return ExecutionResult.SUCCESS;
@@ -146,8 +147,10 @@ public class BleCharRWTask {
      */
     private void bleDisconnect() {
         setBleGattServicesDiscovered(false);
-        this.mBleGatt.disconnect();
-        this.mBleGatt = null;
+        if (this.mBleGatt != null) {
+            this.mBleGatt.disconnect();
+            this.mBleGatt = null;
+        }
     }
 
 
