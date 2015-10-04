@@ -51,13 +51,13 @@ public class BleService extends Service {
     public static final String BLE_SERVICE_OUT_RSSI = "BLE_SERVICE_OUT_RSSI";
 
 
-    private BluetoothAdapter mBluetoothAdapter;
-    private Handler mHandler;
-    private ConditionVariable mBleScan;
-    private boolean mBleScanRunning = false;
-    private boolean mServicePaused = false;
+    private static BluetoothAdapter bluetoothAdapter;
+    private static Handler handler = new Handler();
+    private static ConditionVariable cvBleScan = new ConditionVariable();
+    private static boolean isBleScanRunning = false;
+    private static boolean isServicePaused = false;
 
-    private Map<String, byte[]> mBleScanFoundDevices = new HashMap<>();
+    private static Map<String, byte[]> bleScanFoundDevices = new HashMap<>();
 
     private static final long BLE_SCAN_PERIOD = 1000; // how long to scan for BLE devices.
     private static final long BLE_SCAN_FREQ = 6000; // time interval between scan stop and next scan
@@ -65,16 +65,22 @@ public class BleService extends Service {
 
     private static LinkedBlockingQueue<BleCharRWTask> bleTaskInfoQueue = new LinkedBlockingQueue<>();
 
-    public BleService() {
-        mBleScan = new ConditionVariable();
-        mBleScan.open();
+    // Since only one instance of this class can be created - this field refers to that instance.
+    private static BleService oneInstance;
+
+    static {
+        cvBleScan.open();
     }
+
+    public BleService() {
+        oneInstance = this;
+    }
+
 
     @Override
     public void onCreate() {
-        mHandler = new Handler();
         BluetoothManager bluetoothManager = (BluetoothManager)this.getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
+        bluetoothAdapter = bluetoothManager.getAdapter();
 
         // Start up a new thread and start mainLoop.
         Thread t = new Thread("BleService") {
@@ -83,19 +89,19 @@ public class BleService extends Service {
                 while (true) {
                     BleCharRWTask bleTask;
 
-                    if (!mServicePaused) {
+                    if (!isServicePaused) {
                         startBleScan();
-                        mBleScan.block(BLE_SCAN_PERIOD);
+                        cvBleScan.block(BLE_SCAN_PERIOD);
                     }
 
                     do {
-                        if (mServicePaused) {
+                        if (isServicePaused) {
                             break;
                         }
                         try {
                             bleTask = bleTaskInfoQueue.poll(BLE_SCAN_FREQ, TimeUnit.MILLISECONDS);
                             if (bleTask != null) {
-                                bleTask.attachAdapter(mBluetoothAdapter, BleService.this);
+                                bleTask.attachAdapter(bluetoothAdapter, BleService.this);
                                 bleTask.execute();
                             }
                         } catch (InterruptedException e) {
@@ -175,17 +181,17 @@ public class BleService extends Service {
     /**
      * Start BLE scan.
      */
-    private void startBleScan() {
+    private static void startBleScan() {
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
-        if (!mBluetoothAdapter.isEnabled()) {
+        if (!bluetoothAdapter.isEnabled()) {
             Log.e(LOG_TAG, "BLE adpater is not enabled");
-            sendBroadcast(new Intent(BLE_SERVICE_MSG_BLE_NOT_ENABLED));
+            oneInstance.sendBroadcast(new Intent(BLE_SERVICE_MSG_BLE_NOT_ENABLED));
             return;
         }
 
         // Stop scanning after a pre-defined scan period.
-        mHandler.postDelayed(new Runnable() {
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 stopBleScan();
@@ -193,30 +199,30 @@ public class BleService extends Service {
         }, BLE_SCAN_PERIOD);
 
         Log.i(LOG_TAG, "Starting BLE scan");
-        mBleScanFoundDevices = new HashMap<>();
-        mBleScan.close();
-        mBluetoothAdapter.startLeScan(mLeScanCallback);
-        mBleScanRunning = true;
-        sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_STARTED));
+        bleScanFoundDevices.clear();
+        cvBleScan.close();
+        bluetoothAdapter.startLeScan(mLeScanCallback);
+        isBleScanRunning = true;
+        oneInstance.sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_STARTED));
     }
 
-    private void stopBleScan() {
-        if (!mBleScanRunning) {
+    private static void stopBleScan() {
+        if (!isBleScanRunning) {
             return;
         }
-        mBluetoothAdapter.stopLeScan(mLeScanCallback);
-        mBleScanRunning = false;
-        mBleScan.open();
+        bluetoothAdapter.stopLeScan(mLeScanCallback);
+        isBleScanRunning = false;
+        cvBleScan.open();
         Log.i(LOG_TAG, "Stopping BLE scan");
-        sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_FINISHED));
+        oneInstance.sendBroadcast(new Intent(BLE_SERVICE_MSG_SCAN_FINISHED));
     }
 
-    private void pause() {
+    private static void pause() {
         Log.i(LOG_TAG, "Pausing BLE service");
-        mServicePaused = true;
+        isServicePaused = true;
         stopBleScan();
         // resume scanning after a pre-defined scan period.
-        mHandler.postDelayed(new Runnable() {
+        handler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 resume();
@@ -224,21 +230,21 @@ public class BleService extends Service {
         }, BLE_SCAN_PAUSE_TIMEOUT);
     }
 
-    private void resume() {
+    private static void resume() {
         Log.i(LOG_TAG, "Resuming BLE service");
-        mServicePaused = false;
+        isServicePaused = false;
     }
 
     // Device scan callback.
-    private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
+    private static final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(final BluetoothDevice bleDevice, final int rssi, byte[] scanRecord) {
-            if (mBleScanFoundDevices.get(bleDevice.getAddress()) != null) {
+            if (bleScanFoundDevices.get(bleDevice.getAddress()) != null) {
                 Log.v(LOG_TAG, "Ignoring device since it is already found" + bleDevice);
                 return;
             }
 
-            mBleScanFoundDevices.put(bleDevice.getAddress(), scanRecord);
+            bleScanFoundDevices.put(bleDevice.getAddress(), scanRecord);
 
             Log.v(LOG_TAG, "Found new BLE device " + bleDevice + " with RSSI " + rssi);
             BleTrigger.analyzeScanRecord(bleDevice.getAddress(), scanRecord);
@@ -247,7 +253,7 @@ public class BleService extends Service {
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_NAME, bleDevice.getName());
             intent.putExtra(BLE_SERVICE_OUT_DEVICE_ADDRESS, bleDevice.getAddress());
             intent.putExtra(BLE_SERVICE_OUT_RSSI, rssi);
-            sendBroadcast(intent);
+            oneInstance.sendBroadcast(intent);
         }
     };
 
