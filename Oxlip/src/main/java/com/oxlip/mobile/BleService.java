@@ -12,7 +12,6 @@ import android.os.IBinder;
 import android.util.Log;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -114,16 +113,8 @@ public class BleService extends Service {
         String action = intent.getAction();
         Log.d(LOG_TAG, "Starting BLE Service - " + action);
 
-        if (action.equals(BLE_SERVICE_REQUEST_CHAR_READ) || action.equals(BLE_SERVICE_REQUEST_CHAR_WRITE))
-        {
-            BleCharRWTask bleCharRWTask = buildBleTask(intent);
-            if (bleCharRWTask != null) {
-                try {
-                    bleTaskInfoQueue.put(bleCharRWTask);
-                }catch(InterruptedException e){
-                    Log.e(LOG_TAG, "Failed to add to BLE task.");
-                }
-            }
+        if (action.equals(BLE_SERVICE_REQUEST_CHAR_READ) || action.equals(BLE_SERVICE_REQUEST_CHAR_WRITE)) {
+            createBleTask(intent);
         } else if (action.equals(BLE_SERVICE_REQUEST_SERVICE_PAUSE)) {
             pause();
         } else if (action.equals(BLE_SERVICE_REQUEST_SERVICE_RESUME)) {
@@ -145,7 +136,7 @@ public class BleService extends Service {
      * @param intent
      * @return
      */
-    private static BleCharRWTask buildBleTask(Intent intent) {
+    private static BleCharRWTask bleTaskFromIntent(Intent intent) {
         String action = intent.getAction();
         if (action.equals(BLE_SERVICE_REQUEST_CHAR_READ) ||
             action.equals(BLE_SERVICE_REQUEST_CHAR_WRITE)) {
@@ -162,6 +153,23 @@ public class BleService extends Service {
             return new BleCharRWTask(deviceAddress, serviceId, characteristicId, characteristicValue, isWrite, appContext);
         }
         return null;
+    }
+
+    /**
+     * Create BLE RW task from the given intent and put that in the queue for execution.
+     * @param intent
+     * @return
+     */
+    private static void createBleTask(Intent intent) {
+        BleCharRWTask bleCharRWTask = bleTaskFromIntent(intent);
+        if (bleCharRWTask == null) {
+            Log.e(LOG_TAG, "Failed to build BLE task.");
+        }
+        try {
+            bleTaskInfoQueue.put(bleCharRWTask);
+        }catch(InterruptedException e){
+            Log.e(LOG_TAG, "Failed to add to BLE task.");
+        }
     }
 
     /**
@@ -256,14 +264,7 @@ public class BleService extends Service {
         intent.putExtra(BleService.BLE_SERVICE_IO_CHAR, charId.toString());
         intent.putExtra(BleService.BLE_SERVICE_IO_VALUE, writeValue);
 
-        BleCharRWTask bleCharRWTask = buildBleTask(intent);
-        if (bleCharRWTask != null) {
-            try {
-                bleTaskInfoQueue.put(bleCharRWTask);
-            }catch(InterruptedException e){
-                Log.e(LOG_TAG, "Failed to add to BLE task.");
-            }
-        }
+        createBleTask(intent);
     }
 
     public static void startReadBleCharacteristic(String bleAddress, UUID serviceId, UUID charId) {
