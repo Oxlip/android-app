@@ -185,7 +185,7 @@ public class BleService extends Service {
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         if (!bluetoothAdapter.isEnabled()) {
-            Log.e(LOG_TAG, "BLE adpater is not enabled");
+            Log.e(LOG_TAG, "BLE adapter is not enabled");
             oneInstance.sendBroadcast(new Intent(BLE_SERVICE_MSG_BLE_NOT_ENABLED));
             return;
         }
@@ -257,6 +257,13 @@ public class BleService extends Service {
         }
     };
 
+    /**
+     * Initiates a Read/Write to BLE device.
+     * @param bleAddress - Address of the BLE device.
+     * @param serviceId - Service from which to read/write
+     * @param charId - Characteristics from which to read/write
+     * @param writeValue - If operation is write the value to be written.
+     */
     private static void startRWBleCharacteristic(String bleAddress, UUID serviceId, UUID charId, byte[] writeValue) {
         Context context = ApplicationGlobals.getAppContext();
         Intent intent = new Intent(context, BleService.class);
@@ -270,7 +277,11 @@ public class BleService extends Service {
         intent.putExtra(BleService.BLE_SERVICE_IO_CHAR, charId.toString());
         intent.putExtra(BleService.BLE_SERVICE_IO_VALUE, writeValue);
 
+        // create and add a BLE task.
         createBleTask(intent);
+
+        // stop the BLE scan if running.
+        stopBleScan();
     }
 
     public static void startReadBleCharacteristic(String bleAddress, UUID serviceId, UUID charId) {
