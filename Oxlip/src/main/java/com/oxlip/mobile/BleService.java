@@ -133,8 +133,8 @@ public class BleService extends Service {
 
     /**
      * Create BLE RW task from the given intent.
-     * @param intent
-     * @return
+     * @param intent Intent from which bleTask has to be created.
+     * @return Newly allocated BleCharRWTask - this is not yet added to the bleTaskInfoQueue
      */
     private static BleCharRWTask bleTaskFromIntent(Intent intent) {
         String action = intent.getAction();
@@ -157,13 +157,13 @@ public class BleService extends Service {
 
     /**
      * Create BLE RW task from the given intent and put that in the queue for execution.
-     * @param intent
-     * @return
+     * @param intent Intent from which bleTask has to be created.
      */
     private static void createBleTask(Intent intent) {
         BleCharRWTask bleCharRWTask = bleTaskFromIntent(intent);
         if (bleCharRWTask == null) {
             Log.e(LOG_TAG, "Failed to build BLE task.");
+            return;
         }
         try {
             bleTaskInfoQueue.put(bleCharRWTask);
