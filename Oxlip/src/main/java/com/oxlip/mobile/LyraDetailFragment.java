@@ -11,7 +11,6 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -128,9 +127,9 @@ public class LyraDetailFragment extends DetailFragment {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE)) {
-                BleCharRWTask.ExecutionResult result;
-                result = (BleCharRWTask.ExecutionResult)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
-                if (result != BleCharRWTask.ExecutionResult.SUCCESS) {
+                BleCharRWTask.ExecutionStatus result;
+                result = (BleCharRWTask.ExecutionStatus)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
+                if (result != BleCharRWTask.ExecutionStatus.SUCCESS) {
                     return;
                 }
                 UUID charid = (UUID)intent.getSerializableExtra(BleService.BLE_SERVICE_IO_CHAR);

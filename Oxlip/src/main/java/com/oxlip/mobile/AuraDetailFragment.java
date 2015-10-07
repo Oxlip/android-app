@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -14,7 +13,6 @@ import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -42,17 +40,17 @@ public class AuraDetailFragment extends DetailFragment {
 
     /* Current power state */
     private boolean poweredOn = false;
+
     /* Cache of power usage information of the connected device. The stored value is reflected in the UI*/
     private PowerUsage powerUsage = new PowerUsage();
-    /* What measurement to show in the UI - 0-Amps 1-Volts 2-Watts*/
-    private int powerUsageDisplayMode = 0;
+
     /* Current RSSI of the device*/
     private int rssi = 0;
 
     /* Timer to gather BLE info and update the UI */
     private Timer timer = new Timer();
 
-    private int BLE_CS_READ_DELAY = 5000;
+    private int BLE_CS_READ_DELAY = 3000;
 
     private static final String LOG_TAG_AURA_UI = "AURA_UI";
 
@@ -144,7 +142,7 @@ public class AuraDetailFragment extends DetailFragment {
 
                 txt_rssi.setText("" + rssi);
 
-                btn_on.setChecked(poweredOn);
+                //btn_on.setChecked(poweredOn);
             }
         });
     }
@@ -157,9 +155,9 @@ public class AuraDetailFragment extends DetailFragment {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             if (action.equals(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE)) {
-                BleCharRWTask.ExecutionResult result;
-                result = (BleCharRWTask.ExecutionResult)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
-                if (result != BleCharRWTask.ExecutionResult.SUCCESS) {
+                BleCharRWTask.ExecutionStatus result;
+                result = (BleCharRWTask.ExecutionStatus)intent.getSerializableExtra(BleService.BLE_SERVICE_OUT_STATUS);
+                if (result != BleCharRWTask.ExecutionStatus.SUCCESS) {
                     return;
                 }
                 UUID charid = (UUID)intent.getSerializableExtra(BleService.BLE_SERVICE_IO_CHAR);

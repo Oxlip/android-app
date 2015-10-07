@@ -21,14 +21,13 @@ public class BleCharRWTask {
     private UUID mServiceId;
     private UUID mCharacteristicId;
     private byte[] mCharacteristicValue;
-    private ExecutionResult mResult;
+    private ExecutionStatus mResult;
     private String mAppContext;
 
     private BluetoothAdapter mBluetoothAdapter;
     private Context mContext;
 
     private BluetoothGatt mBleGatt;
-    private BluetoothDevice mBleDevice;
 
     /* Condition which would be open(trigger) only when BLE connection is opened and GATT services are discovered. */
     private final ConditionVariable mBleServicesDiscovered;
@@ -37,18 +36,26 @@ public class BleCharRWTask {
 
     private final String LOG_TAG_BLE_CHAR_RW = "BLE_RW_TASK";
 
-    private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 5000;
-    private static final int BLE_GATT_WRITE_TIMEOUT = 3000;
+    private static final int BLE_GATT_SERVICE_DISCOVER_TIMEOUT = 2000;
+    private static final int BLE_GATT_WRITE_TIMEOUT = 2000;
 
-
-    public enum ExecutionResult {
+    public enum ExecutionStatus {
         SUCCESS,
         CONNECTION_TIMEOUT,
         SERVICE_NOT_FOUND,
         CHAR_NOT_FOUND,
         RW_TIMEOUT,
         FAILURE
-    }
+    };
+
+    public class ExecutionResult {
+        ExecutionStatus status;
+        byte[] readValue;
+
+        public ExecutionResult(ExecutionStatus status) {
+            this.status = status;
+        }
+    };
 
     public BleCharRWTask(String deviceAddress, String serviceId, String characteristicId,
                          byte[] characteristicValue, boolean isWrite, String appContext) {
@@ -102,7 +109,7 @@ public class BleCharRWTask {
      * @param characteristic - Characteristic to read.
      * @return Success or Timeout
      */
-    private ExecutionResult rwBleCharacteristic(BluetoothGattCharacteristic characteristic) {
+    private ExecutionStatus rwBleCharacteristic(BluetoothGattCharacteristic characteristic) {
         setBleCharacteristicRWCompleted(false);
         if (mIsWrite) {
             characteristic.setValue(mCharacteristicValue);
@@ -115,7 +122,7 @@ public class BleCharRWTask {
         result = mBleCharacteristicRwOperation.block(BLE_GATT_WRITE_TIMEOUT);
         if (!result) {
             Log.e(LOG_TAG_BLE_CHAR_RW, "BLE characteristic RW timed out");
-            return ExecutionResult.RW_TIMEOUT;
+            return ExecutionStatus.RW_TIMEOUT;
         }
 
         return mResult;
@@ -126,19 +133,17 @@ public class BleCharRWTask {
      *
      * @return Sucess or Connection Timeout
      */
-    private ExecutionResult bleConnect() {
+    private ExecutionStatus bleConnect() {
         boolean result;
 
-        mBleDevice = mBluetoothAdapter.getRemoteDevice(this.mDeviceAddress);
-        this.mBleGatt = mBleDevice.connectGatt(mContext, false, mGattCallback);
+        BluetoothDevice bluetoothDevice = mBluetoothAdapter.getRemoteDevice(this.mDeviceAddress);
+        this.mBleGatt = bluetoothDevice.connectGatt(mContext, false, mGattCallback);
         // connect will trigger service discovery - wait for it to complete.
         result = mBleServicesDiscovered.block(BLE_GATT_SERVICE_DISCOVER_TIMEOUT);
         if (!result) {
-            Log.e(LOG_TAG_BLE_CHAR_RW, "Connection timed out while discovering BLE services.");
-            bleDisconnect();
-            return ExecutionResult.CONNECTION_TIMEOUT;
+            return ExecutionStatus.CONNECTION_TIMEOUT;
         }
-        return ExecutionResult.SUCCESS;
+        return ExecutionStatus.SUCCESS;
 
     }
 
@@ -153,38 +158,58 @@ public class BleCharRWTask {
         }
     }
 
+    private ExecutionResult _finishExecution(ExecutionStatus status, byte[] readValue, String msg) {
+        bleDisconnect();
+        if (msg != null) {
+            Log.e(LOG_TAG_BLE_CHAR_RW, msg);
+        }
 
-    public ExecutionResult execute() {
+        ExecutionResult result = new ExecutionResult(status);
+        result.readValue = readValue;
+        return result;
+    }
+
+    private ExecutionResult _execute() {
         BluetoothGattService service;
         BluetoothGattCharacteristic characteristic;
+        byte[] readValue = null;
+
+        Log.d(LOG_TAG_BLE_CHAR_RW, "Executing BleCharRWTask");
+
+        try{
+            ExecutionStatus status;
+            status = bleConnect();
+            if (status != ExecutionStatus.SUCCESS) {
+                return _finishExecution(status, null, "Failed to connect.");
+            }
+
+            service = this.mBleGatt.getService(mServiceId);
+            if (service == null) {
+                return _finishExecution(ExecutionStatus.SERVICE_NOT_FOUND, null, "Service not found " + mServiceId);
+            }
+
+            characteristic = service.getCharacteristic(mCharacteristicId);
+            if (characteristic == null) {
+                return _finishExecution(ExecutionStatus.CHAR_NOT_FOUND, null, "Characteristic not found " + mCharacteristicId);
+            }
+
+            status = rwBleCharacteristic(characteristic);
+            if (status == ExecutionStatus.SUCCESS && !mIsWrite) {
+                readValue = characteristic.getValue();
+            }
+
+        } catch (Exception e) {
+            return _finishExecution(ExecutionStatus.FAILURE, null, "Exception while executing bleTask " + e);
+        }
+
+        return _finishExecution(ExecutionStatus.SUCCESS, readValue, null);
+    }
+
+
+    public ExecutionResult execute() {
         ExecutionResult result;
 
-        Log.d(LOG_TAG_BLE_CHAR_RW, "Starting");
-
-        result = bleConnect();
-        if (result != ExecutionResult.SUCCESS) {
-            return result;
-        }
-
-        service = this.mBleGatt.getService(mServiceId);
-        if (service == null) {
-            Log.e(LOG_TAG_BLE_CHAR_RW, "Service not found " + mServiceId);
-            bleDisconnect();
-            return ExecutionResult.SERVICE_NOT_FOUND;
-        }
-
-        characteristic = service.getCharacteristic(mCharacteristicId);
-        if (characteristic == null) {
-            Log.e(LOG_TAG_BLE_CHAR_RW, "Characteristic not found " + mCharacteristicId);
-            bleDisconnect();
-            return ExecutionResult.CHAR_NOT_FOUND;
-        }
-
-        result = rwBleCharacteristic(characteristic);
-
-        bleDisconnect();
-
-        Log.d(LOG_TAG_BLE_CHAR_RW, "Result = " + result);
+        result = _execute();
 
         Intent intent;
         if (mIsWrite) {
@@ -192,13 +217,11 @@ public class BleCharRWTask {
         } else {
             intent = new Intent(BleService.BLE_SERVICE_REPLY_CHAR_READ_COMPLETE);
         }
-        intent.putExtra(BleService.BLE_SERVICE_IO_DEVICE, this.mBleDevice.getAddress());
+        intent.putExtra(BleService.BLE_SERVICE_IO_DEVICE, this.mDeviceAddress);
         intent.putExtra(BleService.BLE_SERVICE_IO_SERVICE, mServiceId);
         intent.putExtra(BleService.BLE_SERVICE_IO_CHAR, mCharacteristicId);
-        intent.putExtra(BleService.BLE_SERVICE_OUT_STATUS, result);
-        if (!mIsWrite && result == ExecutionResult.SUCCESS) {
-            intent.putExtra(BleService.BLE_SERVICE_IO_VALUE, characteristic.getValue());
-        }
+        intent.putExtra(BleService.BLE_SERVICE_OUT_STATUS, result.status);
+        intent.putExtra(BleService.BLE_SERVICE_IO_VALUE, result.readValue);
         intent.putExtra(BleService.BLE_SERVICE_IO_CONTEXT, mAppContext);
         mContext.sendBroadcast(intent);
 
@@ -210,12 +233,12 @@ public class BleCharRWTask {
         Log.v(LOG_TAG_BLE_CHAR_RW, "onCharacteristicRW " + (isWrite ? "Write" : "READ") + " ( characteristic :" + characteristic + " ,status, : " + status + ")");
 
         if (status == BluetoothGatt.GATT_SUCCESS) {
-            mResult = ExecutionResult.SUCCESS;
+            mResult = ExecutionStatus.SUCCESS;
             if (!isWrite) {
                 this.mCharacteristicValue = characteristic.getValue();
             }
         } else {
-            mResult = ExecutionResult.FAILURE;
+            mResult = ExecutionStatus.FAILURE;
         }
 
         setBleCharacteristicRWCompleted(true);
@@ -226,11 +249,6 @@ public class BleCharRWTask {
      * BLE Async Callback functions.
      */
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
-
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-            Log.v(LOG_TAG_BLE_CHAR_RW, "onCharacteristicChanged ( characteristic : " + characteristic + ")");
-        }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
@@ -248,36 +266,24 @@ public class BleCharRWTask {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             BluetoothDevice device = gatt.getDevice();
 
-            Log.v(LOG_TAG_BLE_CHAR_RW, "onConnectionStateChange (device : " + device + ", status : " + status + " , newState :  " + newState + ")");
+            //Log.e(LOG_TAG_BLE_CHAR_RW, "onConnectionStateChange (device : " + device + ", status : " + status + " , newState :  " + newState + ")");
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    gatt.readRemoteRssi();
+                    Log.v(LOG_TAG_BLE_CHAR_RW, "Connected");
                     // Automatically discover service once BLE connection is established
                     gatt.discoverServices();
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.v(LOG_TAG_BLE_CHAR_RW, "Disconnect");
                     gatt.close();
                 }
+            } else {
+                Log.e(LOG_TAG_BLE_CHAR_RW, "Connect error " + status);
             }
+
+            super.onConnectionStateChange(gatt, status, newState);
         }
 
-        @Override
-        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor device, int status) {
-            Log.v(LOG_TAG_BLE_CHAR_RW, "onDescriptorRead (device : " + device + " , status :  " + status + ")");
-            super.onDescriptorRead(gatt, device, status);
-        }
-
-        @Override
-        public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor arg0, int status) {
-            Log.v(LOG_TAG_BLE_CHAR_RW, "onDescriptorWrite (arg0 : " + arg0 + " , status :  " + status + ")");
-            super.onDescriptorWrite(gatt, arg0, status);
-        }
-
-        @Override
-        public void onReliableWriteCompleted(BluetoothGatt gatt, int status) {
-            Log.v(LOG_TAG_BLE_CHAR_RW, "onReliableWriteCompleted (gatt : " + gatt + " , status :  " + status + ")");
-            super.onReliableWriteCompleted(gatt, status);
-        }
 
         public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -287,12 +293,15 @@ public class BleCharRWTask {
                 intent.putExtra(BleService.BLE_SERVICE_OUT_RSSI, rssi);
                 mContext.sendBroadcast(intent);
             }
+            super.onReadRemoteRssi(gatt, rssi, status);
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            Log.v(LOG_TAG_BLE_CHAR_RW, "onServicesDiscovered");
+            gatt.readRemoteRssi();
+
             setBleGattServicesDiscovered(true);
+            super.onServicesDiscovered(gatt, status);
         }
     };
 }
