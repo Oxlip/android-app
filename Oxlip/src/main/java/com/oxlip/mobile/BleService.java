@@ -59,8 +59,8 @@ public class BleService extends Service {
 
     private static Map<String, byte[]> bleScanFoundDevices = new HashMap<>();
 
-    private static final long BLE_SCAN_PERIOD = 1000; // how long to scan for BLE devices.
-    private static final long BLE_SCAN_FREQ = 6000; // time interval between scan stop and next scan
+    private static final long BLE_SCAN_PERIOD = 500; // how long to scan for BLE devices.
+    private static final long BLE_SCAN_FREQ = 2000; // time interval between scan stop and next scan
     private static final long BLE_SCAN_PAUSE_TIMEOUT = 30 * 1000;
 
     private static LinkedBlockingQueue<BleCharRWTask> bleTaskInfoQueue = new LinkedBlockingQueue<>();
