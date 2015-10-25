@@ -77,6 +77,17 @@ public class BleService extends Service {
     }
 
 
+    public boolean verifyBleEnabledStatus()
+    {
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+            Intent intent = new Intent(BLE_SERVICE_MSG_BLE_NOT_ENABLED);
+            oneInstance.sendBroadcast(intent);
+
+            return false;
+        }
+        return true;
+    }
+
     @Override
     public void onCreate() {
         BluetoothManager bluetoothManager = (BluetoothManager)this.getSystemService(Context.BLUETOOTH_SERVICE);
@@ -89,6 +100,8 @@ public class BleService extends Service {
                 while (true) {
                     BleCharRWTask bleTask;
 
+                    verifyBleEnabledStatus();
+
                     if (!isServicePaused) {
                         startBleScan();
                         cvBleScan.block(BLE_SCAN_PERIOD);
@@ -98,6 +111,7 @@ public class BleService extends Service {
                         if (isServicePaused) {
                             break;
                         }
+                        verifyBleEnabledStatus();
                         try {
                             bleTask = bleTaskInfoQueue.poll(BLE_SCAN_FREQ, TimeUnit.MILLISECONDS);
                             if (bleTask != null) {

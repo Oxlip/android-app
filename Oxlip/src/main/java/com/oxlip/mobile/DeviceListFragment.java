@@ -43,6 +43,7 @@ public class DeviceListFragment extends Fragment {
 
     private boolean mScanning = false;
     private BleServiceUpdateReceiver bleServiceUpdateReceiver;
+    private boolean mBluetoothEnableRequestSend = false;
 
     private static final int REQUEST_ENABLE_BT = 1;
 
@@ -143,6 +144,17 @@ public class DeviceListFragment extends Fragment {
         }
     }
 
+    private void sendEnableBluetoothIntent() {
+        if (mBluetoothEnableRequestSend) {
+            return;
+        }
+
+        mBluetoothEnableRequestSend = true;
+        Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+        startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+    }
+
+
     @Override
     public void onResume() {
         super.onResume();
@@ -151,6 +163,7 @@ public class DeviceListFragment extends Fragment {
             bleServiceUpdateReceiver = new BleServiceUpdateReceiver();
         }
         IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BleService.BLE_SERVICE_MSG_BLE_NOT_ENABLED);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_SCAN_STARTED);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_SCAN_FINISHED);
         intentFilter.addAction(BleService.BLE_SERVICE_MSG_RSSI);
@@ -185,9 +198,12 @@ public class DeviceListFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // User chose not to enable Bluetooth.
-        if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED) {
-            getActivity().finish();
-            return;
+        if (requestCode == REQUEST_ENABLE_BT) {
+            mBluetoothEnableRequestSend = false;
+            if (resultCode == Activity.RESULT_CANCELED) {
+                Log.e("DeviceList", "Bluetooth initialization failed");
+                getActivity().finish();
+            }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -391,8 +407,7 @@ public class DeviceListFragment extends Fragment {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(BleService.BLE_SERVICE_MSG_BLE_NOT_ENABLED)) {
                 // BLE is not enabled on the phone - start system service to enable.
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+                sendEnableBluetoothIntent();
             } else if (intent.getAction().equals(BleService.BLE_SERVICE_MSG_SCAN_STARTED)) {
                 mScanning = true;
                 getActivity().invalidateOptionsMenu();
