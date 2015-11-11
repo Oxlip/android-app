@@ -5,10 +5,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
-import com.j256.ormlite.dao.Dao;
-import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
+import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.support.ConnectionSource;
@@ -20,8 +20,6 @@ import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -29,7 +27,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -59,7 +56,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     private static List<ApplianceMake> applianceMakeList = null;
 
     // Hash table for faster lookup
-    private static final Map<String, ApplianceType> applianceTypeMap = new HashMap<String, ApplianceType>();
+    private static final Map<String, ApplianceType> applianceTypeMap = new HashMap<>();
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -190,17 +187,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
-     * Returns the RuntimeExceptionDao (Database Access Object) version of a Dao for our DeviceInfo class. It will
-     * create it or just give the cached value. RuntimeExceptionDao only through RuntimeExceptions.
-     */
-    public RuntimeExceptionDao<DeviceInfo, String> getDeviceInfoRuntimeExceptionDao() {
-        if (deviceInfoRuntimeDao == null) {
-            deviceInfoRuntimeDao = getRuntimeExceptionDao(DeviceInfo.class);
-        }
-        return deviceInfoRuntimeDao;
-    }
-
-    /**
      * Returns DeviceInfo for a given deviceAddress
      */
     public static DeviceInfo getDeviceInfo(String deviceAddress) {
@@ -243,7 +229,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * @return List of devices.
      */
     public static List<Device> getDevices() {
-        List<Device> deviceList = new ArrayList<Device>();
+        List<Device> deviceList = new ArrayList<>();
         try {
             List<DeviceInfo> deviceInfoList = getInstance().getDeviceInfoDao().queryForAll();
             for(DeviceInfo deviceInfo : deviceInfoList) {
@@ -267,7 +253,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         if (applianceTypeList != null) {
             return applianceTypeList;
         }
-        applianceTypeList = new ArrayList<ApplianceType>();
+        applianceTypeList = new ArrayList<>();
         try {
             applianceTypeList = getInstance().getApplianceTypeDao().queryForAll();
         } catch (SQLException e) {
@@ -295,7 +281,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         if (applianceMakeList != null) {
             return applianceMakeList;
         }
-        applianceMakeList = new ArrayList<ApplianceMake>();
+        applianceMakeList = new ArrayList<>();
         try {
             applianceMakeList = getInstance().getApplianceMakeDao().queryForAll();
         } catch (SQLException e) {
@@ -305,6 +291,38 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         return applianceMakeList;
     }
 
+    /**
+     * Add given sensor data to the DeviceData table.
+     * @param deviceInfo        Which device generated this data.
+     * @param startDate         When the sensor data was started recording.
+     * @param endDate           When the sensor data was stopped recording.
+     * @param valueType         Value type - current, watts, volts etc.
+     * @param sensorValue       Actual value.
+     */
+    public static void addDeviceData(DeviceInfo deviceInfo, Date startDate, Date endDate, int valueType, float sensorValue) {
+        DatabaseHelper.DeviceData deviceData = new DatabaseHelper.DeviceData();
+        deviceData.deviceInfo = deviceInfo;
+        deviceData.startDate = startDate;
+        deviceData.endDate = endDate;
+        deviceData.valueType = valueType;
+        deviceData.sensorValue = sensorValue;
+
+        try {
+            Dao<DatabaseHelper.DeviceData, String> deviceDataDao = getInstance().getDeviceDataDao();
+            deviceDataDao.create(deviceData);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Helper function to call addDeviceData() since current sensor information comes in tuple.
+     */
+    public static void addDeviceDataCurrentSensorValue(DeviceInfo deviceInfo, Date start, Date end, float current, float watts, float volt) {
+        DatabaseHelper.addDeviceData(deviceInfo, start, end, DatabaseHelper.DeviceData.SENSOR_TYPE_CURRENT, current);
+        DatabaseHelper.addDeviceData(deviceInfo, start, end, DatabaseHelper.DeviceData.SENSOR_TYPE_WATTS, watts);
+        DatabaseHelper.addDeviceData(deviceInfo, start, end, DatabaseHelper.DeviceData.SENSOR_TYPE_VOLTS, volt);
+    }
     /*
      * Add an action for the given device.
      * For example when button 1 is press turn on light.
@@ -421,12 +439,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         final String deviceName;
         final String deviceAddress;
         final Date date;
+        final int sensorType;
         final Float sensorValueSum;
 
-        DeviceDataSummary(String deviceName, String deviceAddress, Date date, Float sensorValueSum) {
+        DeviceDataSummary(String deviceName, String deviceAddress, Date date, int sensorType, Float sensorValueSum) {
             this.deviceName = deviceName;
             this.deviceAddress = deviceAddress;
             this.date = date;
+            this.sensorType = sensorType;
             this.sensorValueSum = sensorValueSum;
         }
     }
@@ -440,25 +460,27 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      */
     public static List<DeviceDataSummary> getDeviceDataSummaryListForDateRange(String address, Date startDate, Date endDate) {
         try {
-            java.sql.Date sDate, eDate;
-            sDate = new java.sql.Date(startDate.getTime());
-            eDate = new java.sql.Date(endDate.getTime());
-
             Dao<DeviceData, String> deviceDataDao = getInstance().getDeviceDataDao();
-            String query = "SELECT name, DeviceData.address, SUM(sensorValue) FROM DeviceData, DeviceInfo" +
-                           " WHERE DeviceData.address=DeviceInfo.address AND startDate >= '" + sDate + "' AND endDate <= '" + eDate + "'";
+            QueryBuilder<DeviceData, String> queryBuilder = deviceDataDao.queryBuilder();
+            Where<DeviceData, String> where = queryBuilder.where();
+
+            where.and(where.ge(DeviceData.FIELD_START_DATE, startDate),
+                    where.le(DeviceData.FIELD_END_DATE, endDate));
             if (address != null) {
-                query += " AND DeviceData.address='" + address + "'";
+                where.and(where.eq(DeviceData.FIELD_DEVICE, address), null);
             }
-            query += " GROUP BY DeviceData.address";
-            query += " ORDER BY SUM(sensorValue)";
 
-            GenericRawResults<String[]> rawResults = deviceDataDao.queryRaw(query);
-            List<DeviceDataSummary> result = new LinkedList<DeviceDataSummary>();
+            queryBuilder.groupByRaw("DATE(" + DeviceData.FIELD_START_DATE + ")");
+            queryBuilder.groupBy(DeviceData.FIELD_DEVICE);
 
-            for (String[] resultArray : rawResults) {
-                Float sum = Float.valueOf(resultArray[2]);
-                DeviceDataSummary d = new DeviceDataSummary(resultArray[0], resultArray[1], null, sum);
+            PreparedQuery<DeviceData> preparedQuery = queryBuilder.prepare();
+            List<DeviceData> deviceDataList = deviceDataDao.query(preparedQuery);
+            List<DeviceDataSummary> result = new LinkedList<>();
+            for (DeviceData deviceData : deviceDataList) {
+                DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceData.deviceInfo.address);
+                DeviceDataSummary d = new DeviceDataSummary(deviceInfo.name, deviceInfo.address,
+                                                            deviceData.startDate, deviceData.valueType,
+                                                            deviceData.sensorValue);
                 result.add(d);
             }
             return result;
@@ -474,12 +496,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * @return List of DeviceData for the given number of days.
      */
     public static List<DeviceDataSummary> getDeviceDataSummaryListForPastNDays(String address, int days) {
-        Date startDate;
-        Date endDate;
+        Date startDate, endDate;
         Calendar c = Calendar.getInstance();
+
         endDate = c.getTime();
         c.add(Calendar.DATE, -days);
         startDate = c.getTime();
+
         return getDeviceDataSummaryListForDateRange(address, startDate, endDate);
     }
 
@@ -489,44 +512,14 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * @return List of DeviceData for the given number of days.
      */
     public static List<DeviceDataSummary> getDeviceDataSummaryListForPastMonth(String address) {
+        Date startDate, endDate;
+        Calendar c = Calendar.getInstance();
 
-        try {
-            Date startDate, endDate;
-            Calendar c = Calendar.getInstance();
-            endDate = c.getTime();
-            c.add(Calendar.MONTH, -1);
-            startDate = c.getTime();
+        endDate = c.getTime();
+        c.add(Calendar.MONTH, -1);
+        startDate = c.getTime();
 
-            java.sql.Date sDate, eDate;
-            sDate = new java.sql.Date(startDate.getTime());
-            eDate = new java.sql.Date(endDate.getTime());
-
-            Dao<DeviceData, String> deviceDataDao = getInstance().getDeviceDataDao();
-            String query = "SELECT name, DeviceData.address, DATE(startDate), SUM(sensorValue) FROM DeviceData, DeviceInfo" +
-                    " WHERE DeviceData.address=DeviceInfo.address AND startDate >= '" + sDate + "' AND endDate <= '" + eDate + "'";
-            if (address != null) {
-                query += " AND DeviceData.address='" + address + "'";
-            }
-            query += " GROUP BY DeviceData.address, DATE(startDate)";
-            query += " ORDER BY DATE(startDate)";
-
-            GenericRawResults<String[]> rawResults = deviceDataDao.queryRaw(query);
-            List<DeviceDataSummary> result = new LinkedList<DeviceDataSummary>();
-
-            for (String[] resultArray : rawResults) {
-                Float sum = Float.valueOf(resultArray[3]);
-                try {
-                    Date activityDate = new SimpleDateFormat("yyyy-mm-dd", Locale.ENGLISH).parse(resultArray[2]);
-                    DeviceDataSummary d = new DeviceDataSummary(resultArray[0], resultArray[1], activityDate, sum);
-                    result.add(d);
-                }  catch (ParseException e) {
-                    e.printStackTrace();
-                }
-            }
-            return result;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        return getDeviceDataSummaryListForDateRange(address, startDate, endDate);
     }
 
     /**
@@ -578,12 +571,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         String name;
 
         /**
-         * True if this appliance is dimmable.
-         */
-        @DatabaseField(canBeNull = false)
-        boolean isDimmable;
-
-        /**
          * Icon resource name.
          */
         @DatabaseField(canBeNull = true)
@@ -613,7 +600,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         /*
          * Device type - Aura, Lyra etc
          */
-        public static final int DEVICE_TYPE_UNKNOWN = -1;
         public static final int DEVICE_TYPE_AURA = 1;
         public static final int DEVICE_TYPE_LYRA = 2;
         @DatabaseField
@@ -679,7 +665,6 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         /**
          * Action type.         *
          */
-        public static final int ACTION_TYPE_UNKNOWN = -1;
         public static final int ACTION_TYPE_ON = 0;
         public static final int ACTION_TYPE_OFF = 1;
         public static final int ACTION_TYPE_TOGGLE = 2;
@@ -705,39 +690,48 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      */
     @DatabaseTable(tableName = "DeviceData")
     public static class DeviceData {
+        public static final String FIELD_DEVICE = "device_id";
+        public static final String FIELD_START_DATE = "start_date";
+        public static final String FIELD_END_DATE = "end_date";
+        public static final String FIELD_SENSOR_VALUE = "sensor_value";
+        public static final String FIELD_VALUE_TYPE = "value_type";
+
         /**
          * Device which generated this data.
          */
-        @DatabaseField(canBeNull = false)
-        String address;
+        @DatabaseField(foreign = true, columnName = FIELD_DEVICE)
+        DeviceInfo deviceInfo;
 
         /**
          * Time when the sensor data recording was started.
          */
-        @DatabaseField(canBeNull = false)
+        @DatabaseField(canBeNull = false, columnName = FIELD_START_DATE)
         Date startDate;
 
         /**
          * Time when the sensor data recording was ended.
          */
-        @DatabaseField
+        @DatabaseField(canBeNull = false, columnName = FIELD_END_DATE)
         Date endDate;
 
         /**
          * Sensor value.
          */
-        @DatabaseField(canBeNull = false)
+        @DatabaseField(canBeNull = false, columnName = FIELD_SENSOR_VALUE)
         float sensorValue;
 
         /**
          * value type (W=watts or V=volts).
          */
-        @DatabaseField(canBeNull = false)
-        String valueType;
+        public static final int SENSOR_TYPE_CURRENT = 1;
+        public static final int SENSOR_TYPE_WATTS = 2;
+        public static final int SENSOR_TYPE_VOLTS = 3;
+        @DatabaseField(canBeNull = false, columnName = FIELD_VALUE_TYPE)
+        int valueType;
 
         @Override
         public String toString() {
-            return startDate + " " + endDate + " " + sensorValue +  " " + valueType;
+            return "Device Data " + startDate + " To " + endDate + " [" + sensorValue +  "] [" + valueType + "]";
         }
     }
 }

@@ -21,6 +21,8 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -93,6 +95,19 @@ public class AuraDetailFragment extends DetailFragment {
     }
 
     /**
+     * Store current sensor information to database.
+     */
+    private void addCSInfoToDB(String address, float current, float watts, float volt) {
+        Calendar calendar = Calendar.getInstance();
+        Date start, end;
+        end = calendar.getTime();
+        calendar.add(Calendar.SECOND, -3);
+        start = calendar.getTime();
+
+        DatabaseHelper.addDeviceDataCurrentSensorValue(aura.getDeviceInfo(), start, end, current, watts, volt);
+    }
+
+    /**
      * Helper function to extract CS inforamtion from the given intent.
      * @param intent - Intent that was received.
      */
@@ -118,6 +133,8 @@ public class AuraDetailFragment extends DetailFragment {
         powerUsage.now.current = current;
         powerUsage.now.wattage = watts;
         powerUsage.now.volt = volt;
+
+        addCSInfoToDB(address, current, watts, volt);
     }
 
     private void extractRSSIFromIntent(Intent intent) {
@@ -218,11 +235,12 @@ public class AuraDetailFragment extends DetailFragment {
     }
 
     private void setChart(BarChart chart) {
-        ArrayList<BarEntry> yVals = new ArrayList<BarEntry>();
-        ArrayList<String> xVals = new ArrayList<String>();
+        ArrayList<BarEntry> yVals = new ArrayList<>();
+        ArrayList<String> xVals = new ArrayList<>();
         List<DatabaseHelper.DeviceDataSummary> deviceDataList;
+        String address = this.getArguments().getString("deviceAddress");
 
-        deviceDataList = DatabaseHelper.getDeviceDataSummaryListForPastMonth(this.getArguments().getString("deviceAddress"));
+        deviceDataList = DatabaseHelper.getDeviceDataSummaryListForPastMonth(address);
 
         int i = 0;
         for (DatabaseHelper.DeviceDataSummary dds: deviceDataList) {
@@ -236,7 +254,7 @@ public class AuraDetailFragment extends DetailFragment {
         // add a lot of colors
         set1.setColors(getResources().getIntArray(R.array.main_chart));
 
-        ArrayList<BarDataSet> dataSets = new ArrayList<BarDataSet>();
+        ArrayList<BarDataSet> dataSets = new ArrayList<>();
         dataSets.add(set1);
 
 
