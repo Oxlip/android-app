@@ -185,7 +185,9 @@ public class DeviceDetailActivity extends ActionBarActivity {
         deviceInfo.name = txtName.getText().toString();
         if (mDeviceType == DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA) {
             final Spinner sprApplianceType = (Spinner) view.findViewById(R.id.action_bar_device_type);
-            deviceInfo.applianceType = sprApplianceType.getSelectedItem().toString();
+            if (sprApplianceType.getSelectedItem() != null) {
+                deviceInfo.applianceType = sprApplianceType.getSelectedItem().toString();
+            }
         }
 
         DatabaseHelper.saveDeviceInfo(deviceInfo);
