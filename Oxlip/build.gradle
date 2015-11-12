@@ -35,6 +35,7 @@ android {
 repositories {
     mavenCentral()
     maven { url 'https://maven.fabric.io/public' }
+    maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -46,10 +47,10 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile files('libs/ormlite-android-4.48.jar')
     compile files('libs/ormlite-core-4.48.jar')
-    compile files('libs/mpandroidchartlibrary-1-7-2.jar')
     compile 'com.makeramen:roundedimageview:1.5.0'
     compile project(':DFULibrary')
     compile('com.crashlytics.sdk.android:crashlytics:2.2.0@aar') {
         transitive = true;
     }
+    compile 'com.github.PhilJay:MPAndroidChart:v2.1.6'
 }

@@ -25,7 +25,6 @@ import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.utils.Legend;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -271,15 +270,7 @@ public class DeviceListFragment extends Fragment {
         PieData data = new PieData(xVals, pieDataSet);
         chart.setData(data);
 
-        chart.setDrawXValues(false);
-
         chart.setHoleColor(getResources().getColor(R.color.background));
-
-        chart.getPaint(PieChart.PAINT_CENTER_TEXT).setColor(foregroundColor);
-
-        //chart.setDrawCenterText(!noData);
-        chart.setDrawYValues(!noData);
-        chart.setDrawLegend(!noData);
 
         chart.setCenterTextSize(24f);
         if (noData) {
@@ -290,15 +281,8 @@ public class DeviceListFragment extends Fragment {
 
         chart.setUsePercentValues(true);
 
-        Legend l = chart.getLegend();
-        l.setPosition(Legend.LegendPosition.RIGHT_OF_CHART_CENTER);
-        l.setXEntrySpace(7f);
-        l.setYEntrySpace(5f);
-        l.setTextSize(12f);
-
         chart.setDescription("");
 
-        chart.getPaint(PieChart.PAINT_LEGEND_LABEL).setColor(foregroundColor);
         chart.setTransparentCircleRadius(0);
 
         // undo all highlights

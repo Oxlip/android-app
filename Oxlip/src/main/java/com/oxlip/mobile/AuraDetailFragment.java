@@ -263,8 +263,6 @@ public class AuraDetailFragment extends DetailFragment {
         chart.setDrawGridBackground(false);
         chart.setDrawValueAboveBar(false);
         chart.setDrawBarShadow(false);
-        chart.setDrawLegend(false);
-        chart.setDrawYValues(false);
         chart.setData(data);
     }
 
