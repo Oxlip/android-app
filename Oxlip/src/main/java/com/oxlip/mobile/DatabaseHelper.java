@@ -5,8 +5,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
+import com.j256.ormlite.dao.GenericRawResults;
+import com.j256.ormlite.dao.RawRowMapper;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
@@ -20,6 +23,8 @@ import java.io.DataInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -27,6 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -57,6 +63,8 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
 
     // Hash table for faster lookup
     private static final Map<String, ApplianceType> applianceTypeMap = new HashMap<>();
+
+    private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -398,55 +406,43 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
     }
 
     /**
-     * Get sensor data for the given date range for a given device.
-     * @param address Address of the device. (if null all device data for the given time range will be returned).
-     * @param startDate Start date.
-     * @param endDate End date.
-     * @return List of DeviceData for the given range.
+     * Get lat N number of sensor data for given device.
+     * @param address - Address of the device.
+     * @param sensorType - Sensor type.
+     * @param count - Last N number of deviceData to return.
+     * @return List of DeviceData.
      */
-    public static List<DeviceData> getDeviceDataListForDateRange(String address, Date startDate, Date endDate) {
+    public static List<DeviceData> getDeviceData(String address, int sensorType, long count) {
         try {
-            QueryBuilder<DeviceData, String> queryBuilder = getInstance().getDeviceDataDao().queryBuilder();
-            Where<DeviceData, String> whereQuery;
-            whereQuery = queryBuilder.where().ge("startDate", startDate).and().le("endDate", endDate);
-            if (address != null) {
-                whereQuery = whereQuery.and().eq("address", address);
-            }
+            Dao<DeviceData, String> deviceDataDao = getInstance().getDeviceDataDao();
+            QueryBuilder<DeviceData, String> queryBuilder = deviceDataDao.queryBuilder();
+            Where<DeviceData, String> where = queryBuilder.where();
 
-            return getInstance().getDeviceDataDao().query(whereQuery.prepare());
+            where.eq(DeviceData.FIELD_DEVICE, address).and().
+                    eq(DeviceData.FIELD_VALUE_TYPE, sensorType);
+
+            queryBuilder.orderBy(DeviceData.FIELD_START_DATE, true);
+            queryBuilder.limit(count);
+            queryBuilder.groupByRaw("DATE(" + DeviceData.FIELD_START_DATE + ")");
+            queryBuilder.groupBy(DeviceData.FIELD_DEVICE);
+
+            PreparedQuery<DeviceData> preparedQuery = queryBuilder.prepare();
+            return deviceDataDao.query(preparedQuery);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * Get all sensor data for the given date range.
-     * @param address Address of the device. (if null all device data for the given time range will be returned).
-     * @param startDate - Start date from when to count.
-     * @param days - Number of days to retrieve.
-     * @return List of DeviceData for the given number of days.
-     */
-    public static List<DeviceData> getDeviceDataListForDateRange(String address, Date startDate, int days) {
-        Date endDate;
-        Calendar c = Calendar.getInstance();
-        c.setTime(startDate);
-        c.add(Calendar.DATE, days);
-        endDate = c.getTime();
-        return getDeviceDataListForDateRange(address, startDate, endDate);
     }
 
     public static class DeviceDataSummary {
         final String deviceName;
         final String deviceAddress;
         final Date date;
-        final int sensorType;
         final Float sensorValueSum;
 
-        DeviceDataSummary(String deviceName, String deviceAddress, Date date, int sensorType, Float sensorValueSum) {
+        DeviceDataSummary(String deviceName, String deviceAddress, Date date, Float sensorValueSum) {
             this.deviceName = deviceName;
             this.deviceAddress = deviceAddress;
             this.date = date;
-            this.sensorType = sensorType;
             this.sensorValueSum = sensorValueSum;
         }
     }
@@ -456,34 +452,53 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * @param address Address of the device. (if null all device data for the given time range will be returned).
      * @param startDate Start date.
      * @param endDate End date.
+     * @param valueType Sensor value type - watts, amps, volts etc.
      * @return List of DeviceData summary for the given range.
      */
-    public static List<DeviceDataSummary> getDeviceDataSummaryListForDateRange(String address, Date startDate, Date endDate) {
+    public static List<DeviceDataSummary> getDeviceDataSummaryList(String address, Date startDate, Date endDate, int valueType) {
+        final int COLUMN_DEVICE = 0;
+        final int COLUMN_DATE = 1;
+        final int COLUMN_VALUE = 2;
+
         try {
             Dao<DeviceData, String> deviceDataDao = getInstance().getDeviceDataDao();
             QueryBuilder<DeviceData, String> queryBuilder = deviceDataDao.queryBuilder();
-            Where<DeviceData, String> where = queryBuilder.where();
 
+            queryBuilder.selectRaw(DeviceData.FIELD_DEVICE);
+            queryBuilder.selectRaw("DATE(" + DeviceData.FIELD_START_DATE + ")");
+            queryBuilder.selectRaw("SUM(" + DeviceData.FIELD_SENSOR_VALUE + ")");
+
+            Where<DeviceData, String> where = queryBuilder.where();
             where.and(where.ge(DeviceData.FIELD_START_DATE, startDate),
-                    where.le(DeviceData.FIELD_END_DATE, endDate));
+                      where.le(DeviceData.FIELD_END_DATE, endDate));
+            where.and(where.eq(DeviceData.FIELD_VALUE_TYPE, valueType), null);
             if (address != null) {
                 where.and(where.eq(DeviceData.FIELD_DEVICE, address), null);
             }
 
-            queryBuilder.groupByRaw("DATE(" + DeviceData.FIELD_START_DATE + ")");
-            queryBuilder.groupBy(DeviceData.FIELD_DEVICE);
+            queryBuilder.groupByRaw("DATE(" + DeviceData.FIELD_START_DATE + "), " + DeviceData.FIELD_DEVICE);
 
-            PreparedQuery<DeviceData> preparedQuery = queryBuilder.prepare();
-            List<DeviceData> deviceDataList = deviceDataDao.query(preparedQuery);
-            List<DeviceDataSummary> result = new LinkedList<>();
-            for (DeviceData deviceData : deviceDataList) {
-                DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(deviceData.deviceInfo.address);
-                DeviceDataSummary d = new DeviceDataSummary(deviceInfo.name, deviceInfo.address,
-                                                            deviceData.startDate, deviceData.valueType,
-                                                            deviceData.sensorValue);
-                result.add(d);
-            }
-            return result;
+            GenericRawResults<DeviceDataSummary> rawResults;
+
+            RawRowMapper<DeviceDataSummary> rawRowMapper = new RawRowMapper<DeviceDataSummary>() {
+                public DeviceDataSummary mapRow(String[] columnNames, String[] resultColumns) {
+                    DeviceInfo deviceInfo = DatabaseHelper.getDeviceInfo(resultColumns[COLUMN_DEVICE]);
+                    Float value = Float.parseFloat(resultColumns[COLUMN_VALUE]);
+                    Date date;
+                    try {
+                        date = simpleDateFormat.parse(resultColumns[COLUMN_DATE]);
+                    } catch (ParseException e) {
+                        Log.e(LOG_TAG_DATABASE_HELPER, "Date ParseException " + resultColumns[COLUMN_DATE]);
+                        return null;
+                    }
+
+                    return new DeviceDataSummary(deviceInfo.name, deviceInfo.address, date, value);
+                }
+            };
+            rawResults =  deviceDataDao.queryRaw(queryBuilder.prepareStatementString(), rawRowMapper,
+                                                 simpleDateFormat.format(startDate),
+                                                 simpleDateFormat.format(endDate));
+            return rawResults.getResults();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -493,9 +508,10 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
      * Get sensor data summary for the given date range for a given device..
      * @param address Address of the device. (if null all device data for the given time range will be returned).
      * @param days - Number of previous days to retrieve from today.
+     * @param valueType Sensor value type - watts, amps, volts etc.
      * @return List of DeviceData for the given number of days.
      */
-    public static List<DeviceDataSummary> getDeviceDataSummaryListForPastNDays(String address, int days) {
+    public static List<DeviceDataSummary> getDeviceDataSummaryList(String address, int days, int valueType) {
         Date startDate, endDate;
         Calendar c = Calendar.getInstance();
 
@@ -503,15 +519,16 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         c.add(Calendar.DATE, -days);
         startDate = c.getTime();
 
-        return getDeviceDataSummaryListForDateRange(address, startDate, endDate);
+        return getDeviceDataSummaryList(address, startDate, endDate, valueType);
     }
 
     /**
      * Get sensor data summary for last month.
      * @param address Address of the device.
+     * @param valueType Sensor value type - watts, amps, volts etc.
      * @return List of DeviceData for the given number of days.
      */
-    public static List<DeviceDataSummary> getDeviceDataSummaryListForPastMonth(String address) {
+    public static List<DeviceDataSummary> getDeviceDataSummaryList(String address, int valueType) {
         Date startDate, endDate;
         Calendar c = Calendar.getInstance();
 
@@ -519,7 +536,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         c.add(Calendar.MONTH, -1);
         startDate = c.getTime();
 
-        return getDeviceDataSummaryListForDateRange(address, startDate, endDate);
+        return getDeviceDataSummaryList(address, startDate, endDate, valueType);
     }
 
     /**
