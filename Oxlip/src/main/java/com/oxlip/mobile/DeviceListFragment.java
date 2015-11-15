@@ -22,12 +22,15 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * A list fragment representing a list of Devices. This fragment
@@ -241,20 +244,30 @@ public class DeviceListFragment extends Fragment {
             return;
         }
 
-        int foregroundColor = getResources().getColor(R.color.foreground);
+        int mainChartColors[] = getResources().getIntArray(R.array.main_chart);
+
         ArrayList<Entry> yVals = new ArrayList<>();
         ArrayList<String> xVals = new ArrayList<>();
+        ArrayList<String> legendLabels  = new ArrayList<>();
+        ArrayList<Integer> legendLabelColors  = new ArrayList<>();
+
         List<DatabaseHelper.DeviceDataSummary> summaryList;
         boolean noData;
 
-        summaryList = DatabaseHelper.getDeviceDataSummaryListForPastNDays(null, 30);
+        summaryList = DatabaseHelper.getDeviceDataSummaryList(null, 7, DatabaseHelper.DeviceData.SENSOR_TYPE_CURRENT);
 
         int i = 0;
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEE", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d", Locale.getDefault());
         for (DatabaseHelper.DeviceDataSummary dds: summaryList) {
             yVals.add(new Entry(dds.sensorValueSum, i));
-            xVals.add(dds.deviceName);
+            xVals.add(dayFormat.format(dds.date));
+            legendLabels.add(dateFormat.format(dds.date));
+            legendLabelColors.add(mainChartColors[i]);
             i++;
         }
+        Legend legend = chart.getLegend();
+        legend.setCustom(legendLabelColors, legendLabels);
 
         noData = yVals.size() == 0;
         if (noData) {
@@ -263,6 +276,7 @@ public class DeviceListFragment extends Fragment {
         }
         PieDataSet pieDataSet = new PieDataSet(yVals, "");
         pieDataSet.setSliceSpace(3f);
+        pieDataSet.setValueTextSize(14f);
 
         // add a lot of colors
         pieDataSet.setColors(getResources().getIntArray(R.array.main_chart));

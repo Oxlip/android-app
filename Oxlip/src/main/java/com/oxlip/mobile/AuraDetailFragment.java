@@ -237,15 +237,15 @@ public class AuraDetailFragment extends DetailFragment {
     private void setChart(BarChart chart) {
         ArrayList<BarEntry> yVals = new ArrayList<>();
         ArrayList<String> xVals = new ArrayList<>();
-        List<DatabaseHelper.DeviceDataSummary> deviceDataList;
+        List<DatabaseHelper.DeviceData> deviceDataList;
         String address = this.getArguments().getString("deviceAddress");
 
-        deviceDataList = DatabaseHelper.getDeviceDataSummaryListForPastMonth(address);
+        deviceDataList = DatabaseHelper.getDeviceData(address, DatabaseHelper.DeviceData.SENSOR_TYPE_CURRENT, 100);
 
         int i = 0;
-        for (DatabaseHelper.DeviceDataSummary dds: deviceDataList) {
-            yVals.add(new BarEntry(dds.sensorValueSum, i));
-            xVals.add(dds.date.getDate() + "");
+        for (DatabaseHelper.DeviceData dds: deviceDataList) {
+            yVals.add(new BarEntry(dds.sensorValue, i));
+            xVals.add(dds.startDate + "");
             i++;
         }
 
