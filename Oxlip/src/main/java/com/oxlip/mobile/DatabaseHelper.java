@@ -418,13 +418,13 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
             QueryBuilder<DeviceData, String> queryBuilder = deviceDataDao.queryBuilder();
             Where<DeviceData, String> where = queryBuilder.where();
 
-            where.eq(DeviceData.FIELD_DEVICE, address).and().
-                    eq(DeviceData.FIELD_VALUE_TYPE, sensorType);
+            where.eq(DeviceData.FIELD_DEVICE, address);
+            if (sensorType != DeviceData.SENSOR_TYPE_ALL) {
+                where.and().eq(DeviceData.FIELD_VALUE_TYPE, sensorType);
+            }
 
             queryBuilder.orderBy(DeviceData.FIELD_START_DATE, true);
             queryBuilder.limit(count);
-            queryBuilder.groupByRaw("DATE(" + DeviceData.FIELD_START_DATE + ")");
-            queryBuilder.groupBy(DeviceData.FIELD_DEVICE);
 
             PreparedQuery<DeviceData> preparedQuery = queryBuilder.prepare();
             return deviceDataDao.query(preparedQuery);
@@ -740,6 +740,7 @@ public class DatabaseHelper extends OrmLiteSqliteOpenHelper {
         /**
          * value type (W=watts or V=volts).
          */
+        public static final int SENSOR_TYPE_ALL = 0;
         public static final int SENSOR_TYPE_CURRENT = 1;
         public static final int SENSOR_TYPE_WATTS = 2;
         public static final int SENSOR_TYPE_VOLTS = 3;

@@ -16,14 +16,20 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -39,6 +45,9 @@ public class AuraDetailFragment extends DetailFragment {
     private String deviceAddress;
     private TextView txt_ma, txt_mw, txt_volt, txt_rssi;
     private SwitchCompat btn_on;
+
+    private LineChart chart;
+    private final int CHART_MAX_VISIBLE_ENTRIES = 20;
 
     /* Current power state */
     private boolean poweredOn = false;
@@ -87,7 +96,7 @@ public class AuraDetailFragment extends DetailFragment {
             }
         });
 
-        BarChart chart = (BarChart) view.findViewById(R.id.ddl_chart);
+        chart = (LineChart) view.findViewById(R.id.ddl_chart);
         setChart(chart);
         chart.animateX(2500);
 
@@ -158,6 +167,11 @@ public class AuraDetailFragment extends DetailFragment {
                 txt_volt.setText("" + powerUsage.now.volt);
 
                 txt_rssi.setText("" + rssi);
+
+                SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss", Locale.getDefault());
+                if (powerUsage.now.current > 0) {
+                    addEntryToChart(chart, dateFormat.format(new Date()), powerUsage.now.current);
+                }
 
                 //btn_on.setChecked(poweredOn);
             }
@@ -234,36 +248,71 @@ public class AuraDetailFragment extends DetailFragment {
         super.onCreateOptionsMenu(menu, inflater);
     }
 
-    private void setChart(BarChart chart) {
-        ArrayList<BarEntry> yVals = new ArrayList<>();
+    private void setChart(LineChart chart) {
+        ArrayList<Entry> currentVals = new ArrayList<>();
+
         ArrayList<String> xVals = new ArrayList<>();
         List<DatabaseHelper.DeviceData> deviceDataList;
         String address = this.getArguments().getString("deviceAddress");
 
-        deviceDataList = DatabaseHelper.getDeviceData(address, DatabaseHelper.DeviceData.SENSOR_TYPE_CURRENT, 100);
+        deviceDataList = DatabaseHelper.getDeviceData(address, DatabaseHelper.DeviceData.SENSOR_TYPE_CURRENT, CHART_MAX_VISIBLE_ENTRIES);
 
         int i = 0;
+        SimpleDateFormat dateFormat = new SimpleDateFormat("mm:ss", Locale.getDefault());
         for (DatabaseHelper.DeviceData dds: deviceDataList) {
-            yVals.add(new BarEntry(dds.sensorValue, i));
-            xVals.add(dds.startDate + "");
+            xVals.add(dateFormat.format(dds.startDate));
+            currentVals.add(new Entry(dds.sensorValue, i));
             i++;
         }
 
         // create a dataset and give it a type
-        BarDataSet set1 = new BarDataSet(yVals, "Consumption");
-        // add a lot of colors
-        set1.setColors(getResources().getIntArray(R.array.main_chart));
+        LineDataSet currentSet = new LineDataSet(currentVals, "Current");
+        //currentSet.setColor(R.color.current);
+        //currentSet.setFillColor(R.color.current);
+        currentSet.setDrawCubic(true);
+        currentSet.setDrawFilled(true);
 
-        ArrayList<BarDataSet> dataSets = new ArrayList<>();
-        dataSets.add(set1);
+        ArrayList<LineDataSet> dataSets = new ArrayList<>();
+        dataSets.add(currentSet);
 
+        LineData data = new LineData(xVals, dataSets);
 
-        BarData data = new BarData(xVals, dataSets);
-
+        chart.setScaleEnabled(true);
         chart.setDrawGridBackground(false);
-        chart.setDrawValueAboveBar(false);
-        chart.setDrawBarShadow(false);
+        chart.setPinchZoom(true);
         chart.setData(data);
+
+        chart.getAxisRight().setStartAtZero(false);
+        chart.getAxisLeft().setStartAtZero(false);
+    }
+
+    private void addEntryToChart(LineChart chart, String xVal, int yVal) {
+
+        LineData data = chart.getData();
+
+        if (data != null) {
+            LineDataSet set = data.getDataSetByIndex(0);
+
+            if (set == null) {
+                return;
+            }
+
+            // add a new x-value first
+            data.addXValue(xVal);
+            data.addEntry(new Entry(yVal, set.getEntryCount()), 0);
+
+            // let the chart know it's data has changed
+            chart.notifyDataSetChanged();
+
+            // limit the number of visible entries
+            chart.setVisibleXRangeMaximum(CHART_MAX_VISIBLE_ENTRIES);
+
+            // move to the latest entry
+            chart.moveViewToX(data.getXValCount() - CHART_MAX_VISIBLE_ENTRIES + 1);
+
+            chart.getAxisRight().setStartAtZero(false);
+            chart.getAxisLeft().setStartAtZero(false);
+        }
     }
 
     /* Simple classes to hold power usage information */

@@ -34,4 +34,8 @@
         <item>@color/dark_red</item>
         <item>@color/red</item>
     </array>
+
+    <color name="volt">#6599FF</color>
+    <color name="current">#FF9900</color>
+    <color name="watts">#097054</color>
 </resources>
