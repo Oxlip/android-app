@@ -247,7 +247,7 @@ class LyraButtonAdapter extends RecyclerView.Adapter<LyraButtonAdapter.ButtonVie
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 int button = (int) vh.mTextViewNumber.getTag();
-                mLyra.addAction((byte)button, device.getDeviceInfo().address, (byte)vh.getAdapterPosition(), (byte)which, (byte)0);
+                mLyra.addAction((byte)button, device.getDeviceInfo().address, (byte)vh.getPosition(), (byte)which, (byte)0);
                 drawActionList(button, vh);
                 dialog.dismiss();
             }

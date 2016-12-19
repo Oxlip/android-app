@@ -52,7 +52,7 @@ public class Device {
         } else if (this.mDeviceInfo.name.startsWith("Lyra") ) {
             this.mDeviceInfo.deviceType = DatabaseHelper.DeviceInfo.DEVICE_TYPE_LYRA;
         } else {
-            this.mDeviceInfo.deviceType = DatabaseHelper.DeviceInfo.DEVICE_TYPE_UNKNOWN;
+            this.mDeviceInfo.deviceType = DatabaseHelper.DeviceInfo.DEVICE_TYPE_AURA;
         }
     }
 
