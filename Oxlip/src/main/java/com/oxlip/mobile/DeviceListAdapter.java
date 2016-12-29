@@ -135,7 +135,7 @@ public class DeviceListAdapter extends BaseAdapter {
 
         LayoutInflater mInflater = (LayoutInflater) mContext.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         view = mInflater.inflate(R.layout.lyra_list_item, null);
-        ApplianceImage.transformImage(view, R.drawable.ic_three_button, R.id.dl_image);
+        ImageHelper.transformImage(view, R.drawable.ic_three_button, R.id.dl_image);
 
         return  view;
     }
@@ -150,9 +150,9 @@ public class DeviceListAdapter extends BaseAdapter {
 
 
         if (applianceType != null) {
-            ApplianceImage.loadApplianceImage(view, applianceType.imageName, R.id.dl_image);
+            ImageHelper.loadApplianceImage(view, applianceType.imageName, R.id.dl_image);
         } else {
-            ApplianceImage.transformImage(view, R.drawable.ic_icon_socket, R.id.dl_image);
+            ImageHelper.transformImage(view, R.drawable.ic_icon_socket, R.id.dl_image);
         }
 
         btnOn = (SwitchCompat)view.findViewById(R.id.dl_btn_on_off);

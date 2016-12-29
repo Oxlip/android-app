@@ -398,7 +398,7 @@ class AuraListAdapter extends RecyclerView.Adapter<AuraListAdapter.ViewHolder> {
         DatabaseHelper.DeviceInfo deviceInfo = mDataset.get(position).getDeviceInfo();
         holder.mTextView.setText(deviceInfo.name);
         holder.mTextView.setTag(mDataset.get(position)); //this tag is used by drag and drop
-        ApplianceImage.transformImage(holder.mImageView, R.drawable.ic_three_button, R.id.lyra_cfg_dl_image);
+        ImageHelper.transformImage(holder.mImageView, R.drawable.ic_three_button, R.id.lyra_cfg_dl_image);
     }
 
     // Return the size of your dataset (invoked by the layout manager)
