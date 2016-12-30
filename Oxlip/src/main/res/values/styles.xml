@@ -3,8 +3,10 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat">
         <item name="android:actionBarStyle">@style/MyActionBar</item>
-           <item name="android:actionMenuTextColor">@color/foreground</item>
+        <item name="android:actionMenuTextColor">@color/foreground</item>
         <item name="colorPrimary">@color/primary</item>
+
+        <item name="actionOverflowMenuStyle">@style/OverflowMenu</item>
     </style>
 
     <style name="MyActionBar" parent="Theme.AppCompat">
@@ -13,6 +15,15 @@
     </style>
     <style name="myTheme.ActionBar.Text" parent="@android:style/TextAppearance">
         <item name="android:textColor">@color/foreground</item>
+    </style>
+    <style name="OverflowMenu" parent="Widget.AppCompat.PopupMenu.Overflow">
+        <!-- Required for pre-Lollipop. -->
+        <item name="overlapAnchor">false</item>
+
+        <!-- Required for Lollipop. -->
+        <item name="android:overlapAnchor">false</item>
+        <item name="android:dropDownVerticalOffset">4.0dip</item>
+
     </style>
 
     <style name="topbar_title_text">

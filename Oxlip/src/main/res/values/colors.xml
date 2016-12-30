@@ -24,6 +24,8 @@
     <color name="green_blue">#097054</color>
     <color name="green">#00FF00</color>
 
+    <color name="profile_background">#ff424242</color>
+
     <array name="main_chart">
         <item>@color/blue</item>
         <item>@color/green</item>

@@ -1,12 +1,29 @@
 package com.oxlip.mobile;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
+import com.facebook.login.LoginManager;
+
+import studios.codelight.smartloginlibrary.SmartLoginBuilder;
+import studios.codelight.smartloginlibrary.SmartLoginConfig;
+import studios.codelight.smartloginlibrary.users.SmartFacebookUser;
+import studios.codelight.smartloginlibrary.users.SmartGoogleUser;
+import studios.codelight.smartloginlibrary.users.SmartUser;
 
 /**
  * An activity representing a list of Devices. This activity
@@ -25,7 +42,7 @@ import android.widget.Toast;
  * to listen for item selections.
  */
 public class DeviceListActivity extends ActionBarActivity
-        implements DeviceListFragment.Callbacks {
+        implements DeviceListFragment.Callbacks, ExtractBitmapFromUrlTaskCompleted {
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -33,9 +50,13 @@ public class DeviceListActivity extends ActionBarActivity
      */
     private boolean mTwoPane;
 
+    private Menu mMenu;
+    private Bitmap mProfilePic;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_device_list);
 
         getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -62,7 +83,96 @@ public class DeviceListActivity extends ActionBarActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_actions, menu);
+        MenuItem profilePictureenuItem = menu.findItem(R.id.main_action_bar_profile_picture);
+        MenuItem signinMenuItem =  menu.findItem(R.id.main_action_bar_signin);
+        MenuItem signoutMenuItem = menu.findItem(R.id.main_action_bar_signout);
+        if (signinMenuItem == null) {
+            return true;
+        }
+        signinMenuItem.setVisible(mProfilePic == null);
+        signoutMenuItem.setVisible(mProfilePic != null);
+        profilePictureenuItem.setVisible(mProfilePic != null);
+        if(mProfilePic != null) {
+            Drawable profilePic;
+            profilePic = new BitmapDrawable(getResources(), mProfilePic);
+            profilePictureenuItem.setIcon(profilePic);
+        }
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.main_action_bar_signin:
+                SmartLoginBuilder loginBuilder = new SmartLoginBuilder();
+
+                Intent intent = loginBuilder.with(this)
+                        .setAppLogo(R.drawable.ic_action_logo)
+                        .isFacebookLoginEnabled(true).withFacebookAppId("366802223673857")
+                        .withFacebookPermissions(null)
+                        .isGoogleLoginEnabled(false)
+                        .build();
+                startActivityForResult(intent, SmartLoginConfig.LOGIN_REQUEST);
+                return true;
+            case R.id.main_action_bar_signout:
+                LoginManager.getInstance().logOut();
+                mProfilePic = null;
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //Intent "data" contains the user object
+        if(resultCode == SmartLoginConfig.FACEBOOK_LOGIN_REQUEST){
+            SmartFacebookUser user;
+            try {
+                user = data.getParcelableExtra(SmartLoginConfig.USER);
+                Bundle params = new Bundle();
+                params.putBoolean("redirect", false);
+                params.putString("type", "large");
+                new GraphRequest(
+                    AccessToken.getCurrentAccessToken(),
+                    user.getUserId() + "/picture",
+                    params, HttpMethod.GET,
+                    new GraphRequest.Callback() {
+                        @Override
+                        public void onCompleted(GraphResponse response) {
+                            if (response != null) {
+                                try {
+                                    String picUrl = (String) response.getJSONObject().getJSONObject("data").getString("url");
+                                    new ExtractBitmapFromUrlTask(DeviceListActivity.this).execute(picUrl);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }).executeAsync();
+
+                //setFacebookProfilePicture(user.getUserId());
+                //use this user object as per your requirement
+            } catch (Exception e){
+                Log.e(getClass().getSimpleName(), e.getMessage());
+            }
+        }else if(resultCode == SmartLoginConfig.GOOGLE_LOGIN_REQUEST){
+            SmartGoogleUser user;
+            try {
+                user = data.getParcelableExtra(SmartLoginConfig.USER);
+                //use this user object as per your requirement
+            }catch (Exception e){
+                Log.e(getClass().getSimpleName(), e.getMessage());
+            }
+        }else if(resultCode == SmartLoginConfig.CUSTOM_LOGIN_REQUEST){
+            SmartUser user = data.getParcelableExtra(SmartLoginConfig.USER);
+            //use this user object as per your requirement
+        }else if(resultCode == RESULT_CANCELED){
+            //Login Failed
+            Log.e(getClass().getSimpleName(), "Login failed");
+        }
     }
 
     /**
@@ -106,5 +216,17 @@ public class DeviceListActivity extends ActionBarActivity
             detailIntent.putExtra("deviceType", device.getDeviceInfo().deviceType);
             startActivity(detailIntent);
         }
+    }
+
+    @Override
+    public void onTaskCompleted(Bitmap extractedBitmap) {
+        // Calculate ActionBar's height
+        int radius = 0;
+        TypedValue tv = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            radius = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
+        }
+
+        mProfilePic = ImageHelper.getRoundedBitmap(extractedBitmap, radius, getResources().getColor(R.color.profile_background));
     }
 }

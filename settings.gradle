@@ -1,1 +1,1 @@
-include ':Oxlip', ':DFULibrary'
+include ':Oxlip', ':DFULibrary', 'smartloginlibrary'

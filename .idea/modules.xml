@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/DFULibrary/DFULibrary.iml" filepath="$PROJECT_DIR$/DFULibrary/DFULibrary.iml" />
       <module fileurl="file://$PROJECT_DIR$/Oxlip/Oxlip.iml" filepath="$PROJECT_DIR$/Oxlip/Oxlip.iml" />
       <module fileurl="file://$PROJECT_DIR$/Oxlip-App.iml" filepath="$PROJECT_DIR$/Oxlip-App.iml" />
+      <module fileurl="file://$PROJECT_DIR$/smartloginlibrary/smartloginlibrary.iml" filepath="$PROJECT_DIR$/smartloginlibrary/smartloginlibrary.iml" />
     </modules>
   </component>
 </project>

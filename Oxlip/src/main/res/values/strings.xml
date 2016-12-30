@@ -34,4 +34,8 @@
     <string name="lyra_detail_detect_motion">Detect motion.</string>
     <string name="lyra_detail_detect_tap">Detect tap.</string>
     <string name="lyra_detail_drag_and_drop_info">Appliances (Drag and drop on buttons)</string>
+
+    <string name="signout">Sign out</string>
+    <string name="facebook_app_id">366802223673857</string>
+    <string name="fb_login_protocol_scheme">fb366802223673857</string>
 </resources>
